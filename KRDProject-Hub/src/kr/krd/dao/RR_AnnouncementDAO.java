@@ -12,51 +12,54 @@ import kr.util.DBUtil;
 public class RR_AnnouncementDAO {
 
     // 1) 공고 등록
-    public int insertAnnouncement(RR_AnnouncementVO vo) {
-        Connection conn = null;
-        PreparedStatement pstmt = null;
-        String sql = null;
-        int count = 0;
+	public int insertAnnouncement(RR_AnnouncementVO vo) {
+	    Connection conn = null;
+	    PreparedStatement pstmt = null;
+	    String sql = null;
+	    int count = 0;
 
-        try {
-            conn = DBUtil.getConnection();
+	    try {
+	        conn = DBUtil.getConnection();
 
-            // 기본: PK 자동증가/트리거 있다고 가정하고 PK 컬럼 제외
-            sql = "INSERT INTO ANNOUNCEMENT ("
-                + "ANNOUNCEMENT_AGY_ID, ANNOUNCEMENT_TITLE, ANNOUNCEMENT_DESC, "
-                + "ANNOUNCEMENT_REANN_YN, ANNOUNCEMENT_PM_CONTACT, ANNOUNCEMENT_RECRUIT_CAP, "
-                + "ANNOUNCEMENT_START_DT, ANNOUNCEMENT_END_DT, ANNOUNCEMENT_STATUS, "
-                + "ANNOUNCEMENT_FIELD, ANNOUNCEMENT_CREATED_BY, ANNOUNCEMENT_TOTAL_BUDGET, "
-                + "ANNOUNCEMENT_HIDDEN_YN"
-                + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	        // PK(ANNOUNCEMENT_ANN_ID)를 시퀀스로 직접 넣음
+	        sql = "INSERT INTO ANNOUNCEMENT ("
+	            + "ANNOUNCEMENT_ANN_ID, "  // ← PK 컬럼 추가
+	            + "ANNOUNCEMENT_AGY_ID, ANNOUNCEMENT_TITLE, ANNOUNCEMENT_DESC, "
+	            + "ANNOUNCEMENT_REANN_YN, ANNOUNCEMENT_PM_CONTACT, ANNOUNCEMENT_RECRUIT_CAP, "
+	            + "ANNOUNCEMENT_START_DT, ANNOUNCEMENT_END_DT, ANNOUNCEMENT_STATUS, "
+	            + "ANNOUNCEMENT_FIELD, ANNOUNCEMENT_CREATED_BY, ANNOUNCEMENT_TOTAL_BUDGET, "
+	            + "ANNOUNCEMENT_HIDDEN_YN"
+	            + ") VALUES ("
+	            + "ANNOUNCEMENT_SEQ.NEXTVAL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" // ← 값 추가
+	            + ")";
 
-            pstmt = conn.prepareStatement(sql);
+	        pstmt = conn.prepareStatement(sql);
 
-            int idx = 1;
-            pstmt.setInt(idx++, vo.getAgyId());
-            pstmt.setString(idx++, vo.getTitle());
-            pstmt.setString(idx++, vo.getDesc());
-            pstmt.setInt(idx++, vo.getReannYn());
-            pstmt.setString(idx++, vo.getPmContact());
-            pstmt.setInt(idx++, vo.getRecruitCap());
-            pstmt.setString(idx++, vo.getStartDt());   // VARCHAR2(10)
-            pstmt.setString(idx++, vo.getEndDt());     // VARCHAR2(10)
-            pstmt.setString(idx++, vo.getStatus());    // "공고중"
-            pstmt.setString(idx++, vo.getField());
-            pstmt.setString(idx++, vo.getCreatedBy());
-            pstmt.setLong(idx++, vo.getTotalBudget());
-            pstmt.setInt(idx++, vo.getHiddenYn());
+	        int idx = 1;
+	        pstmt.setInt(idx++, vo.getAgyId());
+	        pstmt.setString(idx++, vo.getTitle());
+	        pstmt.setString(idx++, vo.getDesc());
+	        pstmt.setInt(idx++, vo.getReannYn());
+	        pstmt.setString(idx++, vo.getPmContact());
+	        pstmt.setInt(idx++, vo.getRecruitCap());
+	        pstmt.setString(idx++, vo.getStartDt());   // VARCHAR2(10)
+	        pstmt.setString(idx++, vo.getEndDt());     // VARCHAR2(10)
+	        pstmt.setString(idx++, vo.getStatus());    // 공고중
+	        pstmt.setString(idx++, vo.getField());
+	        pstmt.setString(idx++, vo.getCreatedBy());
+	        pstmt.setLong(idx++, vo.getTotalBudget());
+	        pstmt.setInt(idx++, vo.getHiddenYn());
 
-            count = pstmt.executeUpdate();
+	        count = pstmt.executeUpdate();
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            DBUtil.executeClose(null, pstmt, conn);
-        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    } finally {
+	        DBUtil.executeClose(null, pstmt, conn);
+	    }
 
-        return count;
-    }
+	    return count;
+	}
 
     // 2) 기관별 공고 목록 조회 (신청팀 수 포함)
     public List<RR_AnnouncementVO> getAnnouncementListByAgency(int agyId) {

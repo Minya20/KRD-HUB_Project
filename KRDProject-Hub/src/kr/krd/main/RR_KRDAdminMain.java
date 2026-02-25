@@ -17,7 +17,7 @@ public class RR_KRDAdminMain {
     // 로그인 후 실제 값으로 세팅되어야 함 (일단 테스트용)
     // 나중에 로그인 성공 시 이 값들에 실제 로그인 사용자 정보 넣으면 됨
     private int loginAgyId = 1;              // 기관ID
-    private String loginUserId = "admin01";  // 사용자ID
+    private String loginUserId = "agy01";  // 사용자ID
 
     public RR_KRDAdminMain() {
         callMenu();
