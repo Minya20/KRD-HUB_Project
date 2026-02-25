@@ -75,7 +75,7 @@ public class USH_MemberDAO {
 			//SQL문 작성
 			sql = "SELECT user_id,user_name,user_birth_dt,user_email,user_phone_no,user_country_cd,"
 					+ "user_addr,user_gender_cd,user_created_at,user_last_login_at,user_penalty_end_dt,"
-					+ "user_role_cd,user_acct_status_cd,user_affiliation,user_field,user_updataed_at "
+					+ "user_role_cd,user_acct_status_cd,user_affiliation,user_field,user_update_at "
 					+ "FROM userInfo WHERE user_id=?";
 			//JDBC 수행 3단계
 			pstmt = conn.prepareStatement(sql);
@@ -88,22 +88,22 @@ public class USH_MemberDAO {
 			}
 			
 			System.out.println("=========회원 상세 조회=========");
-			System.out.println("ID              : " + nvl(rs.getString("user_id")));
-	        System.out.println("이름            : " + nvl(rs.getString("user_name")));
-	        System.out.println("생년월일        : " + nvl(rs.getString("user_birth_dt")));
-	        System.out.println("이메일          : " + nvl(rs.getString("user_email")));
-	        System.out.println("전화번호        : " + nvl(rs.getString("user_phone_no")));
-	        System.out.println("국적            : " + nvl(rs.getString("user_country_cd")));
-	        System.out.println("주소            : " + nvl(rs.getString("user_addr")));
-	        System.out.println("성별            : " + nvl(rs.getString("user_gender_cd")));
-	        System.out.println("권한            : " + nvl(rs.getString("user_role_cd")));
-	        System.out.println("계정 상태       : " + nvl(rs.getString("user_acct_status_cd")));
-	        System.out.println("가입일자        : " + fmtTs(rs.getTimestamp("user_created_at")));
-	        System.out.println("마지막 접속     : " + fmtTs(rs.getTimestamp("user_last_login_at")));
-	        System.out.println("패널티 종료일   : " + nvl(rs.getString("user_penalty_end_dt")));
-	        System.out.println("소속            : " + nvl(rs.getString("user_affiliation")));
-	        System.out.println("담당 분야       : " + nvl(rs.getString("user_field")));
-	        System.out.println("업데이트 일시   : " + fmtTs(rs.getTimestamp("user_updated_at")));
+			System.out.println("ID : " + nvl(rs.getString("user_id")));
+	        System.out.println("이름 : " + nvl(rs.getString("user_name")));
+	        System.out.println("생년월일 : " + nvl(rs.getString("user_birth_dt")));
+	        System.out.println("이메일 : " + nvl(rs.getString("user_email")));
+	        System.out.println("전화번호 : " + nvl(rs.getString("user_phone_no")));
+	        System.out.println("국적 : " + nvl(rs.getString("user_country_cd")));
+	        System.out.println("주소 : " + nvl(rs.getString("user_addr")));
+	        System.out.println("성별 : " + nvl(rs.getString("user_gender_cd")));
+	        System.out.println("권한 : " + nvl(rs.getString("user_role_cd")));
+	        System.out.println("계정 상태 : " + nvl(rs.getString("user_acct_status_cd")));
+	        System.out.println("가입일자 : " + fmtTs(rs.getTimestamp("user_created_at")));
+	        System.out.println("마지막 접속 : " + fmtTs(rs.getTimestamp("user_last_login_at")));
+	        System.out.println("패널티 종료일 : " + nvl(rs.getString("user_penalty_end_dt")));
+	        System.out.println("소속 : " + nvl(rs.getString("user_affiliation")));
+	        System.out.println("담당 분야 : " + nvl(rs.getString("user_field")));
+	        System.out.println("업데이트 일시 : " + fmtTs(rs.getTimestamp("user_update_at")));
 	        System.out.println("-".repeat(50));
 
 		}catch (Exception e) {
@@ -112,4 +112,70 @@ public class USH_MemberDAO {
 			DBUtil.executeClose(rs, pstmt, conn);
 		}
 	}
+	
+	//회원 조건 검색
+	public void searchUsers(String id, String name, String email, String role, String status,
+							String regStart, String regEnd, String lastStart, String lastEnd) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		
+		try {
+			//JDBC 수행 1,2단계
+			conn = DBUtil.getConnection();
+			//SQL문 작성
+			StringBuilder sql = new StringBuilder();
+			sql.append("SELECT user_id, user_name, user_birth_dt, user_email, user_role_cd, user_acct_status_cd, "
+					+ "user_created_at, user_last_login_at FROM userInfo"
+					+ "WHERE (user_acct_status_cd <> ? OR user_acct_status_cd IS NULL)");
+			
+			//파라미터를 순서대로 쌓기
+			java.util.List<Object> params = new java.util.ArrayList<>();
+			params.add("DELETED");
+			
+			if(!isEmpty(id)) {
+				sql.append(" AND user_id LIKE ?");
+				params.add("%" + id + "%");
+			}
+			if(!isEmpty(name)) {
+				sql.append(" AND user_name Like ?");
+				params.add("%" + name + "%");
+			}
+			if(!isEmpty(email)) {
+				
+			}
+			if(!isEmpty(role)) {
+				
+			}
+			if(!isEmpty(status)) {
+				
+			}
+			
+			//날짜 범위(일 단위 비교) : TRUNC로 시간 제거
+			if(!isEmpty(regStart)) {
+				
+			}
+			if(!isEmpty(regEnd)) {
+				
+			}
+			if(!isEmpty(lastStart)) {
+				
+			}
+			if(!isEmpty(lastEnd)) {
+				
+			}
+			
+			sql.append(" ORDER BY user_role_cd DESC, user_id");
+			
+		}catch (Exception e) {
+			e.printStackTrace();
+		}finally {
+			DBUtil.executeClose(rs, pstmt, conn);
+		}
+	}
+	
+	private boolean isEmpty(String s) {
+		return s == null || s.trim().isEmpty();
+	}
+	
 }
