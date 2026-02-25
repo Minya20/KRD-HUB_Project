@@ -29,7 +29,7 @@ public class HYJ_KRDAdminMain {
 	private void callMenu()throws IOException{
 		while(true) {
 			System.out.print(
-			"1.상품 등록,2.상품 목록,3.회원 목록,4.구매 목록,5.종료>");
+			"1.공고 조회,2.과제 신청,3.내 신청조회,4.선정 결과 확인,5.보고서 제출,6.내 정보 수정,7.인재 열람,8.종>");
 			try {
 				int no = Integer.parseInt(br.readLine());
 				if(no == 1) {
@@ -37,6 +37,8 @@ public class HYJ_KRDAdminMain {
 				}else if(no == 2) {
 					
 				}else if(no == 3) {
+					
+				}else if(no == 4) {
 					
 				}else if(no == 4) {
 					
