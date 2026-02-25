@@ -5,11 +5,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import kr.krd.dao.HYJ_KRDRESOUserDAO;
-import kr.krd.dao.MemberDAO;
+import kr.krd.dao.CMY_MemberDAO;
 
 public class HYJ_KRDRESOUserMain {
 	private BufferedReader br;
-	private HYJ_KRDRESOUserDAO dao;
+	private String role;
+	private HYJ_KRDRESOUserDAO dao1;
+	private CMY_MemberDAO dao2;
 	private String cust_id;//로그인한 회원 아이디
 	private boolean login;//로그인 여부(로그인:true,로그아웃:false)
 
@@ -18,7 +20,8 @@ public class HYJ_KRDRESOUserMain {
 			br = new BufferedReader(
 					new InputStreamReader(
 							System.in));
-			dao = new HYJ_KRDRESOUserDAO();
+			dao1 = new HYJ_KRDRESOUserDAO();
+			dao2 = new CMY_MemberDAO();
 			callMenu();
 		}catch(Exception e) {
 			e.printStackTrace();
@@ -32,10 +35,23 @@ public class HYJ_KRDRESOUserMain {
 	//메뉴
 	private void callMenu()throws IOException{
 		while(true) {
-			System.out.print("1.로그인,2.회원가입,3.종료>");
+			System.out.print("1.로그인,2.회원가입,3.종료> ");
 			try {
 				int no = Integer.parseInt(br.readLine());
 				if(no == 1) {//로그인
+					//로그인 진행
+					System.out.print("ID : ");
+					String user_id = br.readLine();
+					System.out.print("PW : ");
+					String user_pw = br.readLine();
+					//메서드이름(user_id,user_pw);
+					cust_id=dao2.userLogin(user_id, user_pw);
+					if(!cust_id.equals("0") && !cust_id.equals(null)){// cust_id가 0 또는 null이 아니면 : 즉 유저 아이디 값이 존재함.
+						
+						login = true;//사용자의 로그인 상태를 TRUE로 변경함
+						break;
+						
+					}
 
 				}else if(no == 2) {//회원가입
 
@@ -57,7 +73,7 @@ public class HYJ_KRDRESOUserMain {
 				int no = Integer.parseInt(
 						br.readLine());
 				if(no == 1) {//공고 조회
-					dao.selectAnn();
+					dao1.selectAnn();
 				}else if(no == 2) {
 					
 				}else if(no == 3) {
