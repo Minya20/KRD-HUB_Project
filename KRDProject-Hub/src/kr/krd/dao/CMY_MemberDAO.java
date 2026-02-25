@@ -100,13 +100,19 @@ public class CMY_MemberDAO {
 				//내정보
 			}else if(rev_choose == 4) {
 				//로그아웃
+				return;
 			}else if(rev_choose == 5) {
 				System.out.println("프로그램 종료");
-				return;
+				System.exit(0);
 			}
 		}
 		catch(Exception e) {e.printStackTrace();}
-		finally {if(br != null)try{br.close();}catch(IOException e) {}}
+		//finally {if(br != null)try{br.close();}catch(IOException e) {}}
 		
+	}
+	
+	//로그아웃 메서드
+	public boolean logout() {
+		return false;
 	}
 }

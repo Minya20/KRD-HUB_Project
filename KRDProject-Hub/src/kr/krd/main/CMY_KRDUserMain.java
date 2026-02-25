@@ -71,7 +71,7 @@ public class CMY_KRDUserMain {
 							
 							login = true;					//사용자의 로그인 상태를 TRUE로 변경함
 							role = dao.getUserRole(cust_id);//사용자의 권한을 반환하는 메서드를 사용하여 role에 해당하는 권한을 넣음
-							break;
+							
 						}
 					}else if(secMenuNo == 2) {
 						//아이디/비밀번호 찾기로 진행
@@ -89,49 +89,58 @@ public class CMY_KRDUserMain {
 				else {
 					System.out.println("잘못 입력했습니다.");
 				}
+				
+				//로그인시 보여지는 메뉴
+				while(login) {
+					System.out.println("일단 뭐든 로그인으로 들어왔어");
+					if(role.equals("ADM")) {
+						System.out.println("-".repeat(20));
+						System.out.println("어드민으로 진입시 구현될 화면");
+						//로그아웃은 개인 구현
+						System.out.println("-".repeat(20));
+						break;
+					}else if(role.equals("AGY")) {
+						System.out.println("-".repeat(20));
+						System.out.println("기관 관리자로 진입시 구현될 화면");
+						//로그아웃은 개인 구현
+						System.out.println("-".repeat(20));
+						break;
+					}else if(role.equals("RESI")) {
+						System.out.println("-".repeat(20));
+						System.out.println("개인 연구자로 진입시 구현될 화면");
+						//로그아웃은 개인 구현
+						System.out.println("-".repeat(20));
+						break;
+					}else if(role.equals("RESO")) {
+						System.out.println("-".repeat(20));
+						System.out.println("단체 연구자로 진입시 구현될 화면");
+						//로그아웃은 개인 구현
+						System.out.println("-".repeat(20));
+						break;
+					}else if(role.equals("REV")) {
+						dao.callReviewerMenu();
+						login = dao.logout(); //개인메뉴에서 로그아웃을 하여 로그인에 false를 반환
+						cust_id = null;		  //셰션 지우기 1. 유저아이디 NULL
+						role = null;		  //셰션 지우기 2. 유저 권한 NULL
+						if(!login) {//login 세션이 false(로그아웃됨)
+							break;
+						}
+					}else if(role.equals("GST")){
+						System.out.println("GST는 아직 미구현이야...");
+						//로그아웃은 개인 구현
+						break;
+					}else {
+						System.out.println("로그인 했는데 권한이 없어???");
+					}
+				}//end of while
+				//System.out.println("일단 프로그램 종료 부분");
+				//System.out.println("권한 : "+role+" 유저 아이디 : "+cust_id);
+				
 			}catch(NumberFormatException e) {
 				System.out.println("잘못 입력했습니다.");
 			}
 		}//end of while
-		//로그인시 보여지는 메뉴
-		while(login) {
-			System.out.println("일단 뭐든 로그인으로 들어왔어");
-			if(role.equals("ADM")) {
-				System.out.println("-".repeat(20));
-				System.out.println("어드민으로 진입시 구현될 화면");
-				//로그아웃은 개인 구현
-				System.out.println("-".repeat(20));
-				break;
-			}else if(role.equals("AGY")) {
-				System.out.println("-".repeat(20));
-				System.out.println("기관 관리자로 진입시 구현될 화면");
-				//로그아웃은 개인 구현
-				System.out.println("-".repeat(20));
-				break;
-			}else if(role.equals("RESI")) {
-				System.out.println("-".repeat(20));
-				System.out.println("개인 연구자로 진입시 구현될 화면");
-				//로그아웃은 개인 구현
-				System.out.println("-".repeat(20));
-				break;
-			}else if(role.equals("RESO")) {
-				System.out.println("-".repeat(20));
-				System.out.println("단체 연구자로 진입시 구현될 화면");
-				//로그아웃은 개인 구현
-				System.out.println("-".repeat(20));
-				break;
-			}else if(role.equals("REV")) {
-				dao.callReviewerMenu();
-				break;
-			}else if(role.equals("GST")){
-				System.out.println("GST는 아직 미구현이야...");
-				//로그아웃은 개인 구현
-				break;
-			}else {
-				System.out.println("로그인 했는데 권한이 없어???");
-			}
-		}//end of while
-		System.out.println("일단 프로그램 종료 부분");
+
 	}
 	
 	public static void main(String[] args) {
