@@ -134,38 +134,56 @@ public class USH_MemberDAO {
 			params.add("DELETED");
 			
 			if(!isEmpty(id)) {
-				sql.append(" AND user_id LIKE ?");
+				sql.append(" AND user_id LIKE ? ");
 				params.add("%" + id + "%");
 			}
 			if(!isEmpty(name)) {
-				sql.append(" AND user_name Like ?");
+				sql.append(" AND user_name Like ? ");
 				params.add("%" + name + "%");
 			}
 			if(!isEmpty(email)) {
-				
+				sql.append(" AND user_email Like ? ");
+				params.add("%" + email + "%");
 			}
 			if(!isEmpty(role)) {
-				
+				sql.append(" AND user_role_cd = ? ");
+				params.add(role);
 			}
 			if(!isEmpty(status)) {
-				
+				sql.append(" AND user_acct_status_cd = ? ");
+				params.add(status);
 			}
 			
 			//날짜 범위(일 단위 비교) : TRUNC로 시간 제거
 			if(!isEmpty(regStart)) {
-				
+				sql.append(" AND TRUNC(user_created_at) >= TO_DATE(?, 'YYYY-MM-DD') ");
+				params.add(regStart);
 			}
 			if(!isEmpty(regEnd)) {
-				
+				sql.append(" AND TRUNC(user_created_at) <= TO_DATE(?, 'YYYY-MM-DD') ");
+				params.add(regEnd);
 			}
 			if(!isEmpty(lastStart)) {
-				
+				sql.append(" AND TRUNC(user_last_login_at) >= TO_DATE(?, 'YYYY-MM-DD') ");
+				params.add(lastStart);
 			}
 			if(!isEmpty(lastEnd)) {
-				
+				sql.append(" AND TRUNC(user_last_login_at) <= TO_DATE(?, 'YYYY-MM-DD') ");
+				params.add(lastEnd);
 			}
 			
 			sql.append(" ORDER BY user_role_cd DESC, user_id");
+			
+			pstmt = conn.prepareStatement(sql.toString());
+			
+			for(int i=0;i<params.size();i++) {
+				pstmt.setObject(i + 1, params.get(i));
+			}
+			
+			rs = pstmt.executeQuery();
+			
+			System.out.println("");
+			
 			
 		}catch (Exception e) {
 			e.printStackTrace();
