@@ -23,12 +23,12 @@ public class DBUtil {
 	}
 
 	//자원 정리 메서드
-	public static void excuteClose(CallableStatement cstmt, Connection conn) {
+	public static void executeClose(CallableStatement cstmt, Connection conn) {
 		if (cstmt!=null)try {cstmt.close();}catch(SQLException e) {}
 		if (conn!=null)try {conn.close();}catch(SQLException e) {}
 	}
 
-	public static void excuteClose(ResultSet rs, PreparedStatement pstmt, Connection conn) {
+	public static void executeClose(ResultSet rs, PreparedStatement pstmt, Connection conn) {
 		if (rs!=null)try {rs.close();}catch(SQLException e) {}
 		if (pstmt!=null)try {pstmt.close();}catch(SQLException e) {}
 		if (conn!=null)try {conn.close();}catch(SQLException e) {}
