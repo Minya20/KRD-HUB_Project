@@ -25,8 +25,10 @@ public class USH_MemberDAO {
 			pstmt.setString(1, "DELETED");
 			//JDBC 수행 4단계
 			rs = pstmt.executeQuery();
-			System.out.println("=========회원 목록 조회=========");
+			System.out.println("=======================================회원 목록 조회=======================================");
+			System.out.println();
 			System.out.println("[기본 조회 : DELETED 제외]");
+			System.out.println();
 			if(rs.next()) {
 				System.out.printf("%-12s %-8s %-12s %-24s %-10s %-12s %-19s %-19s%n","ID", "이름", "생년월일", "이메일", "권한", "상태", "가입일자", "마지막접속");
 				System.out.println("-".repeat(130));
@@ -82,12 +84,15 @@ public class USH_MemberDAO {
 			pstmt.setString(1, userId);
 			//JDBC 수행 4단계
 			rs = pstmt.executeQuery();
+			
+			System.out.println();
+			
 			if(!rs.next()) {
 				System.out.println("해당 ID의 회원이 없습니다: " + userId);
 				return;
 			}
 			
-			System.out.println("=========회원 상세 조회=========");
+			System.out.println("===================회원 상세 조회===================");
 			System.out.println("ID : " + nvl(rs.getString("user_id")));
 	        System.out.println("이름 : " + nvl(rs.getString("user_name")));
 	        System.out.println("생년월일 : " + nvl(rs.getString("user_birth_dt")));
@@ -127,7 +132,7 @@ public class USH_MemberDAO {
 			StringBuilder sql = new StringBuilder();
 			sql.append("SELECT user_id, user_name, user_birth_dt, user_email, user_role_cd, user_acct_status_cd, "
 					+ "user_created_at, user_last_login_at FROM userInfo"
-					+ "WHERE (user_acct_status_cd <> ? OR user_acct_status_cd IS NULL)");
+					+ " WHERE (user_acct_status_cd <> ? OR user_acct_status_cd IS NULL)");
 			
 			//파라미터를 순서대로 쌓기
 			java.util.List<Object> params = new java.util.ArrayList<>();
@@ -182,8 +187,26 @@ public class USH_MemberDAO {
 			
 			rs = pstmt.executeQuery();
 			
-			System.out.println("");
-			
+			System.out.println("===============회원 조건 검색 결과===============");
+			if(rs.next()) {
+				System.out.printf("%-12s %-8s %-12s %-24s %-10s %-12s %-19s %-19s%n", "ID", "이름", "생년월일", "이메일", "권한", "상태", "가입일자", "마지막접속");
+				System.out.println("-".repeat(130));
+				
+				do {
+					System.out.printf("%-12s %-8s %-12s %-24s %-10s %-12s %-19s %-19s%n", 
+							nvl(rs.getString("user_id")),
+							nvl(rs.getString("user_name")),
+							nvl(rs.getString("user_birth_dt")),
+							nvl(rs.getString("user_email")),
+							nvl(rs.getString("user_role_cd")),
+							nvl(rs.getString("user_acct_status_cd")),
+							fmtTs(rs.getTimestamp("user_created_at")),
+							fmtTs(rs.getTimestamp("user_last_login_at")));
+				}while (rs.next());
+			}else {
+				System.out.println("조건에 맞는 회원이 없습니다.");
+			}
+			System.out.println("-".repeat(130));
 			
 		}catch (Exception e) {
 			e.printStackTrace();
@@ -194,6 +217,79 @@ public class USH_MemberDAO {
 	
 	private boolean isEmpty(String s) {
 		return s == null || s.trim().isEmpty();
+	}
+	
+	//삭제 가능 여부 판단
+	public String canSoftDelete(String userId) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
+		
+		try {
+			//JDBC 1,2단계 수행
+			conn = DBUtil.getConnection();
+			//SQL문 작성
+			//삭제 가능 여부를 판단하기 위해 상태/권한 조회
+			sql = "SELECT user_acct_status_cd, user_role_cd FROM userInfo WHERE user_id=?";
+			//JDBC 3단계 수행
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userId); //?자리에 바인딩
+			//JDBC 4단계 수행
+			rs = pstmt.executeQuery();
+			
+			//조회 결과가 없으면 존재하지 않는 회원
+			if(!rs.next()) return "NOT_FOUND";
+			
+			//현재 계정 상태/권한
+			String status = rs.getString("user_acct_status_cd");
+			String role = rs.getString("user_role_cd");
+			
+			//이미 삭제 상태면 다시 삭제할 필요 없음
+			if("DELETED".equals(status)) return "ALREADY_DELETED";
+			
+			//관리자 계정은 삭제 못하게 막기
+			if("ADM".equals(role)) return "ADMIN_BLOCK";
+			
+			//위 조건에 걸리지 않으면 삭제 가능
+			return "OK";
+			
+		}catch (Exception e) {
+			e.printStackTrace();
+			return "ERROR";
+		}finally {
+			//자원정리
+			DBUtil.executeClose(rs, pstmt, conn);
+		}
+	}
+	
+	//실제 삭제(논리삭제)수행
+	public int softDeleteUser(String userId) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		String sql = null;
+		
+		try {
+			//JDBC 1,2단계
+			conn = DBUtil.getConnection();
+			//SQL문 작성
+			//상태를 DELETED로 변경
+			sql = "UPDATE userInfo SET user_acct_status_cd = 'DELETED' WHERE user_id = ?";
+			//JDBC 3단계
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userId);
+			
+			//JDBC 4단계 executeUpdate() 결과: 1 = 1행 업데이트 성공/ 0 = 해당 ID가 없거나 조건에 맞는 행이 없음
+			return pstmt.executeUpdate();
+			
+			
+		}catch (Exception e) {
+			e.printStackTrace();
+			return 0;
+		}finally {
+			//자원정리
+			DBUtil.executeClose(null, pstmt, conn);
+		}
 	}
 	
 }
