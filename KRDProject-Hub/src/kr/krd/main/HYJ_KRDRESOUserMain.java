@@ -20,8 +20,10 @@ public class HYJ_KRDRESOUserMain {
 			br = new BufferedReader(
 					new InputStreamReader(
 							System.in));
+
 			dao1 = new HYJ_KRDRESOUserDAO();
 			dao2 = new CMY_MemberDAO();
+
 			callMenu();
 		}catch(Exception e) {
 			e.printStackTrace();
