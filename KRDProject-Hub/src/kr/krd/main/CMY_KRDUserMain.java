@@ -121,10 +121,7 @@ public class CMY_KRDUserMain {
 				System.out.println("-".repeat(20));
 				break;
 			}else if(role.equals("REV")) {
-				System.out.println("-".repeat(20));
-				System.out.println("평가위원으로 진입시 구현될 화면");
-				//로그아웃은 개인 구현
-				System.out.println("-".repeat(20));
+				dao.callReviewerMenu();
 				break;
 			}else if(role.equals("GST")){
 				System.out.println("GST는 아직 미구현이야...");

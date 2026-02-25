@@ -1,13 +1,18 @@
 package kr.krd.dao;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import kr.util.DBUtil;
 
+
+
 public class CMY_MemberDAO {
-	
+	BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 	
 	//로그인 메서드
 	public String userLogin(String user_id, String user_pw) {
@@ -68,4 +73,40 @@ public class CMY_MemberDAO {
 	
 	//로그아웃 메서드
 	
+	
+	//평가목록 화면 메서드
+	public void callReviewerMenu() {
+		System.out.println("┌────────────────────────────────────────────────────────┐");
+		System.out.println("│							 │");
+		System.out.println("│	국가 연구과제 관리 프로그램	「KRD Hubs」		 │");
+		System.out.println("│							 │");
+		System.out.println("│	1. 평가배정목록조회					 │");
+		System.out.println("│	2. 평가기록조회					 │");
+		System.out.println("│	3. 내정보						 │");
+		System.out.println("│	4. 로그아웃					 │");
+		System.out.println("│	5. 종료						 │");
+		System.out.println("│							 │");
+		System.out.println("│등급 : 평가위원					ver.1.0	 │");
+		System.out.println("└────────────────────────────────────────────────────────┘");
+		System.out.println("［원하시는 메뉴를 선택하세요 ]");
+		System.out.print(">>");
+		try {
+			int rev_choose = Integer.parseInt(br.readLine());
+			if(rev_choose == 1) {
+				//평가배정목록조회
+			}else if(rev_choose == 2) {
+				//평가기록조회
+			}else if(rev_choose == 3) {
+				//내정보
+			}else if(rev_choose == 4) {
+				//로그아웃
+			}else if(rev_choose == 5) {
+				System.out.println("프로그램 종료");
+				return;
+			}
+		}
+		catch(Exception e) {e.printStackTrace();}
+		finally {if(br != null)try{br.close();}catch(IOException e) {}}
+		
+	}
 }
