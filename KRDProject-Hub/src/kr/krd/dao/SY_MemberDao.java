@@ -22,7 +22,7 @@ public class SY_MemberDao {
 
 		try {
 			//회원유형 선택
-			System.out.println("어떤 회원으로 가입하시겠습니까? 1.개인연구자 2.단체연구자 3.기관담당자 4.평가위원");
+			System.out.println("어떤 회원으로 가입할지 고르세요 1.개인연구자 2.단체연구자 3.기관담당자 4.평가위원");
 	        br = new BufferedReader(new InputStreamReader(System.in));
 	        int no = Integer.parseInt(br.readLine());
 	        
