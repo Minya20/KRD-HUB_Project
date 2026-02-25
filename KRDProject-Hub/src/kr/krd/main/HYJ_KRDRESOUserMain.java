@@ -35,7 +35,7 @@ public class HYJ_KRDRESOUserMain {
 	//메뉴
 	private void callMenu()throws IOException{
 		while(true) {
-			System.out.print("1.로그인,2.회원가입,3.종료> ");
+			System.out.print("1.로그인,2.회원가입,3.종료>");
 			try {
 				int no = Integer.parseInt(br.readLine());
 				if(no == 1) {//로그인
