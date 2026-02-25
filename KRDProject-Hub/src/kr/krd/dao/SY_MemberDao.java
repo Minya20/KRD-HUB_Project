@@ -2,6 +2,7 @@ package kr.krd.dao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import kr.util.DBUtil;
@@ -29,8 +30,8 @@ public class SY_MemberDao {
 			conn = DBUtil.getConnection();
 			//SQL 문 작성
 				sql = "INSERT INTO USERINFO (user_id, user_pwd, user_name, user_email, user_birth_dt, user_phone_no, user_country_cd, user_addr, " +
-						"user_gender_cd, user_create_at, user_last_login_at, user_penalty_end_dt, user_role_cd, user_affiliation, user_field, " +
-						"user_update_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+						"user_gender_cd, user_create_at, user_last_login_at, user_penalty_end_dt, user_role_cd, user_acct_status_cd, user_affiliation, user_field, " +
+						"user_update_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ACTIVE, ?, ?, ?)";
 						
 			
 			//JDBC 수행 3단계
@@ -67,6 +68,37 @@ public class SY_MemberDao {
 			DBUtil.executeClose(null, pstmt, conn);
 		}
 	}
+	
+	//사용자 아이디 중복 체크
+		public int checkId(String user_id) {
+			Connection conn = null;
+			PreparedStatement pstmt = null;
+			ResultSet rs = null;
+			String sql = null;
+			int count = 0;
+
+			try {
+				//JDBC 수행 1,2단계
+				conn = DBUtil.getConnection();
+				//SQL 문 작성
+				sql = "SELECT user_id FROM USERINFO WHERE user_id=?";
+				//JDBC 수행 3단계
+				pstmt = conn.prepareStatement(sql);
+				//?에 데이터 바인딩
+				pstmt.setString(1, user_id);
+				//JDBC 수행 4단계
+				rs = pstmt.executeQuery();
+				if(rs.next()) {
+					count = 1; 
+				}
+			}catch(Exception e) {
+				count = -1;
+			}finally {
+				//자원정리
+				DBUtil.executeClose( rs, pstmt, conn);
+			}
+			return count;
+		}
 
 
 	
