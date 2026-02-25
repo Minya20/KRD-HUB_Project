@@ -64,7 +64,7 @@ public class HYJ_KRDRESOUserDAO {
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
-                DBUtil.excuteClose(rs, pstmt, conn);
+                DBUtil.executeClose(rs, pstmt, conn);
             }
         }
     }
@@ -122,7 +122,7 @@ public class HYJ_KRDRESOUserDAO {
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
-                DBUtil.excuteClose(rs, pstmt, conn);
+                DBUtil.executeClose(rs, pstmt, conn);
             }
         }
     }

@@ -36,7 +36,7 @@ public class CMY_MemberDAO {
 			}
 		}
 		catch(Exception e){e.printStackTrace();}
-		finally {DBUtil.excuteClose(rs, pstmt, conn);}
+		finally {DBUtil.executeClose(rs, pstmt, conn);}
 		return real_id;
 	}
 	
@@ -61,7 +61,7 @@ public class CMY_MemberDAO {
 			}
 		}
 		catch(Exception e){e.printStackTrace();}
-		finally {DBUtil.excuteClose(rs, pstmt, conn);}
+		finally {DBUtil.executeClose(rs, pstmt, conn);}
 		return real_role;
 	}
 	
