@@ -9,8 +9,14 @@ import java.io.InputStreamReader;
 import kr.util.DBUtil;
 
 public class HYJ_KRDRESOUserDAO {
+	
+	private String cust_id;//로그인한 사용자 받기
 
     private BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    
+    public HYJ_KRDRESOUserDAO(String cust_id) {
+        this.cust_id = cust_id;
+    } //생성자. 로그인한 사용자 받으려고 이렇게 만듦. 이거 있어야 밑에서 application table에 삽입할 때 로그인한 사용자로 가능!
 
     // ===========================
     // 공고 목록
@@ -112,7 +118,35 @@ public class HYJ_KRDRESOUserDAO {
                 int sel = Integer.parseInt(br.readLine());
 
                 if (sel == 1) {
-                    System.out.println("신청 기능은 아직 구현되지 않았습니다.");
+                	//신청서 작성
+                	System.out.println("신청서 작성을 시작합니다. 신청 아이디를 입력하세요");
+                	int application_id = Integer.parseInt(br.readLine());
+                	System.out.println("첨부 파일을 입력하세요.");
+                	String application_attach_path = br.readLine(); 
+                	System.out.println("신청 예산을 입력하세요");
+                	int application_budget_amt = Integer.parseInt(br.readLine());
+                	
+                	//신청서 자동 제출
+                	
+                	conn = DBUtil.getConnection();
+
+ 	                sql = "INSERT INTO APPLICATIONS (APPLICATION_ID, APPLICATION_ANN_ID, APPLICATION_USER_ID, APPLICATION_APPLIED_AT,"
+ 	                		+ " APPLICATION_UPDATED_AT, APPLICATION_ATTACH_PATH, APPLICATION_STATUS_CD, APPLICATION_BUDGET_AMT)"
+ 	                		+ "VALUES (?, ?, ?, SYSDATE, SYSDATE, ?, ?, ?)";
+ 	               pstmt = conn.prepareStatement(sql);
+
+ 	              pstmt.setInt(1, application_id);
+ 	              pstmt.setInt(2, annId);
+ 	              pstmt.setString(3, cust_id);
+ 	              pstmt.setString(4, application_attach_path);
+ 	              pstmt.setString(5, "접수");
+ 	              pstmt.setInt(6, application_budget_amt);
+
+ 	              int count = pstmt.executeUpdate();
+
+ 	              if(count > 0) {
+ 	                  System.out.println("신청이 완료되었습니다.");
+ 	              }
                 } else if (sel == 2) {
                     return;  // 목록으로 복귀
                 } else {
