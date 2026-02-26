@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
+import java.util.Set;
+
 import kr.krd.dao.USH_MemberDAO; //취합시 MemberDAO로 변경해야하니 삭제
 
 public class USH_KRDAdminMain {
@@ -117,6 +119,7 @@ public class USH_KRDAdminMain {
 					handleUserDelete();
 				}else if(no == 5) {
 					//5.권한(역할) 변경
+					handleRoleChange();
 				}else {
 					System.out.println("잘못 입력했습니다.");
 				}
@@ -472,6 +475,76 @@ public class USH_KRDAdminMain {
 		}
 	}
 	
+	//권한 변경
+	private void handleRoleChange() throws IOException {
+		System.out.println("======권한(역할) 변경======");
+		System.out.print("권한을 변경할 대상 ID 입력 > ");
+		String userId = br.readLine().trim();
+		
+		if(userId.isEmpty()) {
+			System.out.println("ID 입력은 필수입니다.");
+			return;
+		}
+		
+		String[] info = dao.getRoleAndStatus(userId);
+		
+		if(info == null) {
+			System.out.println("존재하지 않는 ID입니다.");
+			return;
+		}
+		
+		String currentRole = info[0];
+		String status = info[1];
+
+		if(!(status == null || "ACTIVE".equalsIgnoreCase(status))) {
+			System.out.println("계정 상태가 ACTIVE가 아니면 권한(역할)을 변경할 수 없습니다.");
+			return;
+		}
+		
+		String newRole = null;
+		while(true) {
+			System.out.print("바꾸고 싶은 권한(역할) 입력 > ");
+			newRole = br.readLine().trim().toUpperCase();
+			
+			if(newRole.isEmpty()) {
+				System.out.println("권한(역할) 입력은 필수입니다.");
+				continue;
+			}
+			
+			Set<String> allowed = Set.of("GST","RESI","RESO","AGY","REV");
+			if(!allowed.contains(newRole)) {
+				System.out.println("GST/RESI/RESO/AGY/REV 중 하나로 재입력 해주세요.");
+				continue;
+			}
+			
+			if(newRole.equalsIgnoreCase(currentRole)) {
+				System.out.println("현재 갖고 있는 권한(역할)입니다.");
+				continue;
+			}
+			
+			if(!newRole.equalsIgnoreCase(currentRole)) {
+				break;
+			}
+		}
+		
+		while(true) {
+			System.out.print("정말로 권한(역할)을 변경하시겠습니까? (Y/N) > ");
+			String confirm = br.readLine().trim();
+			
+			if(confirm.equalsIgnoreCase("Y")) {
+				System.out.println("권한을 변경하였습니다.");
+				break;
+			}else if(confirm.equalsIgnoreCase("N")) {
+				System.out.println("권한 변경을 취소하였습니다.");
+				return;
+			}else {
+				System.out.println("잘못 입력하셨습니다. Y 또는 N만 입력해주세요.");
+			}
+		}
+		
+		int result = dao.changeRoleWithHistory(userId, currentRole, newRole, changeBy);
+		
+	}
 	
 	public static void main(String[] args) {
 		new USH_KRDAdminMain();

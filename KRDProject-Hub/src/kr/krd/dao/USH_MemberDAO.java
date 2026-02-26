@@ -454,4 +454,30 @@ public class USH_MemberDAO {
 		}
 	}
 	
+	//권한 변경 - 대상 사용자/상태 조회
+	public String[] getRoleAndStatus(String userId) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
+		
+		try {
+			conn = DBUtil.getConnection();
+			sql = "SELECT user_role_cd, user_acct_status_cd FROM userInfo WHERE user_id =?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userId);
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				String role = rs.getString("user_role_cd");
+				String status = rs.getString("user_acct_status_cd");
+				return new String[] {role, status};
+			}else return null;
+			
+		}catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}finally {
+			DBUtil.executeClose(rs, pstmt, conn);
+		}
+	}
 }
