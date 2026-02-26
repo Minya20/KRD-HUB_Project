@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
-import kr.krd.dao.MemberDAO;
 import kr.krd.dao.USH_MemberDAO; //취합시 MemberDAO로 변경해야하니 삭제
 
 public class USH_KRDAdminMain {
@@ -78,6 +77,12 @@ public class USH_KRDAdminMain {
 	
 	//전체 회원 관리 메뉴(서브 메뉴)
 	private void callUserMenu()throws IOException{
+		
+		int restored = dao.restoreExpiredSuspendedUsers();
+		if(restored > 0) {
+			System.out.println("[알림] 만료된 정지 계정 " + restored + "건을 ACTIVE로 복구했습니다.");
+		}
+		
 		while(true) {
 			System.out.println("===== 전체 회원 관리 =====");
 			System.out.println();
@@ -267,10 +272,6 @@ public class USH_KRDAdminMain {
 		else System.out.println("삭제 실패(처리 중 오류 또는 조건 변경)");
 	}
 	
-	public static void main(String[] args) {
-		new USH_KRDAdminMain();
-	}
-	
 	//회원 상태(패널티 부여/해제) 변경
 	private void changeUserStatus() throws IOException {
 		System.out.println("================회원 상태 변경(패널티 부여/해제)===============");
@@ -284,7 +285,9 @@ public class USH_KRDAdminMain {
 		}
 		
 		//ID 존재 확인
-		Boolean chk = dao.existsUser(userId);
+		boolean chk = dao.existsUser(userId);
+		
+		
 		
 		if(!chk) {
 			System.out.println("존재하지 않는 ID입니다.");
@@ -303,46 +306,118 @@ public class USH_KRDAdminMain {
 			
 		}
 		
+		String current = dao.getAcctStatus(userId);
+		
+		if(current == null) {
+			System.out.println("상태 조회 실패");
+			return;
+		}
+		
+		//DELETED일 경우 상태 변경 자체 금지
+		if("DELETED".equalsIgnoreCase(current)) {
+			System.out.println("이미 삭제된 계정입니다.(DELETED 상태는 변경 금지) 담당자에게 문의하십시오.");
+			return;
+		}
+		
+		//연장 모드인지 판단
+		boolean isExtend = "SUSPENDED".equalsIgnoreCase(current) && "SUSPENDED".equals(status);
+		if(isExtend) System.out.println("======기간 연장======");
+		
+		
+		if("ACTIVE".equalsIgnoreCase(current) && "ACTIVE".equals(status)) {
+			System.out.println("이미 ACTIVE한 상태입니다.");
+			return;
+		}
+		
 		//SUSPEDED 일 경우
 		if(status.equals("SUSPENDED")) {
-			String startStr = readDateOrRequired("패널티 시작일(YYYY-MM-DD) > ");
-			String endStr = readDateOrRequired("패널티 종료일(YYYY-MM-DD) > ");
 			
-			LocalDate start = LocalDate.parse(startStr);
-			LocalDate end = LocalDate.parse(endStr);
-			
-			if(start.isAfter(end)) {
-				System.out.println("종료일이 시작일보다 날짜가 빠릅니다. 다시 입력하세요.");
-				return;
-			}
-			
-			if(start.isAfter(LocalDate.now())) {
-				System.out.println("시작일이 오늘보다 미래입니다.(패널티는 입력시 바로 적용) 다시 입력하세요.");
-				return;
-			}
-			
-			if(end.isBefore(LocalDate.now())) {
-				System.out.println("종료일이 오늘보다 과거입니다. 다시 입력하세요.");
-				return;
-			}
-			
-			while(true) {
-				System.out.print("정말 변경하시겠습니까? (Y/N) >");
-				String confirm = br.readLine().trim();
+			if(isExtend) {
+				//기간 연장 모드 : 종료일만 다시 받고, 기존 종료일보다 뒤여야 함.
+				String oldEndStr = dao.getPenaltyEndDt(userId); //기존 종료일(YYYY-MM-DD) 또는 null
+				String endStr = readDateOrRequired("연장할 패널티 종료일(YYYY-MM-DD) > ");
+				LocalDate newEnd = LocalDate.parse(endStr);
 				
-				if(confirm.equalsIgnoreCase("Y")) {
-					break;
-				}else if(confirm.equalsIgnoreCase("N")) {
-					System.out.println("변경을 취소했습니다.");
+				//종료일이 오늘보다 과거면 불가
+				if(newEnd.isBefore(LocalDate.now())) {
+					System.out.println("종료일이 오늘보다 이전입니다. 다시 입력하세요.");
 					return;
-				}else {
-					System.out.println("잘못된 입력입니다. Y 또는 N만 입력하세요.");
 				}
+				
+				//기존 종료일이 있으면, 새 종료일은 반드시 더 뒤여야 "연장"
+				if(oldEndStr == null || oldEndStr.trim().isEmpty()) {
+					System.out.println("기존 종료일이 없어 연장 비교를 생략합니다.");
+				}else if(!oldEndStr.trim().matches("\\d{4}-\\d{2}-\\d{2}")) {
+					System.out.println("기존 종료일 형식이 올바르지 않아 연장 비교를 생략합니다.");
+				}else {
+					LocalDate oldEnd = LocalDate.parse(oldEndStr.trim());
+					if(!newEnd.isAfter(oldEnd)) {
+						System.out.println("연장은 기존 종료일("+ oldEndStr.trim() + ") 이후 날짜로만 가능합니다.");
+						return;
+					}
+				}
+				
+				while(true) {
+					System.out.print("정말 변경하시겠습니까? (Y/N) >");
+					String confirm = br.readLine().trim();
+					
+					if(confirm.equalsIgnoreCase("Y")) {
+						break;
+					}else if(confirm.equalsIgnoreCase("N")) {
+						System.out.println("변경을 취소했습니다.");
+						return;
+					}else {
+						System.out.println("잘못된 입력입니다. Y 또는 N만 입력하세요.");
+					}
+				}
+				
+				int result = dao.updateUserStatus(userId, "SUSPENDED", endStr);
+				if(result == 1) System.out.println("변경이 완료되었습니다.");
+				else System.out.println("변경 실패(처리 중 오류 또는 조건 변경)");
+				
+			}else {
+				String startStr = readDateOrRequired("패널티 시작일(YYYY-MM-DD) > ");
+				String endStr = readDateOrRequired("패널티 종료일(YYYY-MM-DD) > ");
+				
+				LocalDate start = LocalDate.parse(startStr);
+				LocalDate end = LocalDate.parse(endStr);
+				
+				if(start.isAfter(end)) {
+					System.out.println("종료일이 시작일보다 날짜가 빠릅니다. 다시 입력하세요.");
+					return;
+				}
+				
+				if(start.isAfter(LocalDate.now())) {
+					System.out.println("시작일이 오늘보다 미래입니다.(패널티는 입력시 바로 적용) 다시 입력하세요.");
+					return;
+				}
+				
+				if(end.isBefore(LocalDate.now())) {
+					System.out.println("종료일이 오늘보다 과거입니다. 다시 입력하세요.");
+					return;
+				}
+				
+				while(true) {
+					System.out.print("정말 변경하시겠습니까? (Y/N) >");
+					String confirm = br.readLine().trim();
+					
+					if(confirm.equalsIgnoreCase("Y")) {
+						break;
+					}else if(confirm.equalsIgnoreCase("N")) {
+						System.out.println("변경을 취소했습니다.");
+						return;
+					}else {
+						System.out.println("잘못된 입력입니다. Y 또는 N만 입력하세요.");
+					}
+				}
+				
+				int result = dao.updateUserStatus(userId, "SUSPENDED", endStr);
+				if(result == 1) System.out.println("변경이 완료되었습니다.");
+				else System.out.println("변경 실패(처리 중 오류 또는 조건 변경)");
 			}
 			
-			int result = dao.updateUserStatus(userId, "SUSPENDED", endStr);
-			if(result == 1) System.out.println("변경이 완료되었습니다.");
-			else System.out.println("변경 실패(처리 중 오류 또는 조건 변경)");
+			
+			
 		}else {
 		//ACTIVE일 경우
 		//해결할 것 ACTIVE 상태에 ACTIVE로 변환하면 막아야함.
@@ -363,6 +438,7 @@ public class USH_KRDAdminMain {
 			}
 			
 			int result = dao.updateUserStatus(userId, "ACTIVE", null);
+			
 			
 			if(result == 1) System.out.println("변경이 완료되었습니다.");
 			else System.out.println("변경 실패(처리 중 오류 또는 조건 변경)");
@@ -395,6 +471,13 @@ public class USH_KRDAdminMain {
 			}
 		}
 	}
+	
+	
+	public static void main(String[] args) {
+		new USH_KRDAdminMain();
+	}
+	
+
 }
 
 

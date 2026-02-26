@@ -369,4 +369,89 @@ public class USH_MemberDAO {
 			DBUtil.executeClose(null, pstmt, conn);
 		}
 	}
+	
+	//회원 상태 변경 - 현재 상태 확인
+	public String getAcctStatus(String userId) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
+		
+		try {
+			//JDBC 1,2단계
+			conn = DBUtil.getConnection();
+			//SQL문 작성
+			sql = "SELECT user_acct_status_cd FROM userInfo WHERE user_id=?";
+			//JDBC 3단계
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userId);
+			//JDBC 4단계
+			rs = pstmt.executeQuery();
+			
+			if(!rs.next()) return null;
+			return rs.getString("user_acct_status_cd");
+			
+		}catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}finally {
+			DBUtil.executeClose(rs, pstmt, conn);
+		}
+	}
+	
+	//회원 상태 변경 - 마지막 패널티 기간 확인
+	public String getPenaltyEndDt(String userId) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
+		
+		try {
+			//JDBC 1,2단계
+			conn = DBUtil.getConnection();
+			//SQL문 작성
+			sql = "SELECT user_penalty_end_dt FROM userInfo WHERE user_id=?";
+			//JDBC 3단계
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userId);
+			//JDBC 4단계
+			rs = pstmt.executeQuery();
+			
+			if(!rs.next()) return null;
+			return rs.getString("user_penalty_end_dt");
+		}catch(Exception e) {
+			e.printStackTrace();
+			return null;
+		}finally {
+			DBUtil.executeClose(rs, pstmt, conn);
+		}
+	}
+	
+	//회원 상태 변경 - 패널티 기간 종료 후 자동 상태 변경&패널티 날짜 초기화
+	public int restoreExpiredSuspendedUsers() {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		String sql = null;
+		
+		try {
+			//JDBC 1,2단계
+			conn = DBUtil.getConnection();
+			//SQL문 작성
+			sql = "UPDATE userInfo SET user_acct_status_cd = 'ACTIVE', user_penalty_end_dt = NULL WHERE user_acct_status_cd =? AND "
+					+ "user_penalty_end_dt IS NOT NULL AND REGEXP_LIKE(user_penalty_end_dt, '^\\d{4}-\\d{2}-\\d{2}$') AND "
+					+ "TO_DATE(user_penalty_end_dt, 'YYYY-MM-DD') <= TRUNC(SYSDATE)";
+			//JDBC 3단계
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, "SUSPENDED");
+			//JDBC 4단계
+			return pstmt.executeUpdate();
+			
+		}catch (Exception e) {
+			e.printStackTrace();
+			return 0;
+		}finally {
+			DBUtil.executeClose(null, pstmt, conn);
+		}
+	}
+	
 }
