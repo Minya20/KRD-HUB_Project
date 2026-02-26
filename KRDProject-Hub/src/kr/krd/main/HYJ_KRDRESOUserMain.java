@@ -18,7 +18,7 @@ public class HYJ_KRDRESOUserMain {
 			br = new BufferedReader(
 					new InputStreamReader(
 							System.in));
-			dao = new HYJ_KRDRESOUserDAO();
+			dao = new HYJ_KRDRESOUserDAO(cust_id);
 			callMenu();
 		}catch(Exception e) {
 			e.printStackTrace();
