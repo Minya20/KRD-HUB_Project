@@ -5,11 +5,14 @@ import java.util.Scanner;
 
 import kr.krd.dao.RR_AnnouncementDAO;
 import kr.krd.vo.RR_AnnouncementVO;
+import kr.krd.dao.RR_ApplicationDAO;
+import kr.krd.vo.RR_ApplicationVO;
 
 public class RR_KRDAdminMain {
 
     private Scanner sc = new Scanner(System.in);
     private RR_AnnouncementDAO announcementDAO = new RR_AnnouncementDAO();
+    private RR_ApplicationDAO applicationDAO = new RR_ApplicationDAO();
 
     // 상태값 통일 (DB에서 OPEN/CLOSED로 쓰고 싶으면 "OPEN"으로 바꾸기)
     private static final String STATUS_OPEN = "공고중";
@@ -46,6 +49,8 @@ public class RR_KRDAdminMain {
                     manageAnnouncement();
                     break;
                 case 3:
+                	applicantListMenu();
+                    break;
                 case 4:
                 case 5:
                 case 6:
@@ -156,6 +161,8 @@ public class RR_KRDAdminMain {
             }
         }
     }
+    
+    
 
     // 공고 목록 출력
     private void printAnnouncementList() {
@@ -305,6 +312,79 @@ public class RR_KRDAdminMain {
             System.out.println("공고 삭제에 실패했습니다.");
         }
     }
+    
+    
+    // ===== 3. 신청자 목록 조회 ===== 
+    private void applicantListMenu() {
+        while (true) {
+            System.out.println("\n===== 신청자 목록 조회 =====");
+            System.out.println("[공고 목록]");
+            // 이미 네가 만든 공고 목록 출력 함수가 있으면 그걸 써도 됨
+            // 여기선 2번 메뉴에서 쓰던 목록 출력 그대로 재사용 추천:
+            printAnnouncementList();
+
+            System.out.print("조회할 과제ID 입력 (0=이전) : ");
+            int annId = readInt();
+            if (annId == 0) return;
+
+            List<RR_ApplicationVO> apps = applicationDAO.getApplicationsByAnnouncement(annId);
+
+            System.out.println("\n===== 신청자 목록 =====");
+            System.out.println("현재 과제 : [" + annId + "]");
+            System.out.println("--------------------------------------------------------------");
+            System.out.printf("%-8s %-12s %-10s %-12s %-10s%n", "신청ID", "신청자ID", "이름", "신청일", "상태");
+            System.out.println("--------------------------------------------------------------");
+
+            if (apps.isEmpty()) {
+                System.out.println("신청 내역이 없습니다.");
+            } else {
+                for (RR_ApplicationVO a : apps) {
+                    System.out.printf("%-8d %-12s %-10s %-12s %-10s%n",
+                            a.getApplicationId(),
+                            a.getUserId(),
+                            cut(a.getUserName(), 9),
+                            a.getAppliedAt(),
+                            a.getStatusCd());
+                }
+            }
+            System.out.println("--------------------------------------------------------------");
+
+            System.out.println("1. 신청 상세 조회");
+            System.out.println("0. 이전 메뉴");
+            System.out.print("선택 : ");
+            int sel = readInt();
+            if (sel == 0) continue;
+
+            if (sel == 1) {
+                System.out.print("신청 상세 조회할 신청ID 입력 : ");
+                int appId = readInt();
+
+                RR_ApplicationVO detail = applicationDAO.getApplicationDetail(appId);
+                if (detail == null) {
+                    System.out.println("해당 신청ID를 찾을 수 없습니다.");
+                    continue;
+                }
+
+                System.out.println("\n===== 신청 상세 =====");
+                System.out.println("신청ID : " + detail.getApplicationId());
+                System.out.println("신청자 : " + detail.getUserId() + " (" + detail.getUserName() + ")");
+                System.out.println("제출서류명 : " + (detail.getAttachPath() == null ? "-" : detail.getAttachPath()));
+                System.out.println("신청일 : " + detail.getAppliedAt());
+                System.out.println("상태 : " + detail.getStatusCd());
+                System.out.println("희망 예산 : " + detail.getBudgetAmt());
+
+                if (detail.getAvgScore() == null) {
+                    System.out.println("평균 점수 : -");
+                } else {
+                    System.out.println("평균 점수 : " + detail.getAvgScore());
+                }
+
+                System.out.println("\n0. 이전 메뉴");
+                readInt();
+            }
+        }
+    }
+    
 
     // ===== 공통 입력 유틸 =====
     private int readInt() {
