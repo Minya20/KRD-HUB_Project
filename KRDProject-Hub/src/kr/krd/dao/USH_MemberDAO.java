@@ -7,31 +7,42 @@ import kr.util.DBUtil;
 
 public class USH_MemberDAO {
 	//시스템 관리자 회원 목록
+	
+	//selectUsers 기능
+	//DB 연결/DELETED계정을 제외하고 회원 목록 조회/조회 결과를 표 형태로 콘솔 출력
 	public void selectUsers() {
+		//자원 변수 준비
 		Connection conn = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		String sql = null;
 		try {
-			//JDBC 수행 1,2단계
+			//JDBC 수행 1,2단계 DB연결 (여기서 실패하면 DB 접속 설정 문제)
 			conn = DBUtil.getConnection();
-			//SQL문 작성
+			//SQL문 작성 : DELETED 제외 + 역할/ID 정렬
+			//status 컬럼 NULL 허용이므로 OR IS NULL 포함
 			sql = "SELECT user_id,user_name,user_birth_dt,user_email,user_role_cd,user_acct_status_cd,"
 					+ "user_created_at,user_last_login_at FROM userInfo "
 					+ "WHERE user_acct_status_cd <> ? OR user_acct_status_cd IS NULL "
 					+ "ORDER BY user_role_cd DESC, user_id";
-			//JDBC 수행 3단계
+			//JDBC 수행 3단계 PreparedStatment 바인딩
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, "DELETED");
-			//JDBC 수행 4단계
+			//JDBC 수행 4단계 실행 후 결과 받기
 			rs = pstmt.executeQuery();
 			System.out.println("=======================================회원 목록 조회=======================================");
 			System.out.println();
 			System.out.println("[기본 조회 : DELETED 제외]");
 			System.out.println();
+			
+			//출력 로직 : if(rs.next()) 패턴
+			//rs.next()는 다음 행으로 이동이면서 행이 있는지도 알려줌.
+			//그래서 첫 행이 있는지 확인하고, 있으면 do-while로 첫 행부터 출력하는 패턴.
 			if(rs.next()) {
+				//헤더 출력
 				System.out.printf("%-12s %-8s %-12s %-24s %-10s %-12s %-19s %-19s%n","ID", "이름", "생년월일", "이메일", "권한", "상태", "가입일자", "마지막접속");
 				System.out.println("-".repeat(130));
+				//do-while로 첫 행 포함 전체 출력
 				do {
 					System.out.printf("%-12s %-8s %-12s %-24s %-10s %-12s %-19s %-19s%n",
 					        nvl(rs.getString("user_id")),
@@ -44,6 +55,7 @@ public class USH_MemberDAO {
 					        fmtTs(rs.getTimestamp("user_last_login_at")));
 				}while(rs.next());
 			}else {
+				//결과 없음 출력
 				System.out.println("등록된 회원 정보가 없습니다.");
 			}
 			System.out.println("-".repeat(130));
@@ -55,16 +67,24 @@ public class USH_MemberDAO {
 		}
 		
 	}
+	
+	//nvl() -> DB에서 NULL로 넘어오는 값은 출력하면 null로 보이기 때문에 보기 안 좋음.
+	//		   그래서 NULL/빈 문자열이면 -로 통일해서 출력.
 	private String nvl(String s) {
 	    return (s == null || s.isBlank()) ? "-" : s;
 	}
 
+	//fmtTs() -> getTimestamp()로 가져오면 날짜+시간까지 있음
+	//			 Timestamp.toString()도 되지만, LocalDateTime으로 바꿔서 보기 좋게 만드는 방식. NULL이면 -.
 	private String fmtTs(java.sql.Timestamp ts) {
 	    if (ts == null) return "-";
 	    return ts.toLocalDateTime().toString().replace('T', ' '); // 2026-02-25 14:03:21
 	}
 	
 	//회원 정보 상세 조회
+	//입력받은 userId로 해당 회원 1명을 DB에서 조회
+	//조회 결과가 있으면 상세 정보를 줄줄이 출력
+	//없으면 오류메시지 출력
 	public void selectUserDetail(String userId) {
 		Connection conn = null;
 		PreparedStatement pstmt = null;
@@ -292,4 +312,61 @@ public class USH_MemberDAO {
 		}
 	}
 	
+	//회원 존재 여부 확인
+	public boolean existsUser(String userId) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
+		
+		try {
+			//JDBC 1,2단계
+			conn = DBUtil.getConnection();
+			sql = "SELECT user_id FROM userInfo WHERE user_id = ?";
+			//JDBC 3단계
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userId);
+			//JDBC 4단계
+			rs = pstmt.executeQuery();
+			
+			return rs.next();
+			
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+			return false;
+		}finally {
+			//자원정리
+			DBUtil.executeClose(rs, pstmt, conn);
+		}
+		
+	}
+	
+	//회원 상태 변경
+	public int updateUserStatus(String userId, String status, String endDtOrNull) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		String sql = null;
+		
+		try {
+			//JDBC 1,2단계
+			conn = DBUtil.getConnection();
+			//SQL문 작성
+			sql = "UPDATE userInfo SET user_acct_status_cd = ?, user_penalty_end_dt = ? WHERE user_id = ?";
+			//JDBC 3단계
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, status);
+			pstmt.setString(2, endDtOrNull);
+			pstmt.setString(3, userId);
+			//JDBC 4단계
+			return pstmt.executeUpdate();
+			
+			
+		}catch (Exception e) {
+			e.printStackTrace();
+			return 0;
+		}finally {
+			DBUtil.executeClose(null, pstmt, conn);
+		}
+	}
 }
