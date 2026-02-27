@@ -21,11 +21,10 @@ public class HJY_CheckSystem {
             conn = DBUtil.getConnection();
             conn.setAutoCommit(false);
 
-            /* 1 공고 상태 확인 */
+            /* 1️⃣ 공고 상태 + 정원 조회 */
             String checkSql =
-                    "SELECT ANNOUNCEMENT_STATUS " +
-                    "FROM ANNOUNCEMENT " +
-                    "WHERE ANNOUNCEMENT_ANN_ID = ?";
+                    "SELECT ANNOUNCEMENT_STATUS, ANNOUNCEMENT_RECRUIT_CAP " +
+                    "FROM ANNOUNCEMENT WHERE ANNOUNCEMENT_ANN_ID = ?";
 
             pstmt = conn.prepareStatement(checkSql);
             pstmt.setInt(1, annId);
@@ -38,6 +37,7 @@ public class HJY_CheckSystem {
             }
 
             String status = rs.getString("ANNOUNCEMENT_STATUS");
+            int cap = rs.getInt("ANNOUNCEMENT_RECRUIT_CAP");
 
             if (!"공고중".equals(status)) {
                 System.out.println("현재 모집중인 공고가 아닙니다.");
@@ -48,7 +48,30 @@ public class HJY_CheckSystem {
             rs.close();
             pstmt.close();
 
-           /*2 신청 체크 */
+
+            /* 2️⃣ 현재 선정된 인원 수 체크 (SELECTION 기준) */
+            String selectedSql =
+                    "SELECT COUNT(*) FROM SELECTION " +
+                    "WHERE SELECTION_ANN_ID = ?";
+
+            pstmt = conn.prepareStatement(selectedSql);
+            pstmt.setInt(1, annId);
+            rs = pstmt.executeQuery();
+            rs.next();
+
+            int selectedCount = rs.getInt(1);
+
+            if (selectedCount >= cap) {
+                System.out.println("이미 선정 인원이 마감되었습니다.");
+                conn.rollback();
+                return;
+            }
+
+            rs.close();
+            pstmt.close();
+
+
+            /* 3️⃣ 중복 신청 체크 */
             String dupSql =
                     "SELECT COUNT(*) FROM APPLICATION " +
                     "WHERE APPLICATION_ANN_ID = ? " +
@@ -70,7 +93,7 @@ public class HJY_CheckSystem {
             pstmt.close();
 
 
-            /* 3. 진행중(SELECTED) 과제 5개 제한 */
+            /* 4️⃣ 진행중(SELECTED) 과제 5개 제한 */
             String countSql =
                     "SELECT COUNT(*) FROM APPLICATION " +
                     "WHERE APPLICATION_USER_ID = ? " +
@@ -91,7 +114,7 @@ public class HJY_CheckSystem {
             pstmt.close();
 
 
-            /* 4.APPLICATION INSERT */
+            /* 5️⃣ APPLICATION INSERT */
             String insertSql =
                     "INSERT INTO APPLICATION (" +
                     "APPLICATION_ANN_ID, " +
