@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import kr.krd.dao.HYJ_KRDRESOUserDAO;
+import kr.krd.dao.HYJ_MyInfoDAO;
 import kr.krd.dao.CMY_MemberDAO;
 
 public class HYJ_KRDRESOUserMain {
@@ -14,6 +15,7 @@ public class HYJ_KRDRESOUserMain {
 	private CMY_MemberDAO dao2;
 	private String cust_id;//로그인한 회원 아이디
 	private boolean login;//로그인 여부(로그인:true,로그아웃:false)
+	private HYJ_MyInfoDAO dao3;
 
 	public HYJ_KRDRESOUserMain() {
 		try {
@@ -23,6 +25,7 @@ public class HYJ_KRDRESOUserMain {
 
 			dao1 = new HYJ_KRDRESOUserDAO();
 			dao2 = new CMY_MemberDAO();
+			dao3 = new HYJ_MyInfoDAO();
 
 			callMenu();
 		}catch(Exception e) {
@@ -33,7 +36,7 @@ public class HYJ_KRDRESOUserMain {
 			catch(IOException e) {}
 		}
 	}
-     
+
 	//메뉴
 	private void callMenu()throws IOException{
 		while(true) {
@@ -49,10 +52,10 @@ public class HYJ_KRDRESOUserMain {
 					//메서드이름(user_id,user_pw);
 					cust_id=dao2.userLogin(user_id, user_pw);
 					if(!cust_id.equals("0") && !cust_id.equals(null)){// cust_id가 0 또는 null이 아니면 : 즉 유저 아이디 값이 존재함.
-						
+
 						login = true;//사용자의 로그인 상태를 TRUE로 변경함
 						break;
-						
+
 					}
 
 				}else if(no == 2) {//회원가입
@@ -77,14 +80,30 @@ public class HYJ_KRDRESOUserMain {
 				if(no == 1) {//공고 조회
 					dao1.selectAnn();
 				}else if(no == 2) {
-					
+
 				}else if(no == 3) {
-					
+
 				}else if(no == 4) {
-					
-				}else if(no == 4) {
-					
+
 				}else if(no == 5) {
+
+				}else if(no == 6) {
+					dao3.SelectInfo(cust_id);
+
+					System.out.print("이름 : ");
+					String user_name = br.readLine();
+					System.out.print("이메일 : ");
+					String user_email = br.readLine();
+					System.out.print("주소 : ");
+					String user_addr = br.readLine();
+					System.out.print("분야 : ");
+					String user_field = br.readLine();
+
+					dao3.InfoUpdate(user_name, user_email, user_addr, user_field, cust_id);
+
+				}else if(no == 7) {
+
+				}else if(no == 8) {
 					System.out.println("프로그램을 종료합니다.");
 					break;
 				}else {
