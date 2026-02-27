@@ -118,7 +118,7 @@ public class CMY_KRDUserMain {
 						System.out.println("-".repeat(20));
 						break;
 					}else if(role.equals("REV")) {
-						dao.callReviewerMenu();
+						dao.callReviewerMenu(cust_id);
 						login = dao.logout(); //개인메뉴에서 로그아웃을 하여 로그인에 false를 반환
 						cust_id = null;		  //셰션 지우기 1. 유저아이디 NULL
 						role = null;		  //셰션 지우기 2. 유저 권한 NULL
