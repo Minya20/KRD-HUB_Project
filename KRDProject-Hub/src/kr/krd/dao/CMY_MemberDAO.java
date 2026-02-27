@@ -68,6 +68,7 @@ public class CMY_MemberDAO {
 		catch(Exception e){e.printStackTrace();}
 		finally {DBUtil.executeClose(rs, pstmt, conn);}
 		return real_role;
+		
 	}
 	
 	

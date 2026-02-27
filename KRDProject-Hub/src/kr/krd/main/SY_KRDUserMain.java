@@ -4,11 +4,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import kr.krd.dao.MemberDAO;
+import kr.krd.dao.HYJ_KRDRESOUserDAO;
 
 public class SY_KRDUserMain {
 	private BufferedReader br;
-	private MemberDAO dao;
+	private HYJ_KRDRESOUserDAO dao;
 	private String cust_id;//로그인한 회원 아이디
 	private boolean login;//로그인 여부(로그인:true,로그아웃:false)
 	
@@ -17,7 +17,7 @@ public class SY_KRDUserMain {
 			br = new BufferedReader(
 					new InputStreamReader(
 							     System.in));
-			dao = new MemberDAO();
+			dao = new HYJ_KRDRESOUserDAO();
 			callMenu();
 		}catch(Exception e) {
 			e.printStackTrace();
