@@ -15,6 +15,8 @@ import kr.util.DBUtil;
 public class CMY_MemberDAO {
 	BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 	String cust_id;
+	String role;
+	String field;
 	
 	//로그인 메서드
 	public String userLogin(String user_id, String user_pw) {
@@ -71,6 +73,30 @@ public class CMY_MemberDAO {
 		return real_role;
 	}
 	
+	//사용자의 분야를 반환하는 메서드
+	public String getUserField(String user_id) {
+		
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		String sql = null;
+		ResultSet rs = null;
+		String real_field = null;
+		
+		try {
+			conn = DBUtil.getConnection();
+			sql = "SELECT user_field FROM USERINFO WHERE USER_ID = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, user_id);
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				real_field = rs.getString("user_field");	//일치하면 real_id에 유저 아이디를 넣는다
+			}
+		}
+		catch(Exception e){e.printStackTrace();}
+		finally {DBUtil.executeClose(rs, pstmt, conn);}
+		return real_field;
+	}
+	
 	
 	//평가 배정 목록 조회
 	//평가 테이블에 행이 있어야 조회 함
@@ -79,32 +105,110 @@ public class CMY_MemberDAO {
 		PreparedStatement pstmt = null;
 		String sql = null;
 		ResultSet rs = null;
+		//DB 행값을 담을 변수를 선언
+		int eval_id=0;				//평가번호
+		int eval_app_id=0	;	//신청번호
+		String eval_rev_id="";	//평가위원ID
+		String eval_field="";			//평가분야
+		Date eval_assigned_dt =null;	//평가배정일
+		int eval_score=0;	
+		String eval_comment="";			//평가 코멘트//평가 점수
+		String eval_status="";		//평가 상태
+		
+		Date ann_start_dt =null;		//공고(평가)시작일
+		Date ann_end_dt =null;			//공고(평가)마감일			
+		String ann_title="";			//공고명
+		String ann_desc="";			//공고 설명
+		String ann_budget="";	//총 예산
+		
+		int app_budget_amt=0;		//신청자의 요구 예산
+		String app_user_id="";		//신청자 아이디
+		String app_attach="";	//신청자 첨부파일
+		
+		String ag_name="";		//기관명
+		
+		
 		
 		
 		try {
 			conn = DBUtil.getConnection();
-			sql = "SELECT * FROM EVALUATIONS WHERE EVALUATION_REVIEWER_ID = ?";
+			sql = "SELECT  e.EVALUATION_ID,\r\n"
+					+ "		e.EVALUATION_APPLICATION_ID,\r\n"
+					+ "		e.EVALUATION_REVIEWER_ID,\r\n"
+					+ "		e.EVALUATION_FIELD,\r\n"
+					+ "		e.EVALUATION_ASSIGNED_at,\r\n"
+					+ "		e.EVALUATION_SCORE,\r\n"
+					+ "		e.EVALUATION_STATUS_CD,\r\n"
+					+ "		e.EVALUATION_IS,\r\n"
+					+ "		a.APPLICATION_ID,\r\n"
+					+ "		a.APPLICATION_BUDGET_AMT,\r\n"
+					+ "		a.APPLICATION_USER_ID,\r\n"
+					+ "        a.APPLICATION_ATTACH_PATH,\r\n"
+					+ "        ag.AGENCY_AGY_NAME,\r\n"
+					+ "		an.ANNOUNCEMENT_START_DT,\r\n"
+					+ "        an.ANNOUNCEMENT_END_DT,\r\n"
+					+ "		an.ANNOUNCEMENT_TITLE,\r\n"
+					+ "		an.ANNOUNCEMENT_DESC,\r\n"
+					+ "        an.ANNOUNCEMENT_TOTAL_BUDGET\r\n"
+					+ "FROM EVALUATIONS e\r\n"
+					+ "JOIN APPLICATIONS a \r\n"
+					+ "ON e.EVALUATION_APPLICATION_ID = a.APPLICATION_ID\r\n"
+					+ "JOIN ANNOUNCEMENT an\r\n"
+					+ "ON a.APPLICATION_ANN_ID = an.ANNOUNCEMENT_ann_ID\r\n"
+					+ "JOIN AGENCY ag\r\n"
+					+ "ON an.ANNOUNCEMENT_AGY_ID = ag.AGENCY_AGY_ID\r\n"
+					+ "WHERE e.EVALUATION_REVIEWER_ID = ?";
 			pstmt = conn.prepareStatement(sql);
+			System.out.println("현재 로그인 ID = [" + cust_id + "]");
+			System.out.println("현재 로그인 FIELD = [" + field + "]");
 			pstmt.setString(1, cust_id);
+			//pstmt.setString(2, field);
 			rs = pstmt.executeQuery();
 			if(rs.next()) {
 				//내용들 대충
 				do {
-					int eval_id = rs.getInt("EVALUATION_ID");
-					int eval_app_id = rs.getInt("EVALUATION_APPLICATION_ID");
-					String eval_rev_id = rs.getString("EVALUATION_REVIEWER_ID");
-					String eval_field = rs.getString("EVALUATION_FIELD");
-					Date eval_assigned_dt = rs.getDate("EVALUATION_ASSIGNED_AT");
-					int eval_score = rs.getInt("EVALUATION_SCORE");
-					String eval_comment = rs.getString("EVALUATION_IS");
-					String eval_status = rs.getString("EVALUATION_STATUS_CD");
-					System.out.println("평가 번호 :"+eval_id);
-					System.out.println("신청 번호 :"+eval_app_id);
-					System.out.println("평가 위원 :"+eval_rev_id);
-					System.out.println("신청 분야 :"+eval_field);
-					System.out.println("점수 :"+eval_score);
-					System.out.println("의견 :"+eval_comment);
-					System.out.println("평가 상태 :"+eval_status);
+					eval_id = rs.getInt("EVALUATION_ID");						//평가번호
+					eval_app_id = rs.getInt("EVALUATION_APPLICATION_ID");		//신청번호
+					eval_rev_id = rs.getString("EVALUATION_REVIEWER_ID");	//평가위원ID
+					eval_field = rs.getString("EVALUATION_FIELD");			//평가분야
+					eval_assigned_dt = rs.getDate("EVALUATION_ASSIGNED_AT");	//평가배정일
+					eval_score = rs.getInt("EVALUATION_SCORE");	
+					eval_comment = rs.getString("EVALUATION_IS");			//평가 코멘트//평가 점수
+					eval_status = rs.getString("EVALUATION_STATUS_CD");		//평가 상태
+					
+					ann_start_dt = rs.getDate("ANNOUNCEMENT_START_DT");		//공고(평가)시작일
+					ann_end_dt = rs.getDate("ANNOUNCEMENT_END_DT");			//공고(평가)마감일			
+					ann_title = rs.getString("ANNOUNCEMENT_TITLE");			//공고명
+					ann_desc = rs.getString("ANNOUNCEMENT_DESC");			//공고 설명
+					ann_budget = rs.getString("ANNOUNCEMENT_TOTAL_BUDGET");	//총 예산
+					
+					app_budget_amt = rs.getInt("APPLICATION_BUDGET_AMT");		//신청자의 요구 예산
+					app_user_id = rs.getString("APPLICATION_USER_ID");		//신청자 아이디
+					app_attach = rs.getString("APPLICATION_ATTACH_PATH");	//신청자 첨부파일
+					
+					ag_name = rs.getString("AGENCY_AGY_NAME");				//기관명
+					
+					if(eval_comment == null) {
+						eval_comment = "";
+					}
+					System.out.println("");
+					System.out.print("평가번호\t");
+					System.out.print("과제명\t\t\t");
+					System.out.print("신청자\t");
+					System.out.print("기관명\t\t");
+					System.out.print("분야\t");
+					System.out.print("평가 상태\t\t");
+					System.out.print("평가 마감일\t");
+					System.out.print("연구 수행 기간\n");
+					System.out.println("=".repeat(100));
+					System.out.print(eval_id+"\t");
+					System.out.print(ann_title+"\t");
+					System.out.print(app_user_id+"\t");
+					System.out.print(ag_name+"\t\t");
+					System.out.print(eval_field+"\t");
+					System.out.print(eval_status+"\t");
+					System.out.print(ann_end_dt+"\t");
+					System.out.print(ann_start_dt+"-"+ann_end_dt+"\n");
 				}
 				while(rs.next());
 			}else {
@@ -112,14 +216,150 @@ public class CMY_MemberDAO {
 				System.out.println("│평가할 대상 목록이 없습니다.		│");
 				System.out.println("└───────────────────────────────┘");
 			}
+			System.out.println();
+			System.out.println();
+			
 		}
 		catch(Exception e){e.printStackTrace();}
 		finally {DBUtil.executeClose(rs, pstmt, conn);}
-		
 	}
 	
 	//상세 조회 메서드
-	
+	public void viewAppDetail(String eval_no) 
+	{
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		String sql = null;
+		ResultSet rs = null;
+		//DB 행값을 담을 변수를 선언
+		int eval_id=0;				//평가번호
+		int eval_app_id=0	;	//신청번호
+		String eval_rev_id="";	//평가위원ID
+		String eval_field="";			//평가분야
+		Date eval_assigned_dt =null;	//평가배정일
+		int eval_score=0;	
+		String eval_comment="";			//평가 코멘트//평가 점수
+		String eval_status="";		//평가 상태
+		
+		Date ann_start_dt =null;		//공고(평가)시작일
+		Date ann_end_dt =null;			//공고(평가)마감일			
+		String ann_title="";			//공고명
+		String ann_desc="";			//공고 설명
+		String ann_budget="";	//총 예산
+		
+		int app_budget_amt=0;		//신청자의 요구 예산
+		String app_user_id="";		//신청자 아이디
+		String app_attach="";	//신청자 첨부파일
+		
+		String ag_name="";		//기관명
+		
+		
+		
+		
+		try {
+			conn = DBUtil.getConnection();
+			sql = "SELECT  e.EVALUATION_ID,\r\n"
+					+ "		e.EVALUATION_APPLICATION_ID,\r\n"
+					+ "		e.EVALUATION_REVIEWER_ID,\r\n"
+					+ "		e.EVALUATION_FIELD,\r\n"
+					+ "		e.EVALUATION_ASSIGNED_at,\r\n"
+					+ "		e.EVALUATION_SCORE,\r\n"
+					+ "		e.EVALUATION_STATUS_CD,\r\n"
+					+ "		e.EVALUATION_IS,\r\n"
+					+ "		a.APPLICATION_ID,\r\n"
+					+ "		a.APPLICATION_BUDGET_AMT,\r\n"
+					+ "		a.APPLICATION_USER_ID,\r\n"
+					+ "        a.APPLICATION_ATTACH_PATH,\r\n"
+					+ "        ag.AGENCY_AGY_NAME,\r\n"
+					+ "		an.ANNOUNCEMENT_START_DT,\r\n"
+					+ "        an.ANNOUNCEMENT_END_DT,\r\n"
+					+ "		an.ANNOUNCEMENT_TITLE,\r\n"
+					+ "		an.ANNOUNCEMENT_DESC,\r\n"
+					+ "        an.ANNOUNCEMENT_TOTAL_BUDGET\r\n"
+					+ "FROM EVALUATIONS e\r\n"
+					+ "JOIN APPLICATIONS a \r\n"
+					+ "ON e.EVALUATION_APPLICATION_ID = a.APPLICATION_ID\r\n"
+					+ "JOIN ANNOUNCEMENT an\r\n"
+					+ "ON a.APPLICATION_ANN_ID = an.ANNOUNCEMENT_ann_ID\r\n"
+					+ "JOIN AGENCY ag\r\n"
+					+ "ON an.ANNOUNCEMENT_AGY_ID = ag.AGENCY_AGY_ID\r\n"
+					+ "WHERE e.EVALUATION_ID = ? AND e.EVALUATION_REVIEWER_ID = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, eval_no);
+			pstmt.setString(2, cust_id);
+			//pstmt.setString(2, field);
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				//내용들 대충
+				
+					eval_id = rs.getInt("EVALUATION_ID");						//평가번호
+					eval_app_id = rs.getInt("EVALUATION_APPLICATION_ID");		//신청번호
+					eval_rev_id = rs.getString("EVALUATION_REVIEWER_ID");	//평가위원ID
+					eval_field = rs.getString("EVALUATION_FIELD");			//평가분야
+					eval_assigned_dt = rs.getDate("EVALUATION_ASSIGNED_AT");	//평가배정일
+					eval_score = rs.getInt("EVALUATION_SCORE");	
+					eval_comment = rs.getString("EVALUATION_IS");			//평가 코멘트//평가 점수
+					eval_status = rs.getString("EVALUATION_STATUS_CD");		//평가 상태
+					
+					ann_start_dt = rs.getDate("ANNOUNCEMENT_START_DT");		//공고(평가)시작일
+					ann_end_dt = rs.getDate("ANNOUNCEMENT_END_DT");			//공고(평가)마감일			
+					ann_title = rs.getString("ANNOUNCEMENT_TITLE");			//공고명
+					ann_desc = rs.getString("ANNOUNCEMENT_DESC");			//공고 설명
+					ann_budget = rs.getString("ANNOUNCEMENT_TOTAL_BUDGET");	//총 예산
+					
+					app_budget_amt = rs.getInt("APPLICATION_BUDGET_AMT");		//신청자의 요구 예산
+					app_user_id = rs.getString("APPLICATION_USER_ID");		//신청자 아이디
+					app_attach = rs.getString("APPLICATION_ATTACH_PATH");	//신청자 첨부파일
+					
+					ag_name = rs.getString("AGENCY_AGY_NAME");				//기관명
+					
+					if(eval_comment == null) {
+						eval_comment = "";
+					}
+					System.out.println("");
+					System.out.print("평가번호\t");
+					System.out.print("과제명\t\t\t");
+					System.out.print("신청자\t");
+					System.out.print("기관명\t\t");
+					System.out.print("분야\t");
+					System.out.print("평가 상태\t\t");
+					System.out.print("평가 마감일\t");
+					System.out.print("연구 수행 기간\n");
+					System.out.println("=".repeat(100));
+					System.out.print(eval_id+"\t");
+					System.out.print(ann_title+"\t");
+					System.out.print(app_user_id+"\t");
+					System.out.print(ag_name+"\t\t");
+					System.out.print(eval_field+"\t");
+					System.out.print(eval_status+"\t");
+					System.out.print(ann_end_dt+"\t");
+					System.out.print(ann_start_dt+"-"+ann_end_dt+"\n");
+					System.out.println(eval_rev_id);
+			}else {
+				System.out.println("┌────────────────────────────────────┐");
+				System.out.println("│본인의 평가목록에 존재하는 번호를 입력하세요! │");
+				System.out.println("└────────────────────────────────────┘");
+				System.out.println();
+				readEval();
+				return;
+			}
+			System.out.println();
+			System.out.println();
+			System.out.println("[1]평가하기");
+			System.out.println("[2]나가기");
+			int do_eval_no = Integer.parseInt(br.readLine());
+			if(do_eval_no == 1) {
+				//임시 평가 체크 메서드
+				//평가 메서드
+			}else if(do_eval_no == 2) {
+				//
+				System.out.println("개인메뉴로");
+				
+			}
+		}
+		catch(Exception e){e.printStackTrace();}
+		finally {DBUtil.executeClose(rs, pstmt, conn);}	
+	}
 	//신청하기 메서드
 	
 	//재평가 메서드
@@ -130,8 +370,11 @@ public class CMY_MemberDAO {
 	
 	
 	//평가목록 화면 메서드
-	public void callReviewerMenu(String myCust_id) {
+	public void callReviewerMenu(String myCust_id, String myRole, String myField) {
 		cust_id = myCust_id; //UserMain에서 가져온 사용자 ID를 MemberDAO에 있는 cust_id로 삽입
+		role = myRole;	//UserMain에서 가져온 사용자의 권한을 role에 삽입
+		field = myField;
+		System.out.println("전달된 cust_id = [" + cust_id + "]");
 		while(true) {
 			System.out.println("┌────────────────────────────────────────────────────────┐");
 			System.out.println("│							 │");
@@ -152,6 +395,20 @@ public class CMY_MemberDAO {
 				if(rev_choose == 1) {
 					//평가배정목록조회
 					readEval(); // 평가배정목록 조회
+					System.out.println("[1]상세보기");
+					System.out.println("[2]나가기");
+					int eval_no = Integer.parseInt(br.readLine());
+					if(eval_no == 1) {
+						System.out.println();
+						System.out.println("상세 보기할 대상의 번호를 입력 하세요.");
+						String do_eval_no = br.readLine();
+						//상세 보기 메서드
+						viewAppDetail(do_eval_no);
+					}else if(eval_no == 2) {
+						//
+						System.out.println("목록에서 메뉴로");
+						
+					}
 				}else if(rev_choose == 2) {
 					//평가기록조회
 				}else if(rev_choose == 3) {

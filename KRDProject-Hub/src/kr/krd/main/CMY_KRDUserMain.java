@@ -10,6 +10,7 @@ public class CMY_KRDUserMain {
 	private CMY_MemberDAO dao;
 	private String cust_id;//로그인한 회원 아이디
 	private String role; //사용자의 역할
+	private String field;
 	private boolean login;//로그인 여부(로그인:true,로그아웃:false)
 	
 	public CMY_KRDUserMain() {
@@ -71,6 +72,7 @@ public class CMY_KRDUserMain {
 							
 							login = true;					//사용자의 로그인 상태를 TRUE로 변경함
 							role = dao.getUserRole(cust_id);//사용자의 권한을 반환하는 메서드를 사용하여 role에 해당하는 권한을 넣음
+							field = dao.getUserField(cust_id); //사용자의 분야을 반환하는 메서드를 사용하여 field 변수에 집어넣는다.
 							
 						}
 					}else if(secMenuNo == 2) {
@@ -118,7 +120,7 @@ public class CMY_KRDUserMain {
 						System.out.println("-".repeat(20));
 						break;
 					}else if(role.equals("REV")) {
-						dao.callReviewerMenu(cust_id);
+						dao.callReviewerMenu(cust_id,role,field); //개인 메뉴에 넘어갈 시 유저 아이디, 권한, 분야를 인자로 넣는다.
 						login = dao.logout(); //개인메뉴에서 로그아웃을 하여 로그인에 false를 반환
 						cust_id = null;		  //셰션 지우기 1. 유저아이디 NULL
 						role = null;		  //셰션 지우기 2. 유저 권한 NULL
