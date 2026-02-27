@@ -425,6 +425,7 @@ public class USH_KRDAdminMain {
 		//ACTIVE일 경우
 		//해결할 것 ACTIVE 상태에 ACTIVE로 변환하면 막아야함.
 			
+
 			
 			while(true) {
 				System.out.print("정말 변경하시겠습니까? (Y/N) >");
@@ -527,13 +528,26 @@ public class USH_KRDAdminMain {
 			}
 		}
 		
+		String reason = null;
+		String changedBy = "adm01";// 이후 로그인한 관리자 ID로 교체
+		System.out.print("변경 사유(엔터=생략) > ");
+		reason = br.readLine().trim();
+		if(reason.isEmpty()) reason = null;
+		
 		while(true) {
 			System.out.print("정말로 권한(역할)을 변경하시겠습니까? (Y/N) > ");
 			String confirm = br.readLine().trim();
 			
 			if(confirm.equalsIgnoreCase("Y")) {
-				System.out.println("권한을 변경하였습니다.");
-				break;
+				int result = dao.changeUserRoleWithHistory(userId, newRole, changedBy, reason);
+				
+				if(result == 1) {
+					System.out.println("권한(역할)을 변경하였습니다.");
+					break; //성공했을 때만 루프 종료
+				}else {
+					System.out.println("권한 변경 실패(계정 상태/DB 오류).");
+					return; //또는 continue;(다시 시도하게 할지)
+				}
 			}else if(confirm.equalsIgnoreCase("N")) {
 				System.out.println("권한 변경을 취소하였습니다.");
 				return;
@@ -542,7 +556,6 @@ public class USH_KRDAdminMain {
 			}
 		}
 		
-		int result = dao.changeRoleWithHistory(userId, currentRole, newRole, changeBy);
 		
 	}
 	

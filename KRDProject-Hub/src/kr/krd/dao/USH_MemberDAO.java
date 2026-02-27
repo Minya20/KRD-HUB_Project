@@ -480,4 +480,92 @@ public class USH_MemberDAO {
 			DBUtil.executeClose(rs, pstmt, conn);
 		}
 	}
+	
+	public int changeUserRoleWithHistory(String userId, String newRole, String changedBy, String reason) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
+		String beforeRole = null;
+		String status = null;
+		
+		try {
+			conn = DBUtil.getConnection();
+			conn.setAutoCommit(false); //트랜잭션 시작
+			//현재 역할/상태 조회
+			sql = "SELECT user_role_cd, user_acct_status_cd FROM userInfo WHERE user_id = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userId);
+			rs = pstmt.executeQuery();
+			
+			if(!rs.next()) {
+				conn.rollback();
+				return 0; //사용자 없음
+			}
+			
+			beforeRole = rs.getString("user_role_cd");
+			status = rs.getString("user_acct_status_cd");
+			
+			//ACTIVE 상태인지 체크
+			if(!(status == null || "ACTIVE".equalsIgnoreCase(status))) {
+				conn.rollback();
+				return 0;
+			}
+			
+			//역할 업데이트
+			//동일 역할이면 업데이트/이력 생략하고 e 반환해도 됨
+			if(beforeRole != null && beforeRole.equalsIgnoreCase(newRole)) {
+				conn.rollback();
+				return 0;
+			}
+			
+			//자원 정리 후 재사용
+			DBUtil.executeClose(rs, pstmt, null);
+			rs = null;
+			pstmt = null;
+			
+			String updateSql = "UPDATE userInfo SET user_role_cd = ? WHERE user_id =?";
+			pstmt = conn.prepareStatement(updateSql);
+			pstmt.setString(1, newRole);
+			pstmt.setString(2, userId);
+			
+			int updated = pstmt.executeUpdate();
+			if(updated != 1) {
+				conn.rollback();
+				return 0;
+			}
+			
+			DBUtil.executeClose(null, pstmt, null);
+			pstmt = null;
+			
+			//이력 INSERT (시퀀스 사용)
+			String insertSql = "INSERT INTO role_change_hist (role_change_hist_hist_id, role_change_hist_target_user_id,"
+					+ " role_change_hist_before_role_cd, role_change_hist_after_role_cd, role_change_hist_changed_by,"
+					+ " role_change_hist_changed_at, role_change_hist_reason) VALUES "
+					+ "(seq_role_change_hist.NEXTVAL, ?, ?, ?, ?, SYSDATE, ?) ";
+			pstmt = conn.prepareStatement(insertSql);
+			pstmt.setString(1, userId);
+			pstmt.setString(2, beforeRole);
+			pstmt.setString(3, newRole);
+			pstmt.setString(4, changedBy);
+			pstmt.setString(5, reason); //null 가능
+			
+			int inserted = pstmt.executeUpdate();
+			if(inserted != 1) {
+				conn.rollback();
+				return 0;
+			}
+			
+			conn.commit();
+			return 1;
+			
+		}catch (Exception e) {
+			try {if (conn != null) conn.rollback();}catch (Exception ignore) {}
+			e.printStackTrace();
+			return 0;
+		}finally {
+			try {if (conn != null) conn.setAutoCommit(true);}catch (Exception ignore) {}
+			DBUtil.executeClose(rs, pstmt, conn);
+		}
+	}
 }
