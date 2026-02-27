@@ -1,12 +1,18 @@
 package kr.krd.main;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Scanner;
 
 import kr.krd.dao.RR_AnnouncementDAO;
-import kr.krd.vo.RR_AnnouncementVO;
 import kr.krd.dao.RR_ApplicationDAO;
+import kr.krd.vo.RR_AnnouncementVO;
 import kr.krd.vo.RR_ApplicationVO;
+import kr.krd.constant.RR_AnnouncementStatus;
+import kr.util.DBUtil;
 
 public class RR_KRDAdminMain {
 
@@ -14,13 +20,9 @@ public class RR_KRDAdminMain {
     private RR_AnnouncementDAO announcementDAO = new RR_AnnouncementDAO();
     private RR_ApplicationDAO applicationDAO = new RR_ApplicationDAO();
 
-    // 상태값 통일 (DB에서 OPEN/CLOSED로 쓰고 싶으면 "OPEN"으로 바꾸기)
-    private static final String STATUS_OPEN = "공고중";
-
     // 로그인 후 실제 값으로 세팅되어야 함 (일단 테스트용)
-    // 나중에 로그인 성공 시 이 값들에 실제 로그인 사용자 정보 넣으면 됨
-    private int loginAgyId = 1;              // 기관ID
-    private String loginUserId = "agy01";  // 사용자ID
+    private int loginAgyId = 1;
+    private String loginUserId = "agy01";
 
     public RR_KRDAdminMain() {
         callMenu();
@@ -29,6 +31,9 @@ public class RR_KRDAdminMain {
     // ===== 기관 담당자 메뉴 =====
     private void callMenu() {
         while (true) {
+            // 날짜 기준 상태 자동 갱신(공고예정/공고중/마감)
+            syncAnnouncementStatusByDate();
+
             System.out.println("\n===== 기관 담당자 메뉴 =====");
             System.out.println("1. 공고 등록");
             System.out.println("2. 공고 수정 / 삭제");
@@ -49,7 +54,7 @@ public class RR_KRDAdminMain {
                     manageAnnouncement();
                     break;
                 case 3:
-                	applicantListMenu();
+                    applicantListMenu();
                     break;
                 case 4:
                 case 5:
@@ -62,6 +67,51 @@ public class RR_KRDAdminMain {
                 default:
                     System.out.println("잘못 입력했습니다.");
             }
+        }
+    }
+
+    // ===== 날짜 기준 상태 자동 갱신 =====
+    // - 공고 3종 상태(공고예정/공고중/마감)만 갱신
+    // - 심사중/선정완료/진행중 등 다른 단계는 건드리지 않음
+    private void syncAnnouncementStatusByDate() {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+
+        try {
+            conn = DBUtil.getConnection();
+
+            String sql =
+                "UPDATE ANNOUNCEMENT "
+              + "SET ANNOUNCEMENT_STATUS = CASE "
+              + "  WHEN TO_DATE(ANNOUNCEMENT_END_DT, 'YYYY-MM-DD') < TRUNC(SYSDATE) THEN ? "       // 마감
+              + "  WHEN TO_DATE(ANNOUNCEMENT_START_DT, 'YYYY-MM-DD') > TRUNC(SYSDATE) THEN ? "    // 공고예정
+              + "  ELSE ? "                                                                       // 공고중
+              + "END "
+              + "WHERE ANNOUNCEMENT_AGY_ID = ? "
+              + "  AND ANNOUNCEMENT_HIDDEN_YN = 0 "
+              + "  AND ANNOUNCEMENT_STATUS IN (?, ?, ?) "
+              + "  AND REGEXP_LIKE(ANNOUNCEMENT_START_DT, '^\\d{4}-\\d{2}-\\d{2}$') "
+              + "  AND REGEXP_LIKE(ANNOUNCEMENT_END_DT, '^\\d{4}-\\d{2}-\\d{2}$')";
+
+            pstmt = conn.prepareStatement(sql);
+
+            int idx = 1;
+            pstmt.setString(idx++, RR_AnnouncementStatus.CLOSED);
+            pstmt.setString(idx++, RR_AnnouncementStatus.SCHEDULED);
+            pstmt.setString(idx++, RR_AnnouncementStatus.OPEN);
+            pstmt.setInt(idx++, loginAgyId);
+
+            pstmt.setString(idx++, RR_AnnouncementStatus.SCHEDULED);
+            pstmt.setString(idx++, RR_AnnouncementStatus.OPEN);
+            pstmt.setString(idx++, RR_AnnouncementStatus.CLOSED);
+
+            pstmt.executeUpdate();
+
+        } catch (Exception e) {
+            System.out.println("⚠ 상태 자동 갱신 중 오류가 발생했습니다.");
+            e.printStackTrace();
+        } finally {
+            DBUtil.executeClose(null, pstmt, conn);
         }
     }
 
@@ -94,6 +144,28 @@ public class RR_KRDAdminMain {
         System.out.print("신청 마감일(yyyy-MM-dd) : ");
         String endDt = sc.nextLine().trim();
 
+        // ✅ 마감일 지난 공고는 등록 자체 막기 + 시작일/마감일 검증
+        LocalDate start;
+        LocalDate end;
+        try {
+            start = LocalDate.parse(startDt);
+            end = LocalDate.parse(endDt);
+        } catch (DateTimeParseException e) {
+            System.out.println("⚠ 날짜 형식이 올바르지 않습니다. 예) 2026-03-27");
+            return;
+        }
+
+        if (start.isAfter(end)) {
+            System.out.println("⚠ 시작일이 마감일보다 늦을 수 없습니다.");
+            return;
+        }
+
+        // end == today 는 허용(오늘까지 접수)
+        if (end.isBefore(LocalDate.now())) {
+            System.out.println("⚠ 마감일이 이미 지난 공고는 등록할 수 없습니다.");
+            return;
+        }
+
         System.out.print("담당자 연락처 : ");
         String pmContact = sc.nextLine().trim();
 
@@ -121,7 +193,14 @@ public class RR_KRDAdminMain {
 
         // 기본값
         vo.setReannYn(0);
-        vo.setStatus(STATUS_OPEN);
+
+        // ✅ 시작일이 미래면 공고예정, 아니면 공고중 (마감은 등록에서 막음)
+        if (start.isAfter(LocalDate.now())) {
+            vo.setStatus(RR_AnnouncementStatus.SCHEDULED);
+        } else {
+            vo.setStatus(RR_AnnouncementStatus.OPEN);
+        }
+
         vo.setCreatedBy(loginUserId);
         vo.setHiddenYn(0);
 
@@ -161,11 +240,12 @@ public class RR_KRDAdminMain {
             }
         }
     }
-    
-    
 
     // 공고 목록 출력
     private void printAnnouncementList() {
+        // 목록 보기 전에 상태 자동 갱신
+        syncAnnouncementStatusByDate();
+
         List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
 
         System.out.println("[현재 등록된 공고 목록]");
@@ -200,10 +280,11 @@ public class RR_KRDAdminMain {
             return;
         }
 
-        // 공고중일 때만 수정 가능
-        if (!STATUS_OPEN.equals(vo.getStatus())) {
+        // ✅ 공고예정/공고중일 때만 수정 가능
+        if (!(RR_AnnouncementStatus.OPEN.equals(vo.getStatus())
+           || RR_AnnouncementStatus.SCHEDULED.equals(vo.getStatus()))) {
             System.out.println("⚠ 해당 공고는 이미 " + vo.getStatus() + "입니다.");
-            System.out.println("공고중일 때만 수정 가능합니다.");
+            System.out.println("공고예정/공고중일 때만 수정 가능합니다.");
             return;
         }
 
@@ -248,10 +329,32 @@ public class RR_KRDAdminMain {
                 System.out.print("새 선정 팀수 입력 : ");
                 newValue = String.valueOf(readInt());
                 break;
+
+            // ✅ 마감일 수정: (1) 오늘 이전 금지, (2) 시작일보다 빠르면 금지
             case 5:
                 System.out.print("새 마감일(yyyy-MM-dd) 입력 : ");
                 newValue = sc.nextLine().trim();
+
+                try {
+                    LocalDate today = LocalDate.now();
+                    LocalDate start = LocalDate.parse(vo.getStartDt());  // 기존 시작일
+                    LocalDate newEnd = LocalDate.parse(newValue);
+
+                    if (newEnd.isBefore(start)) {
+                        System.out.println("⚠ 마감일은 시작일보다 빠를 수 없습니다.");
+                        return;
+                    }
+                    if (newEnd.isBefore(today)) {
+                        System.out.println("⚠ 이미 지난 날짜로 마감일을 설정할 수 없습니다.");
+                        return;
+                    }
+
+                } catch (DateTimeParseException e) {
+                    System.out.println("⚠ 날짜 형식이 올바르지 않습니다. 예) 2026-03-27");
+                    return;
+                }
                 break;
+
             default:
                 System.out.println("잘못된 번호입니다.");
                 return;
@@ -278,9 +381,10 @@ public class RR_KRDAdminMain {
             return;
         }
 
-        // 공고중 상태만 삭제 가능
-        if (!STATUS_OPEN.equals(vo.getStatus())) {
-            System.out.println("⚠ 공고중 상태에서만 삭제 가능합니다.");
+        // ✅ 공고예정/공고중 상태만 삭제 가능
+        if (!(RR_AnnouncementStatus.OPEN.equals(vo.getStatus())
+           || RR_AnnouncementStatus.SCHEDULED.equals(vo.getStatus()))) {
+            System.out.println("⚠ 공고예정/공고중 상태에서만 삭제 가능합니다.");
             System.out.println("현재 상태 : " + vo.getStatus());
             return;
         }
@@ -312,15 +416,12 @@ public class RR_KRDAdminMain {
             System.out.println("공고 삭제에 실패했습니다.");
         }
     }
-    
-    
-    // ===== 3. 신청자 목록 조회 ===== 
+
+    // ===== 3. 신청자 목록 조회 =====
     private void applicantListMenu() {
         while (true) {
             System.out.println("\n===== 신청자 목록 조회 =====");
             System.out.println("[공고 목록]");
-            // 이미 네가 만든 공고 목록 출력 함수가 있으면 그걸 써도 됨
-            // 여기선 2번 메뉴에서 쓰던 목록 출력 그대로 재사용 추천:
             printAnnouncementList();
 
             System.out.print("조회할 과제ID 입력 (0=이전) : ");
@@ -384,7 +485,6 @@ public class RR_KRDAdminMain {
             }
         }
     }
-    
 
     // ===== 공통 입력 유틸 =====
     private int readInt() {
