@@ -4,9 +4,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Set;
+import java.util.List;
 
 import kr.krd.dao.USH_MemberDAO;
 import kr.util.USH_ConsoleUtil;
+import kr.krd.vo.USH_UserSummary;
+import kr.krd.vo.USH_UserDetail;
 
 public class USH_AdminMemberService {
 	private final BufferedReader br;
@@ -30,7 +33,8 @@ public class USH_AdminMemberService {
 	}
 	
 	public void userListFlow() throws IOException {
-		dao.selectUsers();
+		List<USH_UserSummary> list = dao.findUserExcludeDeleted();
+		printUserSummaryList("회원 목록 조회 (DELETED 제외)", list);
 		afterUserListMenu();
 	}
 	
@@ -57,9 +61,8 @@ public class USH_AdminMemberService {
 		String lastEnd = io.readDateOrEmpty("마지막접속 끝(YYYY-MM-DD) > ");
 
 		//DAO는 입력값을 기반으로 동적 SQL을 만들어 조건 검색 실행 + 출력
-		dao.searchUsers(id, name, email, role, status, regStart, regEnd, lastStart, lastEnd);
-
-		//검색 후에 0/1 (뒤로/상세조회)연결하고 싶으면:
+		List<USH_UserSummary> list = dao.searchUsers(id, name, email, role, status, regStart, regEnd, lastStart, lastEnd);
+		printUserSummaryList("회원 조건 검색 결과", list);
 		afterUserListMenu();
 	}
 	
@@ -281,28 +284,91 @@ public class USH_AdminMemberService {
 	
 	//회원 목록 조회/조건 검색 결과 후 회원 상세 조회
 	private void afterUserListMenu() throws IOException {
-		while (true) {
-			System.out.println();
-			System.out.println("0.이전 메뉴(뒤로가기)");
-			System.out.println("1.회원 상세 조회");
-			System.out.println();
-			System.out.print("입력 >");
-			try {
-				int no = Integer.parseInt(br.readLine());
+	    while (true) {
+	        System.out.println();
+	        System.out.println("0.이전 메뉴(뒤로가기)");
+	        System.out.println("1.회원 상세 조회");
+	        System.out.println();
 
-				if(no == 0) {
-					return; //회원 관리 메뉴로 복귀
-				}else if(no == 1){
-					//상세조회는 ID를 입력받아 DAO로 넘김
-					String userId = io.readRequired("조회할 회원 ID 입력 > ");
-					dao.selectUserDetail(userId);//상세 조회 호출
-				}else {
-					System.out.println("잘못 입력했습니다. (0 또는 1)");
-				}
-			}catch (NumberFormatException e) {
-				System.out.println("[숫자만 입력 가능]");
-			}
-		}
+	        int no = io.readIntInRange("입력 > ", 0, 1);
+
+	        if (no == 0) return;
+
+	        // no == 1
+	        String userId = io.readRequired("조회할 회원 ID 입력 > ");
+	        USH_UserDetail detail = dao.findUserDetail(userId);
+
+	        if (detail == null) {
+	            System.out.println("해당 ID의 회원이 없습니다: " + userId);
+	            continue;
+	        }
+	        printUserDetail(detail);
+	    }
+	}
+	
+	//회원 목록 조회 출력
+	private void printUserSummaryList(String title, List<USH_UserSummary> list) {
+	    System.out.println("========== " + title + " ==========");
+	    System.out.println();
+
+	    if (list == null || list.isEmpty()) {
+	        System.out.println("조건에 맞는 회원 정보가 없습니다.");
+	        System.out.println("-".repeat(130));
+	        return;
+	    }
+
+	    System.out.printf("%-12s %-8s %-12s %-24s %-10s %-12s %-19s %-19s%n",
+	            "ID", "이름", "생년월일", "이메일", "권한", "상태", "가입일자", "마지막접속");
+	    System.out.println("-".repeat(130));
+
+	    for (USH_UserSummary u : list) {
+	        System.out.printf("%-12s %-8s %-12s %-24s %-10s %-12s %-19s %-19s%n",
+	                nvl(u.userId),
+	                nvl(u.userName),
+	                nvl(u.birthDt),
+	                nvl(u.email),
+	                nvl(u.roleCd),
+	                nvl(u.acctStatusCd),
+	                fmtTs(u.createdAt),
+	                fmtTs(u.lastLoginAt));
+	    }
+	    System.out.println("-".repeat(130));
+	}
+	
+	//회원 상세 조회 출력
+	private void printUserDetail(USH_UserDetail d) {
+	    System.out.println();
+	    System.out.println("===================회원 상세 조회===================");
+	    System.out.println("ID : " + nvl(d.userId));
+	    System.out.println("이름 : " + nvl(d.userName));
+	    System.out.println("생년월일 : " + nvl(d.birthDt));
+	    System.out.println("이메일 : " + nvl(d.email));
+	    System.out.println("전화번호 : " + nvl(d.phoneNo));
+	    System.out.println("국적 : " + nvl(d.countryCd));
+	    System.out.println("주소 : " + nvl(d.addr));
+	    System.out.println("성별 : " + nvl(d.genderCd));
+	    System.out.println("권한 : " + nvl(d.roleCd));
+	    System.out.println("계정 상태 : " + nvl(d.acctStatusCd));
+	    System.out.println("가입일자 : " + fmtTs(d.createdAt));
+	    System.out.println("마지막 접속 : " + fmtTs(d.lastLoginAt));
+	    System.out.println("패널티 종료일 : " + nvl(d.penaltyEndDt));
+	    System.out.println("소속 : " + nvl(d.affiliation));
+	    System.out.println("담당 분야 : " + nvl(d.field));
+	    System.out.println("업데이트 일시 : " + fmtTs(d.updatedAt));
+	    System.out.println("-".repeat(50));
+	}
+	
+	//nvl() -> DB에서 NULL로 넘어오는 값은 출력하면 null로 보이기 때문에 보기 안 좋음.
+		//		   그래서 NULL/빈 문자열이면 -로 통일해서 출력.
+	private String nvl(String s) {
+	    return (s == null || s.isBlank()) ? "-" : s;
+	}
+	
+	//fmtTs() -> getTimestamp()로 가져오면 날짜+시간까지 있음
+		//			 Timestamp.toString()도 되지만, LocalDateTime으로 바꿔서 보기 좋게 만드는 방식. NULL이면 -.
+	private String fmtTs(java.sql.Timestamp ts) {
+	    if (ts == null) return "-";
+	    return ts.toLocalDateTime().toString().replace('T', ' ');
 	}
 	
 }

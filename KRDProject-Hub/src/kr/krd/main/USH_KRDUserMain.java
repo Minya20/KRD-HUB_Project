@@ -37,10 +37,8 @@ public class USH_KRDUserMain {
 			int no = io.readIntInRange("입력 > ", 1, 3);
 			
 			if(no == 1) {
-				System.out.print("ID : ");
-				String user_id = br.readLine();
-				System.out.print("PW : ");
-				String user_pw = br.readLine();
+				String user_id = io.readRequired("ID : ");
+				String user_pw = io.readRequired("PW : ");
 				
 				cust_id = dao.userLogin(user_id, user_pw);
 				
