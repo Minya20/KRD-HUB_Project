@@ -33,16 +33,8 @@ public class USH_KRDUserMain {
 			System.out.println("1.로그인");
 			System.out.println("2.회원가입");
 			System.out.println("3.종료");
-			System.out.print("입력 > ");
 			
-			int no;
-			
-			try {
-				no = Integer.parseInt(br.readLine());
-			} catch(NumberFormatException e) {
-				System.out.println("[숫자만 입력 가능]");
-				continue;
-			}
+			int no = io.readIntInRange("입력 > ", 1, 3);
 			
 			if(no == 1) {
 				System.out.print("ID : ");

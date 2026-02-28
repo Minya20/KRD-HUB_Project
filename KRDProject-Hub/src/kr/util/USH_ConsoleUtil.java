@@ -124,4 +124,28 @@ public class USH_ConsoleUtil {
 		}
 	}
 	
+	//정수 입력(숫자 아니면 재입력)
+	public int readInt(String prompt) throws IOException {
+		while(true) {
+			System.out.print(prompt);
+			String s = br.readLine();
+			if(s == null) return -1; //EOF 방어
+			s = s.trim();
+			try {
+				return Integer.parseInt(s);
+			}catch (NumberFormatException e) {
+				System.out.println("[숫자만 입력 가능]");
+			}
+		}
+	}
+	
+	//범위 제한 정수 입력(min~max)
+	public int readIntInRange(String prompt, int min, int max) throws IOException {
+		while(true) {
+			int n = readInt(prompt);
+			if(n >= min && n <=max) return n;
+			System.out.println("잘못 입력했습니다. (" + min + " ~ " + max + ")");
+			
+		}
+	}
 }
