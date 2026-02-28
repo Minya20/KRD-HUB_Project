@@ -4,76 +4,96 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import kr.krd.dao.MemberDAO;
+import kr.krd.dao.CMY_MemberDAO;
+import kr.util.USH_ConsoleUtil;
 
 public class USH_KRDUserMain {
-	private BufferedReader br;
-	private MemberDAO dao;
-	private USH_KRDAdminMain admMain = new USH_KRDAdminMain();
+	private final BufferedReader br;
+	private final CMY_MemberDAO dao;
+	private final USH_ConsoleUtil io;
 	private String cust_id;//로그인한 회원 아이디
-	private boolean login;//로그인 여부(로그인:true,로그아웃:false)
-	
+
 	public USH_KRDUserMain() {
+		br = new BufferedReader(new InputStreamReader(System.in));
+		io = new USH_ConsoleUtil(br);
+		dao = new CMY_MemberDAO();
 		try {
-			br = new BufferedReader(new InputStreamReader(System.in));
-			dao = new MemberDAO();
-			
 			callMenu();
 		}catch(Exception e) {
 			e.printStackTrace();
 		}finally {
 			//자원정리
-			if(br!=null)try {br.close();}
-			           catch(IOException e) {}
+			if(br!=null)try {br.close();}catch(IOException e) {}
 		}
 	}
-	
-	
-	
-	//메뉴
+     
+	//공통 메뉴(로그인/회원가입/종료)
 	private void callMenu()throws IOException{
 		while(true) {
-			System.out.println("===== 시스템 관리자 메뉴 =====");
-			System.out.println();
-			System.out.println("1.전체 회원 관리 메뉴");
-			System.out.println("2.예산 관리 메뉴");
-			System.out.println("3.선정 통계 조회");
-			System.out.println("4.시스템 설정 메뉴"); //후순위 삭제
-			System.out.println("5.권한 신청 관리"); //후순위 삭제
-			System.out.println("6.로그아웃");
-			System.out.println();
+			System.out.println("1.로그인");
+			System.out.println("2.회원가입");
+			System.out.println("3.종료");
 			System.out.print("입력 > ");
+			
+			int no;
+			
 			try {
-				//숫자 입력을 받아 메뉴 분기
-				int no = Integer.parseInt(br.readLine());
-				if(no == 1) {
-					//1.전체 회원 관리 메뉴
-					System.out.println();
-				}else if(no == 2) {
-					
-				}else if(no == 3) {
-					
-				}else if(no == 4) {
-					
-				}else if(no == 5) {
-					
-				}else if(no == 6) {
-					//로그아웃 선택시 while문 종료
-					System.out.println("시스템 관리자 계정에서 로그아웃합니다.");
-					break;
-				}else {
-					//메뉴 범위 밖 숫자 입력
-					System.out.println();
-					System.out.println("잘못 입력했습니다.");
-					System.out.println();
-				}
-			}catch(NumberFormatException e) {
-				//숫자가 아닌 입력 처리
+				no = Integer.parseInt(br.readLine());
+			} catch(NumberFormatException e) {
 				System.out.println("[숫자만 입력 가능]");
+				continue;
 			}
+			
+			if(no == 1) {
+				System.out.print("ID : ");
+				String user_id = br.readLine();
+				System.out.print("PW : ");
+				String user_pw = br.readLine();
+				
+				cust_id = dao.userLogin(user_id, user_pw);
+				
+				if(cust_id != null && !cust_id.equals("0")) {
+					System.out.println("로그인 성공: " + cust_id);
+					
+					//1.권한 조회
+					String role = dao.getUserRole(cust_id);
+					if(role == null) {
+						System.out.println("권한 조회 실패.");
+						cust_id = null;
+						continue;
+					}
+					
+					//2.권한에 따라 분기
+					if("ADM".equalsIgnoreCase(role)) {
+						//주입 생성자 호출로 변경
+						new USH_KRDAdminMain(br, cust_id);
+						continue;
+					}else if("REV".equalsIgnoreCase(role)) {
+						//추후 메뉴 합칠 때 구현
+						String field = dao.getUserField(cust_id);
+						dao.callReviewerMenu(cust_id, role, field);
+					}else {
+						System.out.println("해당 권한 메뉴는 아직 미구현입니다.");
+					}
+					cust_id = null;					//메뉴로 돌아오면 로그아웃 처리(선택)
+					continue;//로그인 메뉴 종료.		//다시 로그인 메뉴로.
+				}else {
+					System.out.println("로그인 실패: 아이디/비밀번호 확인");
+				}
+				
+			}else if(no == 2){
+				System.out.println("회원가입은 아직 구현 전입니다.");
+			}else if(no == 3) {
+				System.out.println("프로그램 종료");
+				return;
+			}else {
+				System.out.println("잘못 입력했습니다.");
+			}
+			
 		}
+
 	}
-	
+
 	public static void main(String[] args) {
 		new USH_KRDUserMain();
 	}

@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.util.Set;
 
 import kr.krd.dao.USH_MemberDAO; //취합시 MemberDAO로 변경해야하니 삭제
+import kr.util.USH_ConsoleUtil;
 
 public class USH_KRDAdminMain {
 	//콘솔 입력을 받기 위한 BufferedReader
@@ -15,20 +16,27 @@ public class USH_KRDAdminMain {
 	//DB 작업(조회/검색/삭제 등)을 담당하는 DAO
 	//AdminMain은 '입력/흐름', DAO는 'DB 처리'로 역할 분리
 	private USH_MemberDAO dao; //취합시 MemberDAO로 변경
+	private USH_ConsoleUtil io;
+	private final String adminId;
+	private static final Set<String> ALLOWED_ROLES = Set.of("GST","RESI","RESO","AGY","REV");
+	private static final Set<String> ALLOWED_STATUS = Set.of("ACTIVE","SUSPENDED");
 	
-	public USH_KRDAdminMain() {
+	public USH_KRDAdminMain(BufferedReader br, String adminId) {
+		this.br = br;
+		this.io = new USH_ConsoleUtil(br);
+		this.dao = new USH_MemberDAO();
+		this.adminId = adminId;
+		
+		//adminId는 나중에 changedBy 같은데 쓰려고 저장해둠
+		//this.adminId = adminId;
+		
 		try {
-			//표준 입력(System.in)을 BufferedReader로 감싼다
-			br = new BufferedReader(new InputStreamReader(System.in));
-			//DAO 생성
-			dao = new USH_MemberDAO();
 			//시스템 관리자 계정 진입시 최상위 메뉴를 호출
 			callMenu();
 		}catch(Exception e) {
 			e.printStackTrace();
 		}finally {
-			//자원정리(프로그램 종료시 입력 스트림 닫기)
-			if(br!=null)try {br.close();}catch(IOException e) {}
+			//여기서는 br 닫지 않음(br은 UserMain 소유)
 		}
 	}
 	//최상위(시스템 관리자) 메뉴
@@ -63,7 +71,7 @@ public class USH_KRDAdminMain {
 				}else if(no == 6) {
 					//로그아웃 서택시 while문 종료
 					System.out.println("시스템 관리자 계정에서 로그아웃합니다.");
-					break;
+					return;
 				}else {
 					//메뉴 범위 밖 숫자 입력
 					System.out.println();
@@ -144,8 +152,7 @@ public class USH_KRDAdminMain {
 					return; //회원 관리 메뉴로 복귀
 				}else if(no == 1){
 					//상세조회는 ID를 입력받아 DAO로 넘김
-					System.out.print("조회할 회원 ID 입력 >");
-					String userId = br.readLine();
+					String userId = io.readRequired("조회할 회원 ID 입력 > ");
 					dao.selectUserDetail(userId);//상세 조회 호출
 				}else {
 					System.out.println("잘못 입력했습니다. (0 또는 1)");
@@ -162,27 +169,18 @@ public class USH_KRDAdminMain {
 		System.out.println("[안내] 엔터만 치면 해당 조건은 생략됩니다.");
 		
 		//문자열 조건들은 trim() 후 빈 문자열이면 "조건 없음"처리
-		System.out.print("ID(부분일치) > ");
-		String id = br.readLine().trim();
-		
-		System.out.print("이름(부분일치) > ");
-		String name = br.readLine().trim();
-		
-		System.out.print("이메일(부분일치) > ");
-		String email = br.readLine().trim();
-		
-		System.out.print("권한 코드(예: ADM/AGY/RESI/RESO/REV) > ");
-		String role = br.readLine().trim();
-		
-		System.out.print("상태 코드(예: ACTIVE / (빈값 허용)) > ");
-		String status = br.readLine().trim();
+		String id = io.readOptional("ID(부분일치) > ");
+		String name = io.readOptional("이름(부분일치) > ");
+		String email = io.readOptional("이메일(부분일치) > ");
+		String role = io.readOptional("권한 코드(예: ADM/AGY/RESI/RESO/REV) > ");
+		String status = io.readOptional("상태 코드(예: ACTIVE / (빈값 허용)) > ");
 		
 		//날짜는 잘못 입력하면 ORA-01861 오류 발생
 		//그래서 readDateOrEmpty()로 YYYY-MM-DD 형식을 강제 + 실제 날짜 검증까지 함
-		String regStart = readDateOrEmpty("가입일 시작(YYYY-MM-DD) > ");
-		String regEnd = readDateOrEmpty("가입일 끝(YYYY-MM-DD) > ");
-		String lastStart = readDateOrEmpty("마지막접속 시작(YYYY-MM-DD) > ");
-		String lastEnd = readDateOrEmpty("마지막접속 끝(YYYY-MM-DD) > ");
+		String regStart = io.readDateOrEmpty("가입일 시작(YYYY-MM-DD) > ");
+		String regEnd = io.readDateOrEmpty("가입일 끝(YYYY-MM-DD) > ");
+		String lastStart = io.readDateOrEmpty("마지막접속 시작(YYYY-MM-DD) > ");
+		String lastEnd = io.readDateOrEmpty("마지막접속 끝(YYYY-MM-DD) > ");
 	
 		//DAO는 입력값을 기반으로 동적 SQL을 만들어 조건 검색 실행 + 출력
 		dao.searchUsers(id, name, email, role, status, regStart, regEnd, lastStart, lastEnd);
@@ -190,43 +188,11 @@ public class USH_KRDAdminMain {
 		//검색 후에 0/1 (뒤로/상세조회)연결하고 싶으면:
 		afterUserListMenu();
 	}
-	//날짜 입력 헬퍼
-	//엔터면 "" 반환(조건 생략)
-	//형식이 틀리거나 존재하지 않는 날짜면 다시 입력받음
-	private String readDateOrEmpty(String prompt) throws IOException {
-		while(true) {
-			System.out.print(prompt);
-			String s = br.readLine().trim();
-			
-			if(s.isEmpty()) return ""; //엔터면 조건 생략
-			
-			//1차 형식 체크
-			if(!s.matches("\\d{4}-\\d{2}-\\d{2}")) {
-				System.out.println("[날짜 형식 오류] YYYY-MM-DD로 입력하세요. (또는 엔터로 생략)");
-				continue;
-			}
-			
-			//2차 실제 날짜 체크 (e.g. 2026-02-30 같은 거 걸러냄)
-			try {
-				java.time.LocalDate.parse(s);
-				return s;
-			}catch (java.time.format.DateTimeParseException e) {
-				System.out.println("[존재하지 않는 날짜] 다시 입력하세요. (또는 엔터로 생략)");
-			}
-		}
-	}
 	
 	//삭제 UI/흐름 처리
 	private void handleUserDelete() throws IOException{
 		//1) 삭제할 회원 ID 입력
-		System.out.print("삭제할 회원 ID 입력 > ");
-		String userId = br.readLine().trim();
-		
-		//빈 입력 방지
-		if(userId.isEmpty()) {
-			System.out.println("ID 입력은 필수입니다.");
-			return;
-		}
+		String userId = io.readRequired("삭제할 회원 ID 입력 > ");
 		
 		//2) DB에서 삭제 가능한 상태인지 먼저 판단
 		String chk = dao.canSoftDelete(userId);
@@ -251,22 +217,10 @@ public class USH_KRDAdminMain {
 		
 		//4) 여기가지 통과했으면 삭제 가능한 상태
 		//실수 방지를 위해 Y/N 확인을 올바르게 입력받을 때까지 반복
-		while(true) {
-			System.out.print("정말 삭제(계정상태 = DELETED)하시겠습니까? (Y/N) > ");
-			String confirm = br.readLine().trim();
-			
-			if(confirm.equalsIgnoreCase("Y")) {
-				break; //삭제 진행(루프 탈출)
-			}else if(confirm.equalsIgnoreCase("N")) {
-				System.out.println("삭제를 취소했습니다.");
-				return; //삭제 메뉴 종료
-			}else {
-				System.out.println("잘못된 입력입니다. Y 또는 N만 입력하세요.");
-			}
-			
+		if(!io.confirmYN("정말 삭제(계정 상태 = DELETED)하시겠습니까? (Y/N) > ")) {
+			System.out.println("삭제를 취소했습니다.");
+			return;
 		}
-		
-		
 		
 		//5) 실제 삭제(논리삭제) 실행(DAO)
 		int result = dao.softDeleteUser(userId);
@@ -278,36 +232,18 @@ public class USH_KRDAdminMain {
 	//회원 상태(패널티 부여/해제) 변경
 	private void changeUserStatus() throws IOException {
 		System.out.println("================회원 상태 변경(패널티 부여/해제)===============");
-		System.out.print("상태 변경할 사용자 ID 입력 > ");
-		String userId = br.readLine().trim();//입력 공백 방지
-		
-		//빈 입력 방지
-		if(userId.isEmpty()) {
-			System.out.println("ID 입력은 필수입니다.");
-			return;
-		}
+		String userId = io.readRequired("상태 변경할 사용자 ID 입력 > ");
 		
 		//ID 존재 확인
 		boolean chk = dao.existsUser(userId);
-		
-		
 		
 		if(!chk) {
 			System.out.println("존재하지 않는 ID입니다.");
 			return;
 		}
 		
-		String status;
-		
-		//존재 확인 통과 상태 변경 기능 시작
-		while(true) {
-			System.out.print("변경할 상태 입력(ACTIVE/SUSPENDED) > ");
-			status = br.readLine().trim().toUpperCase();
-			
-			if(status.equals("ACTIVE") || status.equals("SUSPENDED")) break;
-			System.out.println("잘못된 입력입니다. ACTIVE 또는 SUSPENDED만 입력하세요.");
-			
-		}
+
+		String status = io.readFromSetRequired("변경할 상태 입력(ACTIVE/SUSPENDED) > ", ALLOWED_STATUS);
 		
 		String current = dao.getAcctStatus(userId);
 		
@@ -338,7 +274,7 @@ public class USH_KRDAdminMain {
 			if(isExtend) {
 				//기간 연장 모드 : 종료일만 다시 받고, 기존 종료일보다 뒤여야 함.
 				String oldEndStr = dao.getPenaltyEndDt(userId); //기존 종료일(YYYY-MM-DD) 또는 null
-				String endStr = readDateOrRequired("연장할 패널티 종료일(YYYY-MM-DD) > ");
+				String endStr = io.readDateRequired("연장할 패널티 종료일(YYYY-MM-DD) > ");
 				LocalDate newEnd = LocalDate.parse(endStr);
 				
 				//종료일이 오늘보다 과거면 불가
@@ -360,18 +296,9 @@ public class USH_KRDAdminMain {
 					}
 				}
 				
-				while(true) {
-					System.out.print("정말 변경하시겠습니까? (Y/N) >");
-					String confirm = br.readLine().trim();
-					
-					if(confirm.equalsIgnoreCase("Y")) {
-						break;
-					}else if(confirm.equalsIgnoreCase("N")) {
-						System.out.println("변경을 취소했습니다.");
-						return;
-					}else {
-						System.out.println("잘못된 입력입니다. Y 또는 N만 입력하세요.");
-					}
+				if(!io.confirmYN("정말 변경하시겠습니까? (Y/N) > ")) {
+					System.out.println("변경을 취소했습니다.");
+					return;
 				}
 				
 				int result = dao.updateUserStatus(userId, "SUSPENDED", endStr);
@@ -379,8 +306,8 @@ public class USH_KRDAdminMain {
 				else System.out.println("변경 실패(처리 중 오류 또는 조건 변경)");
 				
 			}else {
-				String startStr = readDateOrRequired("패널티 시작일(YYYY-MM-DD) > ");
-				String endStr = readDateOrRequired("패널티 종료일(YYYY-MM-DD) > ");
+				String startStr = io.readDateRequired("패널티 시작일(YYYY-MM-DD) > ");
+				String endStr = io.readDateRequired("패널티 종료일(YYYY-MM-DD) > ");
 				
 				LocalDate start = LocalDate.parse(startStr);
 				LocalDate end = LocalDate.parse(endStr);
@@ -400,18 +327,9 @@ public class USH_KRDAdminMain {
 					return;
 				}
 				
-				while(true) {
-					System.out.print("정말 변경하시겠습니까? (Y/N) >");
-					String confirm = br.readLine().trim();
-					
-					if(confirm.equalsIgnoreCase("Y")) {
-						break;
-					}else if(confirm.equalsIgnoreCase("N")) {
-						System.out.println("변경을 취소했습니다.");
-						return;
-					}else {
-						System.out.println("잘못된 입력입니다. Y 또는 N만 입력하세요.");
-					}
+				if(!io.confirmYN("정말 변경하시겠습니까? (Y/N) > ")) {
+					System.out.println("변경을 취소했습니다.");
+					return;
 				}
 				
 				int result = dao.updateUserStatus(userId, "SUSPENDED", endStr);
@@ -425,20 +343,9 @@ public class USH_KRDAdminMain {
 		//ACTIVE일 경우
 		//해결할 것 ACTIVE 상태에 ACTIVE로 변환하면 막아야함.
 			
-
-			
-			while(true) {
-				System.out.print("정말 변경하시겠습니까? (Y/N) >");
-				String confirm = br.readLine().trim();
-				
-				if(confirm.equalsIgnoreCase("Y")) {
-					break;
-				}else if(confirm.equalsIgnoreCase("N")) {
-					System.out.println("변경을 취소했습니다.");
-					return;
-				}else {
-					System.out.println("잘못된 입력입니다. Y 또는 N만 입력하세요.");
-				}
+			if(!io.confirmYN("정말 변경하시겠습니까? (Y/N) > ")) {
+				System.out.println("변경을 취소했습니다.");
+				return;
 			}
 			
 			int result = dao.updateUserStatus(userId, "ACTIVE", null);
@@ -448,44 +355,11 @@ public class USH_KRDAdminMain {
 			else System.out.println("변경 실패(처리 중 오류 또는 조건 변경)");
 		}
 	}
-	
-	//회원 상태 변경 - 날짜 입력 헬퍼
-	private String readDateOrRequired(String prompt) throws IOException {
-		while(true) {
-			System.out.print(prompt);
-			String s = br.readLine().trim();
-			
-			if(s.isEmpty()) {
-				System.out.println("날짜를 입력해주세요");
-				continue;
-			} //엔터(빈 값) 치면 다시 입력
-			
-			//1차 형식 체크
-			if(!s.matches("\\d{4}-\\d{2}-\\d{2}")) {
-				System.out.println("[날짜 형식 오류] YYYY-MM-DD로 입력하세요.");
-				continue;
-			}
-			
-			//2차 실제 날짜 체크 (e.g. 2026-02-30 같은 거 걸러냄)
-			try {
-				java.time.LocalDate.parse(s);
-				return s;
-			}catch (java.time.format.DateTimeParseException e) {
-				System.out.println("[존재하지 않는 날짜] 다시 입력하세요.");
-			}
-		}
-	}
-	
+		
 	//권한 변경
 	private void handleRoleChange() throws IOException {
 		System.out.println("======권한(역할) 변경======");
-		System.out.print("권한을 변경할 대상 ID 입력 > ");
-		String userId = br.readLine().trim();
-		
-		if(userId.isEmpty()) {
-			System.out.println("ID 입력은 필수입니다.");
-			return;
-		}
+		String userId = io.readRequired("권한을 변경할 대상 ID 입력 > ");
 		
 		String[] info = dao.getRoleAndStatus(userId);
 		
@@ -504,19 +378,7 @@ public class USH_KRDAdminMain {
 		
 		String newRole = null;
 		while(true) {
-			System.out.print("바꾸고 싶은 권한(역할) 입력 > ");
-			newRole = br.readLine().trim().toUpperCase();
-			
-			if(newRole.isEmpty()) {
-				System.out.println("권한(역할) 입력은 필수입니다.");
-				continue;
-			}
-			
-			Set<String> allowed = Set.of("GST","RESI","RESO","AGY","REV");
-			if(!allowed.contains(newRole)) {
-				System.out.println("GST/RESI/RESO/AGY/REV 중 하나로 재입력 해주세요.");
-				continue;
-			}
+			newRole = io.readFromSetRequired("바꾸고 싶은 권한(역할) 입력 > ", ALLOWED_ROLES);
 			
 			if(newRole.equalsIgnoreCase(currentRole)) {
 				System.out.println("현재 갖고 있는 권한(역할)입니다.");
@@ -528,41 +390,19 @@ public class USH_KRDAdminMain {
 			}
 		}
 		
-		String reason = null;
-		String changedBy = "adm01";// 이후 로그인한 관리자 ID로 교체
-		System.out.print("변경 사유(엔터=생략) > ");
-		reason = br.readLine().trim();
-		if(reason.isEmpty()) reason = null;
+		String changedBy = adminId;// 이후 로그인한 관리자 ID로 교체
+		String reason = io.readOptional("변경 사유(엔터=생략) > ");
 		
-		while(true) {
-			System.out.print("정말로 권한(역할)을 변경하시겠습니까? (Y/N) > ");
-			String confirm = br.readLine().trim();
-			
-			if(confirm.equalsIgnoreCase("Y")) {
-				int result = dao.changeUserRoleWithHistory(userId, newRole, changedBy, reason);
-				
-				if(result == 1) {
-					System.out.println("권한(역할)을 변경하였습니다.");
-					break; //성공했을 때만 루프 종료
-				}else {
-					System.out.println("권한 변경 실패(계정 상태/DB 오류).");
-					return; //또는 continue;(다시 시도하게 할지)
-				}
-			}else if(confirm.equalsIgnoreCase("N")) {
-				System.out.println("권한 변경을 취소하였습니다.");
-				return;
-			}else {
-				System.out.println("잘못 입력하셨습니다. Y 또는 N만 입력해주세요.");
-			}
+		if(!io.confirmYN("정말로 권한(역할)을 변경하시겠습니까? (Y/N) > ")) {
+			System.out.println("권한 변경을 취소하였습니다.");
+			return;
 		}
 		
+		int result = dao.changeUserRoleWithHistory(userId, newRole, changedBy, reason);
+		if(result == 1) System.out.println("권한(역할)을 변경하였습니다.");
+		else System.out.println("권한 변경 실패.(계정 상태/DB 오류)");
 		
 	}
-	
-	public static void main(String[] args) {
-		new USH_KRDAdminMain();
-	}
-	
 
 }
 
