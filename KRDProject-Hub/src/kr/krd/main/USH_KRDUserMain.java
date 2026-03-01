@@ -57,6 +57,7 @@ public class USH_KRDUserMain {
 					if("ADM".equalsIgnoreCase(role)) {
 						//주입 생성자 호출로 변경
 						new USH_KRDAdminMain(br, cust_id);
+						cust_id = null;
 						continue;
 					}else if("REV".equalsIgnoreCase(role)) {
 						//추후 메뉴 합칠 때 구현

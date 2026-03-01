@@ -12,7 +12,6 @@ import kr.krd.vo.USH_UserSummary;
 import kr.krd.vo.USH_UserDetail;
 
 public class USH_AdminMemberService {
-	private final BufferedReader br;
 	private final USH_ConsoleUtil io;
 	private final USH_MemberDAO dao;
 	private final String adminId;
@@ -21,7 +20,6 @@ public class USH_AdminMemberService {
 
 	
 	public USH_AdminMemberService(BufferedReader br, String adminId) {
-		this.br = br;
 		this.io = new USH_ConsoleUtil(br);
 		this.dao = new USH_MemberDAO();
 		this.adminId = adminId;

@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import kr.krd.service.USH_AdminMemberService;
 import kr.util.USH_ConsoleUtil;
+import kr.krd.service.USH_AdminBudgetService;
 
 public class USH_KRDAdminMain {
 	//콘솔 입력을 받기 위한 BufferedReader
@@ -12,10 +13,12 @@ public class USH_KRDAdminMain {
 	private final BufferedReader br;
 	private final USH_AdminMemberService service;
 	private final USH_ConsoleUtil io;
+	private final USH_AdminBudgetService budgetService;
 
 	public USH_KRDAdminMain(BufferedReader br, String adminId) {
 		this.br = br;
 		this.service = new USH_AdminMemberService(br, adminId);
+		this.budgetService = new USH_AdminBudgetService(br, adminId);
 		io = new USH_ConsoleUtil(br);
 
 		//adminId는 나중에 changedBy 같은데 쓰려고 저장해둠
@@ -51,7 +54,7 @@ public class USH_KRDAdminMain {
 				System.out.println();
 				callUserMenu();
 			}else if(no == 2) {
-
+				callBudgetMenu();
 			}else if(no == 3) {
 
 			}else if(no == 4) {
@@ -117,6 +120,28 @@ public class USH_KRDAdminMain {
 				System.out.println("잘못 입력했습니다.");
 			}
 
+		}
+	}
+	
+	//예산 관리 메뉴
+	private void callBudgetMenu() throws IOException{
+		while(true) {
+			System.out.println("===== 예산 관리 =====");
+			System.out.println();
+			System.out.println("0.이전 메뉴(뒤로가기)");
+			System.out.println("1.예산 변경 이력 조회");
+			System.out.println("2.예산 사용 현황 조회");
+			System.out.println();
+			
+			int no = io.readIntInRange("입력 > ", 0, 2);
+			
+			if(no == 0) {
+				return; //시스템 관리자 메뉴로 복귀
+			}else if(no == 1) {
+				budgetService.budgetHistFlow();
+			}else if(no == 2) {
+				//budgetService.budgetUsageFlos();
+			}
 		}
 	}
 
