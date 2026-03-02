@@ -127,9 +127,6 @@ public class CMY_MemberDAO {
 		
 		String ag_name="";		//기관명
 		
-		
-		
-		
 		try {
 			conn = DBUtil.getConnection();
 			sql = "SELECT  e.EVALUATION_ID,\r\n"
@@ -224,7 +221,7 @@ public class CMY_MemberDAO {
 		finally {DBUtil.executeClose(rs, pstmt, conn);}
 	}
 	
-	//상세 조회 메서드
+	//상세 조회 메서드 (평가 테이블에서 보고 싶은 값을 인자로 받아온다.)
 	public void viewAppDetail(String eval_no) 
 	{
 		Connection conn = null;
@@ -252,9 +249,6 @@ public class CMY_MemberDAO {
 		String app_attach="";	//신청자 첨부파일
 		
 		String ag_name="";		//기관명
-		
-		
-		
 		
 		try {
 			conn = DBUtil.getConnection();
@@ -350,10 +344,23 @@ public class CMY_MemberDAO {
 			int do_eval_no = Integer.parseInt(br.readLine());
 			if(do_eval_no == 1) {
 				//임시 평가 체크 메서드
+				boolean checkYN = checkTempEval(eval_id);
+				//checkTempEval메서드에서 임시평가를 사용하면 checkYN에 True값 리턴
+				//임시평가 값이 존재하지 않거나 임시평가를 사용하지 않으면 false로 리턴함
+				if(!checkYN) {
+					//평가하기
+					//신청 아이디, 평가위원 아이디, 평가분야를 인자로 사용함
+					submiteval(eval_id);
+				}else {
+					//재평가 값을 그대로 사용하는 메서드 작성
+					//submiteval();
+				}
 				//평가 메서드
 			}else if(do_eval_no == 2) {
 				//
-				System.out.println("개인메뉴로");
+				System.out.println();
+				System.out.println("메인메뉴로 돌아갑니다!");
+				System.out.println();
 				
 			}
 		}
@@ -361,8 +368,148 @@ public class CMY_MemberDAO {
 		finally {DBUtil.executeClose(rs, pstmt, conn);}	
 	}
 	//신청하기 메서드
+	//해당 평가를 작성하기 위해 필요한 평가 번호를 가져온다.
+	/*
+	 * 
+	 * 
+	 * 
+	 * 03 03 오후 시간에 여기 부터 시작해야함!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 */
+	public void submiteval(int eval_id) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		String sql = null;
+		
+		try {
+			//점수, 평가 부분
+			int score = checkScore("점수 :"); //점수가 0~100 으로만 입력하게 해주는 메서드
+			System.out.println("코멘트 작성");
+			String comment = br.readLine();
+			
+			//DB연결 부분
+			conn = DBUtil.getConnection();
+			sql = "update evaluations set EVALUATION_SCORE = ?, EVALUATION_IS = ?, EVALUATION_STATUS_CD = ? where EVALUATION_ID = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, score);			//점수 저장
+			pstmt.setString(2, comment);	//평가코멘트 저장
+			pstmt.setInt(4, eval_id);		//업데이트에 사용할 평가 번호 삽입
+			System.out.println();
+			System.out.println();
+			System.out.println("[1]평가작성");
+			System.out.println("[2]나가기");
+			int save_eval_no = Integer.parseInt(br.readLine());
+			if(save_eval_no == 1) {
+				String submit = "SUBMITTED";
+				pstmt.setString(3, submit);
+				int cnt = pstmt.executeUpdate();
+				System.out.println(cnt + "건의 평가를 작성 완료 하였습니다");
+			}else if(save_eval_no == 2) {
+				//
+				System.out.println("작성한 평가를 임시저장 하시겠습니까?");
+				System.out.print("[1] 저장한다.  [2] 나가기 >>");
+				int saveTemp = Integer.parseInt(br.readLine());
+				if(saveTemp == 1) {
+					//임시저장하는 메서드
+				}
+				if(saveTemp == 2) {
+					//그냥 나감(평가목록으로 나가기)
+				}
+				else {
+					System.out.println("1 혹은 2를 입력 해주세요.");
+				}
+			}
+		}
+		catch(Exception e){e.printStackTrace();}
+		finally {DBUtil.executeClose(null, pstmt, conn);}	
+	}
+	
+	//임시평가 내용을 그대로 사용하는 메서드
+	public void submiteval() {
+		//임시평가를 사용하는 메서드를 작성한다.
+	}
+	
+	//평가하기에서 점수를 올바르게 작성했는지 검사하는 메서드
+	public int checkScore(String scoreInfo) {
+		int score;
+		while(true) {
+			System.out.print(scoreInfo);	
+			try {
+				score = Integer.parseInt(br.readLine());
+				if(score > 100 || score < 0) {// 점수가 100 초과 혹은 0 미만인 경우
+					continue;
+				}else {
+					break;
+				}
+			}
+			catch(IOException e) {e.printStackTrace();}
+			catch(NumberFormatException e) {System.out.println("숫자를 입력해주세요.");}
+		}
+		return score;
+	}
+	
 	
 	//재평가 메서드
+	
+	//임시평가 체크 메서드
+	public boolean checkTempEval(int eval_id) {
+		
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		String sql = null;
+		ResultSet rs = null;
+		boolean doYN = false;
+		
+		try {
+			conn = DBUtil.getConnection();
+			//sql은 해당 평가번호를 임시평가 테이블에 검색한다
+			sql = "select * from TEMP_EVAL WHERE TEMP_EVAL_EVALUATION_ID"
+					+ "= ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, eval_id);
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				//검색 결과가 있다는것 = 임시저장을 한 경우
+				System.out.println("해당 과제에 대해 임시평가 기록이 존재합니다 해당 평가를 그대로 평가에 사용하시겠습니까?");
+				System.out.println("[1] 사용한다.  [2]사용하지 않는다.(임시평가 내용이 지워집니다!)");
+				System.out.print(">");
+				int temp_choose = Integer.parseInt(br.readLine());
+				if(temp_choose == 1) {
+					//임시평가에 들어간 내용을 그대로 평가에 사용하는 메서드 작성
+					//method1();
+					doYN = true;
+				}
+				else if(temp_choose == 2) {
+					//임시평가에 해당 행을 삭제하고 평가하기 메서드를 실행하는 메서드 작성
+					sql = "delete from TEMP_EVAL where TEMP_EVAL_EVALUATION_ID = ?";
+					pstmt = conn.prepareStatement(sql);
+					pstmt.setInt(1, eval_id);
+					int delcnt = pstmt.executeUpdate();
+					System.out.println(delcnt + "건의 임시평가를 제거 하였습니다.");
+				}
+				else {
+					System.out.println("1 또는 2를 입력하여 주세요.");
+				}
+				
+			}else {
+				System.out.println("임시평가 테이블을 탐색중 SQL에러 발생하였습니다.");
+			}
+			
+		}
+		catch(Exception e){e.printStackTrace();}
+		finally {DBUtil.executeClose(rs, pstmt, conn);}	
+		return doYN;
+	}
 	
 	//임시저장 메서드
 	
