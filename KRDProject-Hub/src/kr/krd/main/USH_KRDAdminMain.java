@@ -140,7 +140,7 @@ public class USH_KRDAdminMain {
 			}else if(no == 1) {
 				budgetService.budgetHistFlow();
 			}else if(no == 2) {
-				//budgetService.budgetUsageFlos();
+				budgetService.budgetUsageFlow();
 			}
 		}
 	}
