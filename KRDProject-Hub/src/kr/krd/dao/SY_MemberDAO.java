@@ -8,7 +8,7 @@ import java.io.InputStreamReader;
 import kr.util.DBUtil;
 import java.sql.Date;
 
-public class SY_MemberDao {
+public class SY_MemberDAO {
 	private BufferedReader br;
 //회원가입(회원유형 선택을 곁들인)
 	public void insertMember(String user_id, String user_pwd, String user_name, String user_email, String user_birth_dt, String user_phone_no,
