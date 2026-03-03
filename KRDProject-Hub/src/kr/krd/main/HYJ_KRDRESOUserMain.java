@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import kr.krd.dao.HYJ_KRDRESOUserDAO;
 import kr.krd.dao.HYJ_MyInfoDAO;
 import kr.krd.dao.CMY_MemberDAO;
+import kr.krd.dao.HYJ_APPLICATIONCheakDAO;
 
 public class HYJ_KRDRESOUserMain {
 	private BufferedReader br;
@@ -16,6 +17,7 @@ public class HYJ_KRDRESOUserMain {
 	private String cust_id;//로그인한 회원 아이디
 	private boolean login;//로그인 여부(로그인:true,로그아웃:false)
 	private HYJ_MyInfoDAO dao3;
+	private HYJ_APPLICATIONCheakDAO dao4;
 
 	public HYJ_KRDRESOUserMain() {
 		try {
@@ -26,7 +28,8 @@ public class HYJ_KRDRESOUserMain {
 			dao1 = new HYJ_KRDRESOUserDAO();
 			dao2 = new CMY_MemberDAO();
 			dao3 = new HYJ_MyInfoDAO();
-
+			dao4 = new HYJ_APPLICATIONCheakDAO();
+			
 			callMenu();
 		}catch(Exception e) {
 			e.printStackTrace();
@@ -82,7 +85,7 @@ public class HYJ_KRDRESOUserMain {
 				}else if(no == 2) {
 
 				}else if(no == 3) {
-
+					dao4.CheckMyApp(cust_id);
 				}else if(no == 4) {
 
 				}else if(no == 5) {
@@ -90,16 +93,6 @@ public class HYJ_KRDRESOUserMain {
 				}else if(no == 6) {
 					dao3.SelectInfo(cust_id);
 
-					System.out.print("이름 : ");
-					String user_name = br.readLine();
-					System.out.print("이메일 : ");
-					String user_email = br.readLine();
-					System.out.print("주소 : ");
-					String user_addr = br.readLine();
-					System.out.print("분야 : ");
-					String user_field = br.readLine();
-
-					dao3.InfoUpdate(user_name, user_email, user_addr, user_field, cust_id);
 
 				}else if(no == 7) {
 

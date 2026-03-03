@@ -48,12 +48,19 @@ public class HJY_CheckSystem {
                 conn.rollback();
                 return;
             }
+            
+            if(cap == 0) {
+            	System.out.println("모집인원이 모두 모집되었습니다.");
+            	conn.rollback();
+                return;
+            }
 
             rs.close();
             pstmt.close();
 
 
             /* 2 현재 선정된 인원 수 체크 (SELECTION 기준) */
+            /* 
             String selectedSql =
                     "SELECT COUNT(*) FROM SELECTION " +
                     "WHERE SELECTION_ANN_ID = ?";
@@ -73,7 +80,7 @@ public class HJY_CheckSystem {
 
             rs.close();
             pstmt.close();
-
+			*/ 
             //이미 트리거로 사용자가 신청하면(insert selection을 하면)
             //공고테이블에 cap이 자동으로 -1 되게 하였음
             //cap이 0인지만 검사하면 됨
