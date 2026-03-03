@@ -156,8 +156,7 @@ public class CMY_MemberDAO {
 					+ "ON an.ANNOUNCEMENT_AGY_ID = ag.AGENCY_AGY_ID\r\n"
 					+ "WHERE e.EVALUATION_REVIEWER_ID = ?";
 			pstmt = conn.prepareStatement(sql);
-			System.out.println("현재 로그인 ID = [" + cust_id + "]");
-			System.out.println("현재 로그인 FIELD = [" + field + "]");
+
 			pstmt.setString(1, cust_id);
 			//pstmt.setString(2, field);
 			rs = pstmt.executeQuery();
@@ -281,7 +280,6 @@ public class CMY_MemberDAO {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, eval_no);
 			pstmt.setString(2, cust_id);
-			//pstmt.setString(2, field);
 			rs = pstmt.executeQuery();
 			if(rs.next()) {
 				//내용들 대충
@@ -349,7 +347,7 @@ public class CMY_MemberDAO {
 				//임시평가 값이 존재하지 않거나 임시평가를 사용하지 않으면 false로 리턴함
 				if(!checkYN) {
 					//평가하기
-					//신청 아이디, 평가위원 아이디, 평가분야를 인자로 사용함
+					//평가번호
 					submiteval(eval_id);
 				}else {
 					//재평가 값을 그대로 사용하는 메서드 작성
