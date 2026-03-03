@@ -42,7 +42,7 @@ public class USH_AdminBudgetService {
 		List<USH_BudgetHistRow> list = budgetDao.findBudgetHist(projectId, start, end, limit);
 		printBudgetHistList(list, limit);
 		
-		io.readRequired("엔터를 누르면 이전 메뉴로 돌아갑니다. > ");
+		io.readOptional("엔터를 누르면 이전 메뉴로 돌아갑니다. > ");
 	}
 	
 	

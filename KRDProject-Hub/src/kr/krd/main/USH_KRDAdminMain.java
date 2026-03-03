@@ -6,6 +6,7 @@ import java.io.IOException;
 import kr.krd.service.USH_AdminMemberService;
 import kr.util.USH_ConsoleUtil;
 import kr.krd.service.USH_AdminBudgetService;
+import kr.krd.service.USH_AdminStatsService;
 
 public class USH_KRDAdminMain {
 	//콘솔 입력을 받기 위한 BufferedReader
@@ -14,11 +15,13 @@ public class USH_KRDAdminMain {
 	private final USH_AdminMemberService service;
 	private final USH_ConsoleUtil io;
 	private final USH_AdminBudgetService budgetService;
+	private final USH_AdminStatsService statsService;
 
 	public USH_KRDAdminMain(BufferedReader br, String adminId) {
 		this.br = br;
 		this.service = new USH_AdminMemberService(br, adminId);
 		this.budgetService = new USH_AdminBudgetService(br, adminId);
+		this.statsService = new USH_AdminStatsService(br, adminId);
 		io = new USH_ConsoleUtil(br);
 
 		//adminId는 나중에 changedBy 같은데 쓰려고 저장해둠
@@ -56,7 +59,7 @@ public class USH_KRDAdminMain {
 			}else if(no == 2) {
 				callBudgetMenu();
 			}else if(no == 3) {
-
+				callStatsMenu();
 			}else if(no == 4) {
 
 			}else if(no == 5) {
@@ -123,7 +126,7 @@ public class USH_KRDAdminMain {
 		}
 	}
 	
-	//예산 관리 메뉴
+	//예산 관리 메뉴(서브 메뉴)
 	private void callBudgetMenu() throws IOException{
 		while(true) {
 			System.out.println("===== 예산 관리 =====");
@@ -141,6 +144,34 @@ public class USH_KRDAdminMain {
 				budgetService.budgetHistFlow();
 			}else if(no == 2) {
 				budgetService.budgetUsageFlow();
+			}else {
+				System.out.println("잘못 입력했습니다.");
+			}
+		}
+	}
+	
+	//선정 통계 조회(서브 메뉴)
+	private void callStatsMenu() throws IOException {
+		while(true) {
+			System.out.println("========== 선정 통계 조회 ==========");
+			System.out.println("0.이전 메뉴(뒤로가기)");
+			System.out.println("1.연도별 선정 건수");
+			System.out.println("2.기관별 선정 건수");
+			System.out.println("3.평균 경쟁률 조회");
+			System.out.println();
+			
+			int no = io.readIntInRange("입력 > ", 0, 3);
+			
+			if(no == 0) {	//뒤로 가기
+				return;
+			}else if(no == 1) {	//연도별 선정 건수
+				statsService.selectedByYearFlow();
+			}else if(no == 2) {	//기관별 선정 건수
+				statsService.selectedByAgencyFlow();
+			}else if(no == 3) {	//평균 경쟁률 조회
+				statsService.avgCompetitionRateFlow();
+			}else {
+				System.out.println("잘못 입력했습니다.");
 			}
 		}
 	}
