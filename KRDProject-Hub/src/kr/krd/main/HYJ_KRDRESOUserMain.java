@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 
 import kr.krd.dao.HYJ_KRDRESOUserDAO;
 import kr.krd.dao.HYJ_MyInfoDAO;
+import kr.krd.dao.HYJ_RESISearch;
+import kr.krd.dao.HYJ_ReportDAO;
 import kr.krd.dao.CMY_MemberDAO;
 import kr.krd.dao.HYJ_APPLICATIONCheakDAO;
 
@@ -18,6 +20,8 @@ public class HYJ_KRDRESOUserMain {
 	private boolean login;//로그인 여부(로그인:true,로그아웃:false)
 	private HYJ_MyInfoDAO dao3;
 	private HYJ_APPLICATIONCheakDAO dao4;
+	private HYJ_ReportDAO dao5;
+	private HYJ_RESISearch dao6;
 
 	public HYJ_KRDRESOUserMain() {
 		try {
@@ -29,6 +33,8 @@ public class HYJ_KRDRESOUserMain {
 			dao2 = new CMY_MemberDAO();
 			dao3 = new HYJ_MyInfoDAO();
 			dao4 = new HYJ_APPLICATIONCheakDAO();
+			dao5 = new HYJ_ReportDAO();
+			dao6 = new HYJ_RESISearch();
 			
 			callMenu();
 		}catch(Exception e) {
@@ -89,13 +95,11 @@ public class HYJ_KRDRESOUserMain {
 				}else if(no == 4) {
 
 				}else if(no == 5) {
-
+					dao5.InsertReport(cust_id);
 				}else if(no == 6) {
 					dao3.SelectInfo(cust_id);
-
-
 				}else if(no == 7) {
-
+					dao6.RESISearch();
 				}else if(no == 8) {
 					System.out.println("프로그램을 종료합니다.");
 					break;

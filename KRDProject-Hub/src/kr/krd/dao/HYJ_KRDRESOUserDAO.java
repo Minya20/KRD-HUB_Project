@@ -39,11 +39,11 @@ public class HYJ_KRDRESOUserDAO {
                     return;
                 }
                 
-                System.out.println("번호\t공고명\t예산\t시작일\t종료일");
+                System.out.println("번호\t\t공고명\t\t\t예산\t\t시작일\t\t종료일");
 
                 do {
-                    System.out.print(rs.getInt("ANNOUNCEMENT_ANN_ID") + "\t");
-                    System.out.print(rs.getString("ANNOUNCEMENT_TITLE") + "\t");
+                    System.out.print(rs.getInt("ANNOUNCEMENT_ANN_ID") + "\t" + "\t");
+                    System.out.print(rs.getString("ANNOUNCEMENT_TITLE") + "\t" + "\t");
                     System.out.printf("%,d\t", rs.getInt("ANNOUNCEMENT_TOTAL_BUDGET"));
                     System.out.print(rs.getString("ANNOUNCEMENT_START_DT") + "\t");
                     System.out.println(rs.getString("ANNOUNCEMENT_END_DT"));
@@ -115,9 +115,9 @@ public class HYJ_KRDRESOUserDAO {
 
                 if (sel == 1) {
                 	//신청서 작성
-                	System.out.println("신청서 작성을 시작합니다. 신청 아이디를 입력하세요");
+                	System.out.println("신청 하실 번호를 입력하세요");
                 	int application_id = Integer.parseInt(br.readLine());
-                	System.out.println("신청서 작성을 시작합니다. 신청자 아이디를 입력하세요");
+                	System.out.println("신청자 아이디를 입력하세요");
                 	String application_user_id = br.readLine();
                 	System.out.println("첨부 파일을 입력하세요.");
                 	String application_attach_path = br.readLine(); 
