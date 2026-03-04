@@ -7,6 +7,7 @@ import kr.krd.service.USH_AdminMemberService;
 import kr.util.USH_ConsoleUtil;
 import kr.krd.service.USH_AdminBudgetService;
 import kr.krd.service.USH_AdminStatsService;
+import kr.krd.service.USH_AdminAnnouncementService;
 
 public class USH_KRDAdminMain {
 	//콘솔 입력을 받기 위한 BufferedReader
@@ -16,13 +17,15 @@ public class USH_KRDAdminMain {
 	private final USH_ConsoleUtil io;
 	private final USH_AdminBudgetService budgetService;
 	private final USH_AdminStatsService statsService;
+	private final USH_AdminAnnouncementService annService;
 
 	public USH_KRDAdminMain(BufferedReader br, String adminId) {
 		this.br = br;
 		this.service = new USH_AdminMemberService(br, adminId);
 		this.budgetService = new USH_AdminBudgetService(br, adminId);
 		this.statsService = new USH_AdminStatsService(br, adminId);
-		io = new USH_ConsoleUtil(br);
+		this.annService = new USH_AdminAnnouncementService(br, adminId);
+		this.io = new USH_ConsoleUtil(br);
 
 		//adminId는 나중에 changedBy 같은데 쓰려고 저장해둠
 		//this.adminId = adminId;
@@ -45,7 +48,7 @@ public class USH_KRDAdminMain {
 			System.out.println("1.전체 회원 관리 메뉴");
 			System.out.println("2.예산 관리 메뉴");
 			System.out.println("3.선정 통계 조회");
-			System.out.println("4.시스템 설정 메뉴"); //후순위 삭제
+			System.out.println("4.게시물 관리 메뉴"); //후순위 삭제
 			System.out.println("5.권한 신청 관리"); //후순위 삭제
 			System.out.println("6.로그아웃");
 			System.out.println();
@@ -61,7 +64,7 @@ public class USH_KRDAdminMain {
 			}else if(no == 3) {
 				callStatsMenu();
 			}else if(no == 4) {
-
+				callAnnouncementMenu();
 			}else if(no == 5) {
 
 			}else if(no == 6) {
@@ -176,6 +179,21 @@ public class USH_KRDAdminMain {
 		}
 	}
 
+	//공고(게시물) 관리 메뉴(서브 메뉴)
+	private void callAnnouncementMenu() throws IOException {
+		while(true) {
+			System.out.println("===== 시스템 설정(게시물 관리) =====");
+			System.out.println("0.이전 메뉴(뒤로가기)");
+			System.out.println("1.공고 상태 강제 변경");
+			System.out.println();
+			
+			int no = io.readIntInRange("입력 > ", 0, 1);
+			
+			if(no == 0) return;
+			if(no == 1) annService.forceChangeAnnStatusFlow();
+					
+		}
+	}
 }
 
 
