@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.time.LocalDate;
 
 import kr.util.DBUtil;
 
@@ -14,9 +15,13 @@ import kr.util.DBUtil;
 
 public class CMY_MemberDAO {
 	BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-	String cust_id;
-	String role;
-	String field;
+	String cust_id;						//사용자 아이디
+	String role;						//사용자 권한
+	String field;						//사용자 분야
+	LocalDate today = LocalDate.now();	//현재날짜를 저장하는 변수
+	LocalDate deadline;					//데드라인의 값을 저장할 변수
+	
+	
 
 	//로그인 메서드
 	public String userLogin(String user_id, String user_pw) {
@@ -48,6 +53,274 @@ public class CMY_MemberDAO {
 		finally {DBUtil.executeClose(rs, pstmt, conn);}
 		return real_id;
 	}
+	
+	//회원가입 메서드(권한 선택 버전)
+	public void insertMember() {
+		
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		String sql = null;
+		
+		//비밀번호 검사 정규식 : 특수문자1개 포함하여 8자 이상
+		String passwordRegex =
+		        "^(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).{8,}$";
+
+		try {
+			//회원가입 내용 표시
+			System.out.println("회원가입을 진행합니다.");
+	        System.out.println("=".repeat(50));
+	        System.out.print("ID:_________________");
+	        String user_id = br.readLine();
+	        String user_pw;
+	        while(true) {
+	        	System.out.println("※비밀번호 규칙 : 특수문자1개포함, 8자 이상");
+	        	System.out.print("Password:_________________");
+		        user_pw = br.readLine();	
+		        if(user_pw.matches(passwordRegex)) {
+		        	break;
+		        }else {
+		        	System.out.println("비밀번호 규칙에 위배되었습니다.");
+		        }
+	        }
+	        System.out.print("Name:_________________");
+	        String user_name = br.readLine();
+	        System.out.print("e-mail:_________________");
+	        String user_email = br.readLine();
+	        String user_birthDate = null;
+	        while(true) {
+	        	System.out.println("BirthDate:_________________");
+		        System.out.println("ex)1998-03-13");
+		        System.out.print(">>");
+		        user_birthDate = br.readLine();
+		        if(user_birthDate.length() != 10) {
+		        	System.out.println("생년월일을 예시에 맞춰서 입력해주세요");
+		        	continue;
+		        }
+		        break;
+	        }
+	        String user_phoneNo=null;
+	        while(true) {
+	        	System.out.println("PhoneNumber:_________________");
+		        System.out.println("ex)01012345678");
+		        System.out.print(">>");
+		        user_phoneNo = br.readLine();
+		        if(user_phoneNo.length() != 11) {
+		        	System.out.println("전화번호를 예시에 맞게 입력해주세요");
+		        	continue;
+		        }
+		        break;
+	        }
+	        int your_Country;
+	        while(true) {
+	        	System.out.println("		Country");
+		        System.out.println("[1] 한국 [2] 미국 [3] 일본 [4] 중국");
+		        System.out.println("[5] 대만 [6] 캐나다 [7] 영국");
+		        System.out.print("Choose one >>");
+		        your_Country = Integer.parseInt(br.readLine());
+		        if(your_Country > 7 || your_Country < 1) {
+		        	System.out.println("1~7 사이의 숫자를 입력해주세요!");
+		        	System.out.println();
+		        	continue;
+		        }
+		        break;
+	        }
+	    
+	        System.out.print("Address:_________________");
+	        String user_addr = br.readLine();
+	        int your_Gender;
+	        while(true) {
+	        	System.out.println("		Gender");
+		        System.out.print("		[1] male [2] female");
+		        your_Gender = Integer.parseInt(br.readLine());
+		        if(your_Gender > 2 || your_Gender < 1) {
+		        	System.out.println("1 or 2를 입력해주세요");
+		        	System.out.println();
+		        	continue;
+		        }
+		        break;
+	        }
+	        
+	        System.out.print("Affiliation:_________________");
+	        String user_affi = br.readLine();
+	        
+	        while(true) {
+	        	break;
+	        }
+	        System.out.println("		Choose your Field");
+	        System.out.println("[1]의료 [2] 바이오 [3] 로보틱스 [4] 데이터 [5] 기획");
+	        System.out.println("[6] 국방 [7] 교통 [8] 감사 [9] AI [10] 환경 [11] 협약");
+	        System.out.println("[12] 평가 [13] 제도 [14] 정책 [15] 정산 [16] 전기");
+	        System.out.println("[17] 예산 [18] 역사 [19] 에너지 [20] 소재 [21] 반도체");
+	        System.out.println("[22] 운영 [23] 성과");
+	        System.out.print(">>");
+	        int your_field = Integer.parseInt(br.readLine());
+	        
+	        
+			//JDBC 수행 1,2단계
+			conn = DBUtil.getConnection();
+			//SQL 문 작성
+				sql = "INSERT INTO USERINFO (user_id, user_pwd, user_name, user_email, "
+						+ "user_birth_dt, user_phone_no, user_country_cd, user_addr, " +
+						"user_gender_cd, user_penalty_end_dt, user_role_cd, "
+						+ "user_acct_status_cd, user_affiliation, user_field) "
+						+ "VALUES (?id, ?pw, ?name, ?email, ?birth, ?phone, ?country, ?addr, ?gender, ?role, "
+						+ "?status, ?aff, ?field)";
+				
+			
+			//JDBC 수행 3단계
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, user_id); //ID
+			pstmt.setString(2, user_pw); //PW
+			pstmt.setString(3, user_name); //Name
+			pstmt.setString(4, user_email); //Email
+			pstmt.setString(5, user_birthDate); //Birth
+			pstmt.setString(6, user_phoneNo); //Phone
+			
+			//국가 대입 메서드
+			pstmt.setString(7, getCountry(your_Country)); //Country
+			pstmt.setString(8, user_addr); //Address
+			
+			if(your_Gender == 1) {
+				pstmt.setString(9, "male"); //Gender : male
+			}else if(your_Gender == 2) {
+				pstmt.setString(9, "female");//Gender : female
+			}
+			
+			pstmt.setString(10, "GST"); //Role : 일반 회원
+			pstmt.setString(11, "ACTIVE"); //Status : ACTIVE
+			pstmt.setString(12, user_affi); //Affiliation
+			
+			//분야 대입 메서드
+			pstmt.setString(13, getField(your_field)); //Field
+			
+			
+			System.out.println();
+			System.out.println();
+			//JDBC 수행 4단계
+			int count = pstmt.executeUpdate();
+			System.out.println("=".repeat(30));
+			System.out.println(count+"개의 회원 정보를 저장했습니다.");	
+
+		}catch(Exception e) {
+			e.printStackTrace();
+		}finally {
+			DBUtil.executeClose(null, pstmt, conn);
+		}
+	}
+	
+	//국가 대입 메서드
+	public String getCountry(int no) {
+		String country = null;
+		switch (no) {
+		case 1:
+			country = "KOREA";
+			break;
+		case 2:
+			country = "USA";
+			break;
+		case 3:
+			country = "JAPAN";
+			break;
+		case 4:
+			country = "CHINA";
+			break;
+			
+		case 5:
+			country = "TAIWAN";
+			break;
+		case 6:
+			country = "CANADA";
+			break;
+		case 7:
+			country = "ENGLAND";
+			break;
+		}
+		
+		return country;
+	}
+	
+	//필드 분야 대입 메서드
+	public String getField(int no) {
+		String field = null;
+		
+		switch(no) {
+		case 1:
+			field = "의료";
+			break;
+		case 2:
+			field = "바이오";
+			break;
+		case 3:
+			field = "로보틱스";
+			break;
+		case 4:
+			field = "데이터";
+			break;
+		case 5:
+			field = "기획";
+			break;
+		case 6:
+			field = "국방";
+			break;
+		case 7:
+			field = "교통";
+			break;
+		case 8:
+			field = "감사";
+			break;
+		case 9:
+			field = "AI";
+			break;
+		case 10:
+			field = "환경";
+			break;
+		case 11:
+			field = "협약";
+			break;
+		case 12:
+			field = "평가";
+			break;
+		case 13:
+			field = "제도";
+			break;
+		case 14:
+			field = "정책";
+			break;
+		case 15:
+			field = "정산";
+			break;
+		case 16:
+			field = "전기";
+			break;
+		case 17:
+			field = "예산";
+			break;
+		case 18:
+			field = "역사";
+			break;
+		case 19:
+			field = "에너지";
+			break;
+		case 20:
+			field = "소재";
+			break;
+		case 21:
+			field = "반도체";
+			break;
+		case 22:
+			field = "운영";
+			break;
+		case 23:
+			field = "성과";
+			break;
+		
+		}
+		
+		return field;
+	}
+	
+	
+	
 
 	//사용자의 권한을 반환하는 메서드
 	public String getUserRole(String user_id) {
@@ -117,7 +390,8 @@ public class CMY_MemberDAO {
 			String eval_status="";		//평가 상태
 
 			Date ann_start_dt =null;		//공고(평가)시작일
-			Date ann_end_dt =null;			//공고(평가)마감일			
+			Date ann_end_dt =null;			//공고(평가)마감일
+			Date eval_deadline = null;		//평가마감일
 			String ann_title="";			//공고명
 			String ann_desc="";			//공고 설명
 			String ann_budget="";	//총 예산
@@ -138,6 +412,7 @@ public class CMY_MemberDAO {
 						+ "		e.EVALUATION_SCORE,\r\n"
 						+ "		e.EVALUATION_STATUS_CD,\r\n"
 						+ "		e.EVALUATION_IS,\r\n"
+						+ "		e.EVALUATION_DEADLINE_AT,\r\n"
 						+ "		a.APPLICATION_ID,\r\n"
 						+ "		a.APPLICATION_BUDGET_AMT,\r\n"
 						+ "		a.APPLICATION_USER_ID,\r\n"
@@ -163,6 +438,16 @@ public class CMY_MemberDAO {
 				rs = pstmt.executeQuery();
 				if(rs.next()) {
 					//내용들 대충
+					System.out.println("");
+					System.out.print("평가번호\t");
+					System.out.print("과제명\t\t\t");
+					System.out.print("신청자\t");
+					System.out.print("기관명\t\t");
+					System.out.print("분야\t");
+					System.out.print("평가 상태\t\t");
+					System.out.print("평가 마감일\t");
+					System.out.print("연구 수행 기간\n");
+					System.out.println("=".repeat(100));
 					do {
 						eval_id = rs.getInt("EVALUATION_ID");						//평가번호
 						eval_app_id = rs.getInt("EVALUATION_APPLICATION_ID");		//신청번호
@@ -172,6 +457,7 @@ public class CMY_MemberDAO {
 						eval_score = rs.getInt("EVALUATION_SCORE");	
 						eval_comment = rs.getString("EVALUATION_IS");			//평가 코멘트//평가 점수
 						eval_status = rs.getString("EVALUATION_STATUS_CD");		//평가 상태
+						eval_deadline = rs.getDate("EVALUATION_DEADLINE_AT");	//평가마감일
 
 						ann_start_dt = rs.getDate("ANNOUNCEMENT_START_DT");		//공고(평가)시작일
 						ann_end_dt = rs.getDate("ANNOUNCEMENT_END_DT");			//공고(평가)마감일			
@@ -188,23 +474,13 @@ public class CMY_MemberDAO {
 						if(eval_comment == null) {
 							eval_comment = "";
 						}
-						System.out.println("");
-						System.out.print("평가번호\t");
-						System.out.print("과제명\t\t\t");
-						System.out.print("신청자\t");
-						System.out.print("기관명\t\t");
-						System.out.print("분야\t");
-						System.out.print("평가 상태\t\t");
-						System.out.print("평가 마감일\t");
-						System.out.print("연구 수행 기간\n");
-						System.out.println("=".repeat(100));
 						System.out.print(eval_id+"\t");
 						System.out.print(ann_title+"\t");
 						System.out.print(app_user_id+"\t");
 						System.out.print(ag_name+"\t\t");
 						System.out.print(eval_field+"\t");
 						System.out.print(eval_status+"\t");
-						System.out.print(ann_end_dt+"\t");
+						System.out.print(eval_deadline+"\t");
 						System.out.print(ann_start_dt+"-"+ann_end_dt+"\n");
 					}
 					while(rs.next());
@@ -258,7 +534,8 @@ public class CMY_MemberDAO {
 			String eval_status="";		//평가 상태
 
 			Date ann_start_dt =null;		//공고(평가)시작일
-			Date ann_end_dt =null;			//공고(평가)마감일			
+			Date ann_end_dt =null;			//공고(평가)마감일
+			Date eval_deadline = null;		//평가마감일
 			String ann_title="";			//공고명
 			String ann_desc="";			//공고 설명
 			String ann_budget="";	//총 예산
@@ -279,6 +556,7 @@ public class CMY_MemberDAO {
 						+ "		e.EVALUATION_SCORE,\r\n"
 						+ "		e.EVALUATION_STATUS_CD,\r\n"
 						+ "		e.EVALUATION_IS,\r\n"
+						+ "		e.EVALUATION_DEADLINE_AT,\r\n"
 						+ "		a.APPLICATION_ID,\r\n"
 						+ "		a.APPLICATION_BUDGET_AMT,\r\n"
 						+ "		a.APPLICATION_USER_ID,\r\n"
@@ -313,6 +591,8 @@ public class CMY_MemberDAO {
 					eval_score = rs.getInt("EVALUATION_SCORE");	
 					eval_comment = rs.getString("EVALUATION_IS");			//평가 코멘트//평가 점수
 					eval_status = rs.getString("EVALUATION_STATUS_CD");		//평가 상태
+					eval_deadline = rs.getDate("EVALUATION_DEADLINE_AT");	//평가마감일
+					deadline = eval_deadline.toLocalDate();
 
 					ann_start_dt = rs.getDate("ANNOUNCEMENT_START_DT");		//공고(평가)시작일
 					ann_end_dt = rs.getDate("ANNOUNCEMENT_END_DT");			//공고(평가)마감일			
@@ -345,7 +625,7 @@ public class CMY_MemberDAO {
 					System.out.print(ag_name+"\t\t");
 					System.out.print(eval_field+"\t");
 					System.out.print(eval_status+"\t");
-					System.out.print(ann_end_dt+"\t");
+					System.out.print(eval_deadline+"\t");
 					System.out.print(ann_start_dt+"-"+ann_end_dt+"\n");
 					System.out.println(eval_rev_id);
 				}else {
@@ -355,16 +635,34 @@ public class CMY_MemberDAO {
 					System.out.println();
 					return;
 				}
+				//오늘날짜가 데드라인 이후 이면
+				if(today.isAfter(deadline)) {
+					System.out.println();
+					System.out.println();
+					System.out.println("[평가가 마감되었습니다.]");
+					System.out.println("[2]나가기");
+					int do_eval_no = Integer.parseInt(br.readLine());
+					if(do_eval_no == 2) {
+						System.out.println();
+						return;
+					}else {
+						System.out.println("숫자 2만 입력해주세요!");
+					}
+				}
+				
 				System.out.println();
 				System.out.println();
 				System.out.println("[1]평가하기");
 				System.out.println("[2]나가기");
 				int do_eval_no = Integer.parseInt(br.readLine());
 				if(do_eval_no == 1) {
-
-
+					
+					
+					
 					//재평가 여부를 검사하는 메서드
-					//true 값이면 재평가여부를 묻고
+					//해당하는 평가번호,스테이터스,마감일을 검사하고
+					//결과 값이 있으면 true를 반환하는 메서드다
+					//반환 값이 true 값이면 재평가여부를 묻고
 					//재평가하면 평가하기 메서드를 실행
 					//아니면 브레이크
 					//false 값이면 그대로 아래 임시평가 체크 메서드를 진행함
@@ -569,10 +867,15 @@ public class CMY_MemberDAO {
 			
 			int cnt = pstmt.executeUpdate();
 			System.out.println(cnt+"개 임시저장한 값을 사용하여 평가에 반영하였습니다.");
+			pstmt.close();
+			sql="delete from temp_eval where temp_eval_evaluation_id = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, eval_id);
+			pstmt.executeUpdate();	//평가에 반영후 임시저장에 있는 값은 삭제 된다.
 
 		}
 		catch(Exception e){e.printStackTrace();}
-		finally {DBUtil.executeClose(null, pstmt, conn);}	
+		finally {DBUtil.executeClose(rs, pstmt, conn);}	
 	}
 
 	//평가하기에서 점수를 올바르게 작성했는지 검사하는 메서드
@@ -607,6 +910,7 @@ public class CMY_MemberDAO {
 
 		try {
 			conn = DBUtil.getConnection();
+			//평가테이블을 검색하는데 해당하는 평가번호와, 제출현황이 submitted인거 그리고 현재 날짜가 데드라인을 넘겼는지 
 			sql = "select * from EVALUATIONS WHERE EVALUATION_ID = ? and EVALUATION_STATUS_CD = ?";
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, reEval_id);
@@ -614,7 +918,8 @@ public class CMY_MemberDAO {
 			rs = pstmt.executeQuery();
 
 			if(rs.next()) {
-				resultbn = true; //값이 존재하면 (이미 평가를 하였으니까 true 대입)
+				//
+				resultbn = true; //값이 존재하면 (이미 평가를 하였고 아직 마감일 지나지 않았으니 true 대입)
 			}
 		}
 		catch(Exception e) {
@@ -639,10 +944,11 @@ public class CMY_MemberDAO {
 		try {
 			conn = DBUtil.getConnection();
 			//sql은 해당 평가번호를 임시평가 테이블에 검색한다
-			sql = "select * from TEMP_EVAL WHERE TEMP_EVAL_EVALUATION_ID"
-					+ "= ?";
+			sql = "select * from EVALUATIONS WHERE EVALUATION_ID"
+					+ "= ? and EVALUATION_STATUS_CD = ?";
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, eval_id);
+			pstmt.setString(2, "SAVED"); //스테이터스가 SAVED 인지(즉 임시저장 상태인지 검사)
 			rs = pstmt.executeQuery();
 
 			if(rs.next()) {

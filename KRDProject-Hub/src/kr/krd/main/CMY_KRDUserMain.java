@@ -80,8 +80,8 @@ public class CMY_KRDUserMain {
 					}else if(secMenuNo == 3) {
 						continue;
 					}
-				}else if(MenuNo == 2) {//회원가입
-					
+				}else if(MenuNo == 2) {
+					dao.insertMember(); //회원가입
 				}else if(MenuNo == 3) {//공고조회
 					
 				}else if(MenuNo == 4) {
