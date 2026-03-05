@@ -210,7 +210,7 @@ public class USH_KRDAdminMain {
 			int no = io.readIntInRange("입력 > ", 0, 1);
 			
 			if(no == 0) return;
-			if(no == 1) System.out.println("service 아직 미구현입니다.");
+			if(no == 1) roleAppService.pendingListFlow();
 		}
 	}
 }
