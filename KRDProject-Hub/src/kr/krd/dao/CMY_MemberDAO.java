@@ -20,8 +20,8 @@ public class CMY_MemberDAO {
 	String field;						//사용자 분야
 	LocalDate today = LocalDate.now();	//현재날짜를 저장하는 변수
 	LocalDate deadline;					//데드라인의 값을 저장할 변수
-	
-	
+
+
 
 	//로그인 메서드
 	public String userLogin(String user_id, String user_pw) {
@@ -53,120 +53,162 @@ public class CMY_MemberDAO {
 		finally {DBUtil.executeClose(rs, pstmt, conn);}
 		return real_id;
 	}
-	
+
 	//회원가입 메서드(권한 선택 버전)
 	public void insertMember() {
-		
+
 		Connection conn = null;
 		PreparedStatement pstmt = null;
 		String sql = null;
-		
+
 		//비밀번호 검사 정규식 : 특수문자1개 포함하여 8자 이상
 		String passwordRegex =
-		        "^(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).{8,}$";
+				"^(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).{8,}$";
 
 		try {
 			//회원가입 내용 표시
 			System.out.println("회원가입을 진행합니다.");
-	        System.out.println("=".repeat(50));
-	        System.out.print("ID:_________________");
-	        String user_id = br.readLine();
-	        String user_pw;
-	        while(true) {
-	        	System.out.println("※비밀번호 규칙 : 특수문자1개포함, 8자 이상");
-	        	System.out.print("Password:_________________");
-		        user_pw = br.readLine();	
-		        if(user_pw.matches(passwordRegex)) {
-		        	break;
-		        }else {
-		        	System.out.println("비밀번호 규칙에 위배되었습니다.");
-		        }
-	        }
-	        System.out.print("Name:_________________");
-	        String user_name = br.readLine();
-	        System.out.print("e-mail:_________________");
-	        String user_email = br.readLine();
-	        String user_birthDate = null;
-	        while(true) {
-	        	System.out.println("BirthDate:_________________");
-		        System.out.println("ex)1998-03-13");
-		        System.out.print(">>");
-		        user_birthDate = br.readLine();
-		        if(user_birthDate.length() != 10) {
-		        	System.out.println("생년월일을 예시에 맞춰서 입력해주세요");
-		        	continue;
-		        }
-		        break;
-	        }
-	        String user_phoneNo=null;
-	        while(true) {
-	        	System.out.println("PhoneNumber:_________________");
-		        System.out.println("ex)01012345678");
-		        System.out.print(">>");
-		        user_phoneNo = br.readLine();
-		        if(user_phoneNo.length() != 11) {
-		        	System.out.println("전화번호를 예시에 맞게 입력해주세요");
-		        	continue;
-		        }
-		        break;
-	        }
-	        int your_Country;
-	        while(true) {
-	        	System.out.println("		Country");
-		        System.out.println("[1] 한국 [2] 미국 [3] 일본 [4] 중국");
-		        System.out.println("[5] 대만 [6] 캐나다 [7] 영국");
-		        System.out.print("Choose one >>");
-		        your_Country = Integer.parseInt(br.readLine());
-		        if(your_Country > 7 || your_Country < 1) {
-		        	System.out.println("1~7 사이의 숫자를 입력해주세요!");
-		        	System.out.println();
-		        	continue;
-		        }
-		        break;
-	        }
-	    
-	        System.out.print("Address:_________________");
-	        String user_addr = br.readLine();
-	        int your_Gender;
-	        while(true) {
-	        	System.out.println("		Gender");
-		        System.out.print("		[1] male [2] female");
-		        your_Gender = Integer.parseInt(br.readLine());
-		        if(your_Gender > 2 || your_Gender < 1) {
-		        	System.out.println("1 or 2를 입력해주세요");
-		        	System.out.println();
-		        	continue;
-		        }
-		        break;
-	        }
-	        
-	        System.out.print("Affiliation:_________________");
-	        String user_affi = br.readLine();
-	        
-	        while(true) {
-	        	break;
-	        }
-	        System.out.println("		Choose your Field");
-	        System.out.println("[1]의료 [2] 바이오 [3] 로보틱스 [4] 데이터 [5] 기획");
-	        System.out.println("[6] 국방 [7] 교통 [8] 감사 [9] AI [10] 환경 [11] 협약");
-	        System.out.println("[12] 평가 [13] 제도 [14] 정책 [15] 정산 [16] 전기");
-	        System.out.println("[17] 예산 [18] 역사 [19] 에너지 [20] 소재 [21] 반도체");
-	        System.out.println("[22] 운영 [23] 성과");
-	        System.out.print(">>");
-	        int your_field = Integer.parseInt(br.readLine());
-	        
-	        
+			System.out.println("=".repeat(50));
+			System.out.print("ID:_________________");
+			String user_id = br.readLine();
+			String user_pw;
+			while(true) {
+				System.out.println("※비밀번호 규칙 : 특수문자1개포함, 8자 이상");
+				System.out.print("Password:_________________");
+				user_pw = br.readLine();	
+				if(user_pw.matches(passwordRegex)) {
+					break;
+				}else {
+					System.out.println("비밀번호 규칙에 위배되었습니다.");
+				}
+			}
+			System.out.print("Name:_________________");
+			String user_name = br.readLine();
+			System.out.print("e-mail:_________________");
+			String user_email = br.readLine();
+			String user_birthDate = null;
+			while(true) {
+				System.out.println("BirthDate:_________________");
+				System.out.println("ex)1998-03-13");
+				System.out.print(">>");
+				user_birthDate = br.readLine();
+				if(user_birthDate.length() != 10) {
+					System.out.println("생년월일을 예시에 맞춰서 입력해주세요");
+					continue;
+				}
+				break;
+			}
+			String user_phoneNo=null;
+			while(true) {
+				System.out.println("PhoneNumber:_________________");
+				System.out.println("ex)01012345678");
+				System.out.print(">>");
+				user_phoneNo = br.readLine();
+				if(user_phoneNo.length() != 11) {
+					System.out.println("전화번호를 예시에 맞게 입력해주세요");
+					continue;
+				}
+				break;
+			}
+			int your_Country;
+			while(true) {
+				System.out.println("		Country");
+				System.out.println("[1] 한국 [2] 미국 [3] 일본 [4] 중국");
+				System.out.println("[5] 대만 [6] 캐나다 [7] 영국");
+				System.out.print("Choose one >>");
+				
+				try {
+					your_Country = Integer.parseInt(br.readLine());
+					if(your_Country > 7 || your_Country < 1) {
+						System.out.println("1~7 사이의 숫자를 입력해주세요!");
+						System.out.println();
+						continue;
+					}
+					break;
+				}catch(NumberFormatException e) {
+					System.out.println("숫자를 입력하세요");
+				}
+
+			}
+			System.out.print("Address:_________________");
+			String user_addr = br.readLine();
+			int your_Gender;
+			while(true) {
+				System.out.println("		Gender");
+				System.out.println("	[1] male [2] female");
+				System.out.println(">>");
+				
+				try {
+					your_Gender = Integer.parseInt(br.readLine());
+					if(your_Gender > 2 || your_Gender < 1) {
+						System.out.println("1 or 2를 입력해주세요");
+						System.out.println();
+						continue;
+					}
+					break;
+				}catch(NumberFormatException e) {
+					System.out.println("숫자를 입력해주세요");
+				}
+			}
+			int your_affiliation;
+			while(true) {
+				System.out.println("		Choose your Affiliation");
+				System.out.println("[1] DGIST [2] GIST [3] KAIST [4] POSTECH [5] UNIST");
+				System.out.println("[6] 고려대학교 [7] 과학기술정보통신부 [8] 교육부 [9] 국토교통부");
+				System.out.println("[10] 농림축산식품부 [11] 문화체육관광부 [12] 보건복지부 [13] 산업통상자원부");
+				System.out.println("[14] 서울대학교 [15] 성균관대학교 [16] 연세대학교 [17] 중소벤처기업부");
+				System.out.println("[18] 한국전자통신연구원 [19] 한양대학교 [20] 해양수산부 [21] 환경부 [22] 없음");
+				System.out.print(">>");
+				try {
+					your_affiliation = Integer.parseInt(br.readLine());
+					if(your_affiliation > 22 || your_affiliation < 1) {
+						System.out.println("1 ~ 21 사이 숫자를 입력 해주세요");
+						System.out.println();
+						continue;
+					}
+					break;
+				}catch(NumberFormatException e) {
+					System.out.println("숫자를 입력 해주세요");
+				}
+
+
+			}
+
+
+			int your_field;
+			while(true) {
+				System.out.println("		Choose your Field");
+				System.out.println("[1]의료 [2] 바이오 [3] 로보틱스 [4] 데이터 [5] 기획");
+				System.out.println("[6] 국방 [7] 교통 [8] 감사 [9] AI [10] 환경 [11] 협약");
+				System.out.println("[12] 평가 [13] 제도 [14] 정책 [15] 정산 [16] 전기");
+				System.out.println("[17] 예산 [18] 역사 [19] 에너지 [20] 소재 [21] 반도체");
+				System.out.println("[22] 운영 [23] 성과");
+				System.out.print(">>");
+
+				try {
+					your_field = Integer.parseInt(br.readLine());
+					if(your_field > 23 || your_field < 1) {
+						System.out.println("1~ 23 사이의 숫자를 입력 해주세요.");
+						System.out.println();
+						continue;
+					}
+					break;
+				}catch(NumberFormatException e) {
+					System.out.println("숫자를 입력 해주세요");
+				}
+			}
+
 			//JDBC 수행 1,2단계
 			conn = DBUtil.getConnection();
 			//SQL 문 작성
-				sql = "INSERT INTO USERINFO (user_id, user_pwd, user_name, user_email, "
-						+ "user_birth_dt, user_phone_no, user_country_cd, user_addr, " +
-						"user_gender_cd, user_penalty_end_dt, user_role_cd, "
-						+ "user_acct_status_cd, user_affiliation, user_field) "
-						+ "VALUES (?id, ?pw, ?name, ?email, ?birth, ?phone, ?country, ?addr, ?gender, ?role, "
-						+ "?status, ?aff, ?field)";
-				
-			
+			sql = "INSERT INTO USERINFO (user_id, user_pwd, user_name, user_email, "
+					+ "user_birth_dt, user_phone_no, user_country_cd, user_addr, " +
+					"user_gender_cd, user_role_cd, "
+					+ "user_acct_status_cd, user_affiliation, user_field) "
+					+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
+					+ "?, ?, ?)";
+
+
 			//JDBC 수행 3단계
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, user_id); //ID
@@ -175,25 +217,25 @@ public class CMY_MemberDAO {
 			pstmt.setString(4, user_email); //Email
 			pstmt.setString(5, user_birthDate); //Birth
 			pstmt.setString(6, user_phoneNo); //Phone
-			
+
 			//국가 대입 메서드
 			pstmt.setString(7, getCountry(your_Country)); //Country
 			pstmt.setString(8, user_addr); //Address
-			
+
 			if(your_Gender == 1) {
-				pstmt.setString(9, "male"); //Gender : male
+				pstmt.setInt(9, 1); //Gender : male
 			}else if(your_Gender == 2) {
-				pstmt.setString(9, "female");//Gender : female
+				pstmt.setInt(9, 2);//Gender : female
 			}
-			
+
 			pstmt.setString(10, "GST"); //Role : 일반 회원
 			pstmt.setString(11, "ACTIVE"); //Status : ACTIVE
-			pstmt.setString(12, user_affi); //Affiliation
-			
+			pstmt.setString(12, getAffiliation(your_affiliation)); //Affiliation
+
 			//분야 대입 메서드
 			pstmt.setString(13, getField(your_field)); //Field
-			
-			
+
+
 			System.out.println();
 			System.out.println();
 			//JDBC 수행 4단계
@@ -207,7 +249,7 @@ public class CMY_MemberDAO {
 			DBUtil.executeClose(null, pstmt, conn);
 		}
 	}
-	
+
 	//국가 대입 메서드
 	public String getCountry(int no) {
 		String country = null;
@@ -224,7 +266,7 @@ public class CMY_MemberDAO {
 		case 4:
 			country = "CHINA";
 			break;
-			
+
 		case 5:
 			country = "TAIWAN";
 			break;
@@ -235,14 +277,14 @@ public class CMY_MemberDAO {
 			country = "ENGLAND";
 			break;
 		}
-		
+
 		return country;
 	}
-	
+
 	//필드 분야 대입 메서드
 	public String getField(int no) {
 		String field = null;
-		
+
 		switch(no) {
 		case 1:
 			field = "의료";
@@ -313,14 +355,87 @@ public class CMY_MemberDAO {
 		case 23:
 			field = "성과";
 			break;
-		
+
 		}
-		
+
 		return field;
 	}
-	
-	
-	
+
+	public String getAffiliation(int no) {
+		String affiliation = null;
+
+		switch(no) {
+		case 1:
+			affiliation = "DGIST";
+			break;
+		case 2:
+			affiliation = "GIST";
+			break;
+		case 3:
+			affiliation = "KAIST";
+			break;
+		case 4:
+			affiliation = "POSTECH";
+			break;
+		case 5:
+			affiliation = "UNIST";
+			break;
+		case 6:
+			affiliation = "고려대학교";
+			break;
+		case 7:
+			affiliation = "과학기술정보통신부";
+			break;
+		case 8:
+			affiliation = "교육부";
+			break;
+		case 9:
+			affiliation = "국토교통부";
+			break;
+		case 10:
+			affiliation = "농림축산식품부";
+			break;
+		case 11:
+			affiliation = "문화체육관광부";
+			break;
+		case 12:
+			affiliation = "보건복지부";
+			break;
+		case 13:
+			affiliation = "산업통상자원부";
+			break;
+		case 14:
+			affiliation = "서울대학교";
+			break;
+		case 15:
+			affiliation = "성균관대학교";
+			break;
+		case 16:
+			affiliation = "연세대학교";
+			break;
+		case 17:
+			affiliation = "중소벤처기업부";
+			break;
+		case 18:
+			affiliation = "한국전자통신연구원";
+			break;
+		case 19:
+			affiliation = "한양대학교";
+			break;
+		case 20:
+			affiliation = "해양수산부";
+			break;
+		case 21:
+			affiliation = "환경부";
+			break;
+		case 22:
+			affiliation = "무소속";
+			break;
+		}
+
+		return affiliation;
+	}
+
 
 	//사용자의 권한을 반환하는 메서드
 	public String getUserRole(String user_id) {
@@ -649,16 +764,16 @@ public class CMY_MemberDAO {
 						System.out.println("숫자 2만 입력해주세요!");
 					}
 				}
-				
+
 				System.out.println();
 				System.out.println();
 				System.out.println("[1]평가하기");
 				System.out.println("[2]나가기");
 				int do_eval_no = Integer.parseInt(br.readLine());
 				if(do_eval_no == 1) {
-					
-					
-					
+
+
+
 					//재평가 여부를 검사하는 메서드
 					//해당하는 평가번호,스테이터스,마감일을 검사하고
 					//결과 값이 있으면 true를 반환하는 메서드다
@@ -674,13 +789,13 @@ public class CMY_MemberDAO {
 							//재평가대상을 위한 전용 평가 메서드
 							//해당 메서드에서는 평가작성후 나갈 시 임시저장 여부를 묻지 않는다.
 							reSubmiteval(eval_id);
-							
+
 							return;
 						}else if(choose_no == 2) {
 							break;
 						}
 					}
-					
+
 					//임시 평가 체크 메서드
 					boolean checkYN = checkTempEval(eval_id);
 					//checkTempEval메서드에서 임시평가를 사용하면 checkYN에 True값 리턴
@@ -773,7 +888,7 @@ public class CMY_MemberDAO {
 		catch(Exception e){e.printStackTrace();}
 		finally {DBUtil.executeClose(null, pstmt, conn);}	
 	}
-	
+
 	//해당 메서드 역시 동일하게 평가 제출 메서드지만
 	//재평가 대상을 위한 전용 메서드로 만약 점수와 코멘트를 입력하고
 	//제출하지 않고 나갈시 임시저장 여부를 묻지 않고 바로 종료 한다.
@@ -823,7 +938,7 @@ public class CMY_MemberDAO {
 		catch(Exception e){e.printStackTrace();}
 		finally {DBUtil.executeClose(null, pstmt, conn);}	
 	}
-	
+
 
 	//임시평가 내용을 그대로 사용하는 메서드
 	public void useSaveEval(int eval_id) {
@@ -845,7 +960,7 @@ public class CMY_MemberDAO {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, eval_id);		
 			rs = pstmt.executeQuery();
-			
+
 			//임시평가 값을 가져옴
 			if(rs.next()) {
 				temp_eval_no = rs.getInt("TEMP_EVAL_ID");
@@ -864,7 +979,7 @@ public class CMY_MemberDAO {
 			pstmt.setString(2, temp_eval_comment);
 			pstmt.setString(3,"SUBMITTED");
 			pstmt.setInt(4, eval_id);
-			
+
 			int cnt = pstmt.executeUpdate();
 			System.out.println(cnt+"개 임시저장한 값을 사용하여 평가에 반영하였습니다.");
 			pstmt.close();
@@ -957,7 +1072,7 @@ public class CMY_MemberDAO {
 			}else {
 				System.out.println("임시평가한 데이터가 없습니다.");
 			}
-			
+
 			while(checkFlag) {//true면 임시평가한 값이 있음 false면 없음
 				//검색 결과가 있다는것 = 임시저장을 한 경우
 				System.out.println("해당 과제에 대해 임시평가 기록이 존재합니다 해당 평가를 그대로 평가에 사용하시겠습니까?");
@@ -971,7 +1086,7 @@ public class CMY_MemberDAO {
 					//임시평가에 해당 행을 삭제하고 평가하기 메서드를 실행하는 메서드 작성
 					rs.close();
 					pstmt.close();
-					
+
 					sql = "delete from TEMP_EVAL where TEMP_EVAL_EVALUATION_ID = ?";
 					pstmt = conn.prepareStatement(sql);
 					pstmt.setInt(1, eval_id);
@@ -1000,10 +1115,10 @@ public class CMY_MemberDAO {
 		Connection conn = null;
 		PreparedStatement pstmt = null;
 		String sql = null;
-		
+
 		try {
 			conn = DBUtil.getConnection();
-			
+
 			sql = "insert into temp_eval(TEMP_EVAL_ID,TEMP_EVAL_EVALUATION_ID,"
 					+ "TEMP_EVAL_SCORE,TEMP_EVAL_IS) "
 					+ "values(temp_eval_seq.nextval,?,?,?)";
@@ -1011,7 +1126,7 @@ public class CMY_MemberDAO {
 			pstmt.setInt(1, eval_id);
 			pstmt.setInt(2, score);
 			pstmt.setString(3, comment);
-			
+
 			int cnt = pstmt.executeUpdate();
 			System.out.println(cnt+"개의 평가데이터를 임시저장 하였습니다.");
 			pstmt.close();
@@ -1063,6 +1178,50 @@ public class CMY_MemberDAO {
 					//로그아웃
 					return;
 				}else if(rev_choose == 5) {
+					System.out.println("프로그램 종료");
+					System.exit(0);
+				}
+			}
+			catch(Exception e) {e.printStackTrace();}
+			//finally {if(br != null)try{br.close();}catch(IOException e) {}}
+		}
+	}
+
+	//평가목록 화면 메서드
+	public void callGuestMenu(String myCust_id, String myRole, String myField) {
+		cust_id = myCust_id; //UserMain에서 가져온 사용자 ID를 MemberDAO에 있는 cust_id로 삽입
+		role = myRole;	//UserMain에서 가져온 사용자의 권한을 role에 삽입
+		field = myField;
+		System.out.println("전달된 cust_id = [" + cust_id + "]");
+		while(true) {
+			System.out.println("┌────────────────────────────────────────────────────────┐");
+			System.out.println("│							 │");
+			System.out.println("│	국가 연구과제 관리 프로그램	「KRD Hubs」		 │");
+			System.out.println("│							 │");
+			System.out.println("│	1. 공고조회					 │");
+			System.out.println("│	2. 권한신청					 │");
+			System.out.println("│	3. 내정보						 │");
+			System.out.println("│	4. 로그아웃					 │");
+			System.out.println("│	5. 종료						 │");
+			System.out.println("│							 │");
+			System.out.println("│등급 : 일반회원					ver.1.0	 │");
+			System.out.println("└────────────────────────────────────────────────────────┘");
+			System.out.println("［원하시는 메뉴를 선택하세요 ]");
+			System.out.print(">>");
+			try {
+				int gst_choose = Integer.parseInt(br.readLine());
+				if(gst_choose == 1) {
+					//공고조회
+					System.out.println("공고조회임");
+				}else if(gst_choose == 2) {
+					//평가기록조회
+					System.out.println("권한신청");
+				}else if(gst_choose == 3) {
+					//내정보
+				}else if(gst_choose == 4) {
+					//로그아웃
+					return;
+				}else if(gst_choose == 5) {
 					System.out.println("프로그램 종료");
 					System.exit(0);
 				}

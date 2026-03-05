@@ -38,8 +38,8 @@ public class CMY_KRDUserMain {
 			System.out.println("│							 │");
 			System.out.println("│	1. 로그인						 │");
 			System.out.println("│	2. 회원가입					 │");
-			System.out.println("│	3. 공고조회					 │");
-			System.out.println("│	4. 종료						 │");
+			System.out.println("│	3. 종료						 │");
+			System.out.println("│							 │");
 			System.out.println("│							 │");
 			System.out.println("│						ver.1.0	 │");
 			System.out.println("└────────────────────────────────────────────────────────┘");
@@ -128,9 +128,13 @@ public class CMY_KRDUserMain {
 							break;
 						}
 					}else if(role.equals("GST")){
-						System.out.println("GST는 아직 미구현이야...");
-						//로그아웃은 개인 구현
-						break;
+						dao.callGuestMenu(cust_id,role,field);
+						login = dao.logout();
+						cust_id = null;		  //셰션 지우기 1. 유저아이디 NULL
+						role = null;		  //셰션 지우기 2. 유저 권한 NULL
+						if(!login) {//login 세션이 false(로그아웃됨)
+							break;
+						}
 					}else {
 						System.out.println("로그인 했는데 권한이 없어???");
 					}
