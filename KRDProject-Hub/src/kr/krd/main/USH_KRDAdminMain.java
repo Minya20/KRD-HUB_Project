@@ -8,6 +8,7 @@ import kr.util.USH_ConsoleUtil;
 import kr.krd.service.USH_AdminBudgetService;
 import kr.krd.service.USH_AdminStatsService;
 import kr.krd.service.USH_AdminAnnouncementService;
+import kr.krd.service.USH_AdminRoleApplicationService;
 
 public class USH_KRDAdminMain {
 	//콘솔 입력을 받기 위한 BufferedReader
@@ -18,6 +19,7 @@ public class USH_KRDAdminMain {
 	private final USH_AdminBudgetService budgetService;
 	private final USH_AdminStatsService statsService;
 	private final USH_AdminAnnouncementService annService;
+	private final USH_AdminRoleApplicationService roleAppService;
 
 	public USH_KRDAdminMain(BufferedReader br, String adminId) {
 		this.br = br;
@@ -26,6 +28,7 @@ public class USH_KRDAdminMain {
 		this.statsService = new USH_AdminStatsService(br, adminId);
 		this.annService = new USH_AdminAnnouncementService(br, adminId);
 		this.io = new USH_ConsoleUtil(br);
+		this.roleAppService = new USH_AdminRoleApplicationService(br, adminId);
 
 		//adminId는 나중에 changedBy 같은데 쓰려고 저장해둠
 		//this.adminId = adminId;
@@ -66,7 +69,7 @@ public class USH_KRDAdminMain {
 			}else if(no == 4) {
 				callAnnouncementMenu();
 			}else if(no == 5) {
-
+				callRoleMenu();
 			}else if(no == 6) {
 				//로그아웃 서택시 while문 종료
 				System.out.println("시스템 관리자 계정에서 로그아웃합니다.");
@@ -192,6 +195,22 @@ public class USH_KRDAdminMain {
 			if(no == 0) return;
 			if(no == 1) annService.forceChangeAnnStatusFlow();
 					
+		}
+	}
+	
+	//권한 신청 관리 메뉴(서브 메뉴)
+	private void callRoleMenu() throws IOException {
+		while(true) {
+			System.out.println("===== 권한 신청 관리 =====");
+			System.out.println();
+			System.out.println("0.이전 메뉴(뒤로가기)");
+			System.out.println("1.신청 목록 조회");
+			System.out.println();
+			
+			int no = io.readIntInRange("입력 > ", 0, 1);
+			
+			if(no == 0) return;
+			if(no == 1) System.out.println("service 아직 미구현입니다.");
 		}
 	}
 }
