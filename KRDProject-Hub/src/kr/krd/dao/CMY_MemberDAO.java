@@ -1187,7 +1187,7 @@ public class CMY_MemberDAO {
 		}
 	}
 
-	//평가목록 화면 메서드
+	//일반회원 화면 메서드
 	public void callGuestMenu(String myCust_id, String myRole, String myField) {
 		cust_id = myCust_id; //UserMain에서 가져온 사용자 ID를 MemberDAO에 있는 cust_id로 삽입
 		role = myRole;	//UserMain에서 가져온 사용자의 권한을 role에 삽입
@@ -1214,8 +1214,8 @@ public class CMY_MemberDAO {
 					//공고조회
 					System.out.println("공고조회임");
 				}else if(gst_choose == 2) {
-					//평가기록조회
-					System.out.println("권한신청");
+					//권한신청
+					applyRole(cust_id);
 				}else if(gst_choose == 3) {
 					//내정보
 				}else if(gst_choose == 4) {
@@ -1230,7 +1230,82 @@ public class CMY_MemberDAO {
 			//finally {if(br != null)try{br.close();}catch(IOException e) {}}
 		}
 	}
+	//일반 회원 권한 신청
+	public void applyRole(String user_id) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
+		String role = null;
+		
+		try {
+			conn = DBUtil.getConnection();
+			sql = "select role_app_user_id from role_application"
+					+ " where ROLE_APP_USER_ID = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, user_id);
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				System.out.println("[이미 권한 신청이 진행되고 있습니다.]");
+				System.out.println();
+				return;	//만약에 해당 사용자의 권한 신청이 조회가 된다면 리턴함
+			}
+			rs.close();
+			pstmt.close();
+			
+			while(true) {
+				System.out.println();
+				System.out.println("=".repeat(20));
+				System.out.println("권한 신청을 진행합니다.");
+				System.out.println("신청할 권한");
+				System.out.println("[1] 연구자(개인) [2] 연구자(단체) [3] 기관 담당자 [4] 평가위원");
+				try {
+					int your_role = Integer.parseInt(br.readLine());
+					if(your_role > 4 || your_role < 1) {
+						System.out.println("제시된 권한을 보고 올바른 숫자를 입력해주세요.");
+						continue;
+					}
+					switch(your_role) {
+					case 1:
+						role = "RESI";	//개인 연구원
+						break;
+					case 2:
+						role = "RESO";	//단체 연구원
+						break;
+					case 3:
+						role = "AGY";	//기관 담당자
+						break;
+					case 4:
+						role = "REV";	//평가위원
+						break;
+					}
+					break;
+				}catch(NumberFormatException e) {
+					System.out.println("숫자를 입력하세요.");
+				}
+			}
+			System.out.println("	평가 사유[엔터를 누르지 않고 입력 해주세요]");
+			String reason = br.readLine();
+			
+			sql = "insert into role_application("
+					+ "ROLE_APP_ID,ROLE_APP_USER_ID,"
+					+ "ROLE_APP_ROLE_CD, ROLE_APP_APPLY_REASON) "
+					+ "values(role_app_seq.nextval,?,?,?)";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, user_id);
+			pstmt.setString(2, role);
+			pstmt.setString(3, reason);
 
+			int cnt = pstmt.executeUpdate();
+			if(cnt == 1) {
+				System.out.println("권한신청이 완료 되었습니다");
+			}
+			
+
+		}
+		catch(Exception e){e.printStackTrace();}
+		finally {DBUtil.executeClose(null, pstmt, conn);}
+	}
 	//내 정보 보기 메서드
 
 	//로그아웃 메서드
