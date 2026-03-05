@@ -83,8 +83,6 @@ public class CMY_KRDUserMain {
 				}else if(MenuNo == 2) {
 					dao.insertMember(); //회원가입
 				}else if(MenuNo == 3) {//공고조회
-					
-				}else if(MenuNo == 4) {
 					System.out.println("프로그램 종료");
 					break;
 				}
