@@ -6,183 +6,270 @@ import java.io.InputStreamReader;
 import kr.krd.dao.MemberDAO;
 
 public class UserMain {
+	// ------------------------------------------------
+	// ANSI Escape Codes (화려하면서도 절제된 색상)
+	// ------------------------------------------------
+	public static final String RESET = "\u001B[0m";
+	public static final String BOLD = "\u001B[1m";
+	public static final String UNBOLD = "\u001B[22m";
+	
+	public static final String CLR_PRIMARY = "\u001B[36m"; // Cyan (주요 포인트)
+	public static final String CLR_WHT = "\u001B[37m";    // White (기본 텍스트)
+	public static final String CLR_GRY = "\u001B[90m";    // Gray (부제목, 버전)
+	public static final String CLR_ERR = "\u001B[31m";    // Red (에러)
+	public static final String CLR_SUC = "\u001B[32m";    // Green (성공)
+	
+	// UI Elements
+	private static final String LN_SINGLE = "─";
+	private static final String LN_DOUBLE = "═";
+	private static final String INDENT = "      "; // 6 spaces for layout
+
 	private BufferedReader br;
 	private MemberDAO dao;
-	private String cust_id;//로그인한 회원 아이디
-	private String role; //사용자의 역할
+	private String cust_id;
+	private String role; 
 	private String field;
-	private boolean login;//로그인 여부(로그인:true,로그아웃:false)
+	private boolean login;
 
 	public UserMain() {
 		try {
 			br = new BufferedReader(new InputStreamReader(System.in));
 			dao = new MemberDAO();
+			// 콘솔 화면 화면 초기화 (지원하는 터미널에서만 작동)
+			System.out.print("\033[H\033[2J");  
+			System.out.flush();
 			callMenu();
-		}catch(Exception e) {
+		} catch(Exception e) {
+			printError("시스템 초기화 중 예상치 못한 오류가 발생했습니다.");
 			e.printStackTrace();
-		}finally {
-			//자원정리
-			if(br!=null)try {br.close();}catch(IOException e) {}
+		} finally {
+			if(br!=null) try { br.close(); } catch(IOException e) {}
 		}
 	}
 
-	//메뉴
-	private void callMenu()throws IOException{
-		while(true) {
-			System.out.println("┌────────────────────────────────────────────────────────┐");
-			System.out.println("│							 │");
-			System.out.println("│	국가 연구과제 관리 프로그램	「KRD Hubs」		 │");
-			System.out.println("│							 │");
-			System.out.println("│	1. 로그인						 │");
-			System.out.println("│	2. 회원가입					 │");
-			System.out.println("│	3. 종료						 │");
-			System.out.println("│							 │");
-			System.out.println("│							 │");
-			System.out.println("│						ver.1.0	 │");
-			System.out.println("└────────────────────────────────────────────────────────┘");
-			System.out.println("［원하시는 메뉴를 선택하세요 ]");
-			System.out.print(">>");
-			try {
-				int MenuNo = Integer.parseInt(br.readLine());
-				if(MenuNo == 1) {//로그인
-					System.out.println("┌────────────────────────────────────────┐");
-					System.out.println("│					 │ ");
-					System.out.println("│	로그인[1]	 			 │");
-					System.out.println("│					 │");
-					System.out.println("│	ID	________________	 │");
-					System.out.println("│	PW	________________	 │");
-					System.out.println("│					 │");
-					System.out.println("│	아이디 / 비밀번호 찾기 [2]		 │");
-					System.out.println("│					 │");
-					System.out.println("└────────────────────────────────────────┘");
-					System.out.println(">> 진행하실 사항을 선택하세요 [1] : 로그인 | [2] : 아이디/비밀번호 찾기 :  | [3] 뒤로 가기");
-					int secMenuNo = Integer.parseInt(br.readLine());
-					if(secMenuNo == 1) {
-						//로그인 진행
-						System.out.print("ID : ");
-						String user_id = br.readLine();
-						System.out.print("PW : ");
-						String user_pw = br.readLine();
-						//메서드이름(user_id,user_pw);
-						cust_id=dao.userLogin(user_id, user_pw);
-						// cust_id가 0 또는 null이 아니면 : 즉 유저 아이디 값이 존재함.
-						//if(!cust_id.equals("0") && !cust_id.equals(null)) { <-cust_id가 null이면 cust_id.equals(...)자체에서
-																				//NullPointerException 발생 가능
-																				//아래와 같이 변경
-						if(cust_id != null && !cust_id.equals("0")) {
-							login = true;					//사용자의 로그인 상태를 TRUE로 변경함
-							role = dao.getUserRole(cust_id);//사용자의 권한을 반환하는 메서드를 사용하여 role에 해당하는 권한을 넣음
-							field = dao.getUserField(cust_id); //사용자의 분야을 반환하는 메서드를 사용하여 field 변수에 집어넣는다.
-
-						}
-					}else if(secMenuNo == 2) {
-						//아이디/비밀번호 찾기로 진행
-						findIdPwMenu();
-					}else if(secMenuNo == 3) {
-						//뒤로 가기
-						continue;
-					}
-				}else if(MenuNo == 2) {
-					dao.insertMember(); //회원가입
-				}else if(MenuNo == 3) {//공고조회
-					System.out.println("프로그램 종료");
-					break;
-				}
-				else {
-					System.out.println("잘못 입력했습니다.");
-				}
-
-				//로그인시 보여지는 메뉴
-				while(login) {
-					System.out.println("일단 뭐든 로그인으로 들어왔어");
-					if(role.equals("ADM")) {
-						System.out.println("-".repeat(20));
-						System.out.println("어드민으로 진입시 구현될 화면");
-						//로그아웃은 개인 구현
-						System.out.println("-".repeat(20));
-						break;
-					}else if(role.equals("AGY")) {
-						System.out.println("-".repeat(20));
-						System.out.println("기관 관리자로 진입시 구현될 화면");
-						//로그아웃은 개인 구현
-						System.out.println("-".repeat(20));
-						break;
-					}else if(role.equals("RESI")) {
-						System.out.println("-".repeat(20));
-						System.out.println("개인 연구자로 진입시 구현될 화면");
-						//로그아웃은 개인 구현
-						System.out.println("-".repeat(20));
-						break;
-					}else if(role.equals("RESO")) {
-						System.out.println("-".repeat(20));
-						System.out.println("단체 연구자로 진입시 구현될 화면");
-						//로그아웃은 개인 구현
-						System.out.println("-".repeat(20));
-						break;
-					}else if(role.equals("REV")) {
-						dao.callReviewerMenu(cust_id,role,field); //개인 메뉴에 넘어갈 시 유저 아이디, 권한, 분야를 인자로 넣는다.
-						login = dao.logout(); //개인메뉴에서 로그아웃을 하여 로그인에 false를 반환
-						cust_id = null;		  //셰션 지우기 1. 유저아이디 NULL
-						role = null;		  //셰션 지우기 2. 유저 권한 NULL
-						if(!login) {//login 세션이 false(로그아웃됨)
-							break;
-						}
-					}else if(role.equals("GST")){
-						dao.callGuestMenu(cust_id,role,field);
-						login = dao.logout();
-						cust_id = null;		  //셰션 지우기 1. 유저아이디 NULL
-						role = null;		  //셰션 지우기 2. 유저 권한 NULL
-						if(!login) {//login 세션이 false(로그아웃됨)
-							break;
-						}
-					}else {
-						System.out.println("로그인 했는데 권한이 없어???");
-					}
-				}//end of while
-				//System.out.println("일단 프로그램 종료 부분");
-				//System.out.println("권한 : "+role+" 유저 아이디 : "+cust_id);
-
-			}catch(NumberFormatException e) {
-				System.out.println("잘못 입력했습니다.");
-			}
-		}//end of while
-
+	// ------------------------------------------------
+	// UI Helper Methods (깔끔한 출력을 위한 유틸리티)
+	// ------------------------------------------------
+	private void printDrawLine(String start, String middle, String end, String lineType, int width) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(INDENT).append(CLR_GRY).append(start);
+		for(int i=0; i<width; i++) sb.append(lineType);
+		sb.append(end).append(RESET);
+		System.out.println(sb.toString());
 	}
 	
-	//아이디/비밀번호 찾기 메뉴
+	private void printMenuOption(String key, String description) {
+		System.out.print(INDENT + "  " + CLR_PRIMARY + BOLD + "[" + key + "]" + RESET + " ");
+		System.out.println(CLR_WHT + description + RESET);
+	}
+	
+	private void printInputTag(String tag) {
+		System.out.print("\n" + INDENT + CLR_PRIMARY + BOLD + "▶ " + tag + RESET + " : ");
+	}
+	
+	private void printError(String msg) {
+		System.out.println("\n" + INDENT + CLR_ERR + BOLD + "✘ Error: " + UNBOLD + msg + RESET);
+	}
+
+	private void printSuccess(String msg) {
+		System.out.println("\n" + INDENT + CLR_SUC + BOLD + "✔ Success: " + UNBOLD + msg + RESET);
+	}
+
+	// ------------------------------------------------
+	// Screen Outputs (실제 화면 출력)
+	// ------------------------------------------------
+	
+	// 1. 메인 로고 (ASCII Art - 화려함 담당)
+	private void printLogo() {
+		System.out.println(CLR_PRIMARY + BOLD);
+		System.out.println(INDENT + " ██╗  ██╗██████╗ ██████╗     ██╗  ██╗██╗   ██╗██████╗ ███████╗");
+		System.out.println(INDENT + " ██║ ██╔╝██╔══██╗██╔══██╗    ██║  ██║██║   ██║██╔══██╗██╔════╝");
+		System.out.println(INDENT + " █████╔╝ ██████╔╝██║  ██║    ███████║██║   ██║██████╔╝███████╗");
+		System.out.println(INDENT + " ██╔═██╗ ██╔══██╗██║  ██║    ██╔══██║██║   ██║██╔══██╗╚════██║");
+		System.out.println(INDENT + " ██║  ██╗██║  ██║██████╔╝    ██║  ██║╚██████╔╝██████╔╝███████║");
+		System.out.println(INDENT + " ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝     ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝");
+		System.out.println(RESET);
+	}
+
+	// 2. 메인 메뉴화면
+	private void callMenu() throws IOException {
+		while(true) {
+			System.out.println("\n\n"); // Upper padding
+			printLogo();
+			
+			System.out.println(INDENT + CLR_WHT + BOLD + "  국가 연구과제 관리 플랫폼" + RESET + CLR_GRY + " | Version 1.0" + RESET);
+			printDrawLine("┏", LN_SINGLE, "┓", LN_SINGLE, 50);
+			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
+			
+			printMenuOption("1", "시스템 로그인 (Login)");
+			printMenuOption("2", "신규 회원가입 (Sign Up)");
+			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
+			printMenuOption("3", "프로그램 종료 (Exit)");
+			
+			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
+			printDrawLine("┗", LN_SINGLE, "┛", LN_SINGLE, 50);
+			
+			printInputTag("메뉴 선택");
+			
+			try {
+				String input = br.readLine();
+				if(input == null) break;
+				int MenuNo = Integer.parseInt(input);
+				
+				if(MenuNo == 1) {
+					// 로그인 화면 로직
+					if(handleLoginScreen()) {
+						// 로그인 성공 시 권한별 메뉴 진입
+						processRoleMenu();
+					}
+				} else if(MenuNo == 2) {
+					System.out.println("\n" + INDENT + "[ 회원가입 모듈로 이동합니다 ]");
+					dao.insertMember(); 
+				} else if(MenuNo == 3) {
+					System.out.println("\n" + INDENT + CLR_WHT + "KRD Hubs를 종료합니다. 이용해 주셔서 감사합니다." + RESET);
+					break;
+				} else {
+					printError("잘못된 입력입니다. 메뉴 번호를 확인하세요.");
+				}
+			} catch(NumberFormatException e) {
+				printError("숫자만 입력 가능합니다.");
+			}
+		}
+	}
+
+	// 3. 로그인 및 ID/PW 찾기 선택 화면
+	private boolean handleLoginScreen() throws IOException {
+		while(true) {
+			System.out.println("\n");
+			printDrawLine("╔", LN_DOUBLE, "╗", LN_DOUBLE, 40);
+			System.out.println(INDENT + CLR_GRY + "║" + RESET + "  " + CLR_WHT + BOLD + "접속 인증" + RESET);
+			printDrawLine("╠", LN_SINGLE, "╣", LN_SINGLE, 40);
+			System.out.println(INDENT + CLR_GRY + "║" + RESET);
+			
+			printMenuOption("1", "로그인 진행");
+			printMenuOption("2", "아이디 / 비밀번호 찾기");
+			printMenuOption("3", "이전 화면으로");
+			
+			System.out.println(INDENT + CLR_GRY + "║" + RESET);
+			printDrawLine("╚", LN_DOUBLE, "╝", LN_DOUBLE, 40);
+			
+			printInputTag("진행 선택");
+			
+			try {
+				int secMenuNo = Integer.parseInt(br.readLine());
+				if(secMenuNo == 1) {
+					// 실제 로그인 입력 폼
+					System.out.println("\n" + INDENT + CLR_GRY + LN_SINGLE.repeat(42) + RESET);
+					printInputTag("아이디(ID)");
+					String user_id = br.readLine();
+					printInputTag("비밀번호(PW)");
+					String user_pw = br.readLine();
+					System.out.println(INDENT + CLR_GRY + LN_SINGLE.repeat(42) + RESET);
+
+					cust_id = dao.userLogin(user_id, user_pw);
+					
+					if(cust_id != null && !cust_id.equals("0")) {
+						login = true;
+						role = dao.getUserRole(cust_id);
+						field = dao.getUserField(cust_id);
+						printSuccess(cust_id + "님, 환영합니다. 시스템에 접속합니다.");
+						return true; // 로그인 성공
+					} else {
+						printError("인증에 실패했습니다. ID와 PW를 확인하세요.");
+					}
+				} else if(secMenuNo == 2) {
+					findIdPwMenu();
+				} else if(secMenuNo == 3) {
+					return false; // 뒤로 가기
+				} else {
+					printError("잘못된 선택입니다.");
+				}
+			} catch(NumberFormatException e) {
+				printError("숫자를 입력하세요.");
+			}
+		}
+	}
+
+	// 4. 로그인 후 권한별 메뉴 처리 (레이아웃 개선)
+	private void processRoleMenu() throws IOException {
+		while(login) {
+			System.out.println("\n\n" + INDENT + CLR_PRIMARY + BOLD + "========================================");
+			System.out.println(INDENT + "   USER SESSION 활성화 [" + role + "]");
+			System.out.println(INDENT + "========================================" + RESET);
+			
+			// 기존 리스너/게스트 메뉴 호출 (DAO쪽 UI도 이 스타일로 맞추는 것을 추천)
+			if(role.equals("REV")) {
+				dao.callReviewerMenu(cust_id, role, field);
+			} else if(role.equals("GST")) {
+				dao.callGuestMenu(cust_id, role, field);
+			} else if(role.equals("ADM") || role.equals("AGY") || role.equals("RESI") || role.equals("RESO")) {
+				// 미구현 권한에 대한 깔끔한 처리
+				System.out.println("\n" + INDENT + CLR_WHT + "[" + role + "] 권한 전용 화면을 로드 중입니다..." + RESET);
+				System.out.println(INDENT + CLR_GRY + "(현재 버전에서는 데모 화면만 제공됩니다)" + RESET);
+				
+				printInputTag("로그아웃 하시겠습니까? (Y/N)");
+				String logoutInput = br.readLine();
+				if(logoutInput.equalsIgnoreCase("Y")) {
+					// 세션 클리어 로직
+					login = dao.logout(); 
+					cust_id = null;
+					role = null;
+					field = null;
+					printSuccess("안전하게 로그아웃 되었습니다.");
+					break;
+				}
+			} else {
+				printError("정의되지 않은 권한입니다. 관리자에게 문의하세요.");
+				login = false;
+				break;
+			}
+			
+			// DAO 메뉴에서 돌아왔을 때 로그인 상태 확인
+			if(!login) {
+				break;
+			}
+		}
+	}
+	
+	// 5. 아이디/비밀번호 찾기 메뉴 (깔끔하게 정리)
 	public void findIdPwMenu() {
 		while(true) {
 			try {
-				System.out.println();
-				System.out.println("┌───────────────────────────────┐");
-				System.out.println("│   아이디 / 비밀번호 찾기      │");
-				System.out.println("├───────────────────────────────┤");
-				System.out.println("│ 1. 아이디 찾기                │");
-				System.out.println("│ 2. 비밀번호 재설정            │");
-				System.out.println("│ 3. 뒤로가기                   │");
-				System.out.println("└───────────────────────────────┘");
-				System.out.print(">> ");
+				System.out.println("\n");
+				printDrawLine("┌", LN_SINGLE, "┐", LN_SINGLE, 35);
+				System.out.println(INDENT + "┃  " + CLR_WHT + BOLD + "계정 정보 찾기" + RESET);
+				printDrawLine("├", LN_SINGLE, "┤", LN_SINGLE, 35);
+				System.out.println(INDENT + "┃");
+				printMenuOption("1", "아이디(ID) 찾기");
+				printMenuOption("2", "비밀번호 재설정");
+				printMenuOption("3", "이전 화면으로");
+				System.out.println(INDENT + "┃");
+				printDrawLine("└", LN_SINGLE, "┘", LN_SINGLE, 35);
+				
+				printInputTag("선택");
 
 				int menu = Integer.parseInt(br.readLine());
 
 				if(menu == 1) {
 					dao.findUserId();
-				}else if(menu == 2) {
+				} else if(menu == 2) {
 					dao.resetPassword();
-				}else if(menu == 3) {
-					return;
-				}else {
-					System.out.println("잘못 입력했습니다.");
+				} else if(menu == 3) {
+					return; // 뒤로가기
+				} else {
+					printError("잘못된 선택입니다.");
 				}
-			}catch(NumberFormatException e) {
-				System.out.println("숫자를 입력해주세요.");
-			}catch(Exception e) {
-				e.printStackTrace();
+			} catch(NumberFormatException e) {
+				printError("숫자를 입력해주세요.");
+			} catch(Exception e) {
+				printError("오류가 발생했습니다.");
 			}
 		}
 	}
 
 	public static void main(String[] args) {
+		// ANSI Escape 코드를 지원하지 않는 일부 윈도우 CMD를 위한 설정이 필요할 수 있으나,
+		// 최신 터미널(VSCode, IntelliJ, Windows Terminal)에서는 대개 잘 작동합니다.
 		new UserMain();
 	}
 }
