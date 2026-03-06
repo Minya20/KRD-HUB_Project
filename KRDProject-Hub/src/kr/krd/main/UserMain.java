@@ -106,7 +106,7 @@ public class UserMain {
 			
 			printMenuOption("1", "시스템 로그인 (Login)");
 			printMenuOption("2", "신규 회원가입 (Sign Up)");
-			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
+			
 			printMenuOption("3", "프로그램 종료 (Exit)");
 			
 			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
@@ -151,7 +151,7 @@ public class UserMain {
 			
 			printMenuOption("1", "로그인 진행");
 			printMenuOption("2", "아이디 / 비밀번호 찾기");
-			printMenuOption("3", "이전 화면으로");
+			printMenuOption("0", "이전 화면으로");
 			
 			System.out.println(INDENT + CLR_GRY + "║" + RESET);
 			printDrawLine("╚", LN_DOUBLE, "╝", LN_DOUBLE, 40);
@@ -182,7 +182,7 @@ public class UserMain {
 					}
 				} else if(secMenuNo == 2) {
 					findIdPwMenu();
-				} else if(secMenuNo == 3) {
+				} else if(secMenuNo == 0) {
 					return false; // 뒤로 가기
 				} else {
 					printError("잘못된 선택입니다.");
@@ -245,7 +245,7 @@ public class UserMain {
 				System.out.println(INDENT + "┃");
 				printMenuOption("1", "아이디(ID) 찾기");
 				printMenuOption("2", "비밀번호 재설정");
-				printMenuOption("3", "이전 화면으로");
+				printMenuOption("0", "이전 화면으로");
 				System.out.println(INDENT + "┃");
 				printDrawLine("└", LN_SINGLE, "┘", LN_SINGLE, 35);
 				
@@ -257,7 +257,7 @@ public class UserMain {
 					dao.findUserId();
 				} else if(menu == 2) {
 					dao.resetPassword();
-				} else if(menu == 3) {
+				} else if(menu == 0) {
 					return; // 뒤로가기
 				} else {
 					printError("잘못된 선택입니다.");
