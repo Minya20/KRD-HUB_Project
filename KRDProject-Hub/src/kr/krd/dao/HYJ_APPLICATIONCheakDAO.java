@@ -63,6 +63,8 @@ public class HYJ_APPLICATIONCheakDAO {
                 if (sel == 1) {
                     System.out.print("조회할 신청번호 입력 : ");
                     int appId = Integer.parseInt(br.readLine());
+                    
+                    //아래 메서드를 활용하는 지점 
                     detailApp(appId);
                 } else if (sel == 2) {
                     return;

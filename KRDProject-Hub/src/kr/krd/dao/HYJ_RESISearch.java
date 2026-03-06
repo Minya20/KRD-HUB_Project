@@ -41,6 +41,7 @@ public class HYJ_RESISearch {
 					int sel = Integer.parseInt(br.readLine());
 					if(sel == 1) {
 						System.out.print("자세히 볼 아이디를 입력해주세요.");
+						/*아래 메서드 활용 부분*/
 						String user_id = br.readLine();
 						RESISearchDetail(user_id);
 					}else if(sel == 2) {

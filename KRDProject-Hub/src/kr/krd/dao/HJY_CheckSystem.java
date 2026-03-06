@@ -40,9 +40,9 @@ public class HJY_CheckSystem {
                 return;
             }
 
-            String status = rs.getString("ANNOUNCEMENT_STATUS");
-            int cap = rs.getInt("ANNOUNCEMENT_RECRUIT_CAP");
-            String field = rs.getString("ANNOUNCEMENT_FIELD");
+            String status = rs.getString("ANNOUNCEMENT_STATUS");//모집중인지 상태 체크
+            int cap = rs.getInt("ANNOUNCEMENT_RECRUIT_CAP");//모집인원
+            String field = rs.getString("ANNOUNCEMENT_FIELD");//분야 체크
 
             if (!"공고중".equals(status)) {
                 System.out.println("현재 모집중인 공고가 아닙니다.");
@@ -159,7 +159,7 @@ public class HJY_CheckSystem {
             int applicationId = 0;
 
             pstmt = conn.prepareStatement(
-                    "SELECT app_seq.currval FROM dual");
+                    "SELECT app_seq.currval FROM dual");//방금 시퀀스로 만든 값을 반환하라는 sql문
 
             rs = pstmt.executeQuery();
 
