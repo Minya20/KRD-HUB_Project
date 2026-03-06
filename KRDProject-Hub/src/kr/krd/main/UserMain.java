@@ -3,6 +3,8 @@ package kr.krd.main;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+
+import kr.krd.dao.CMY_MemberDAO;
 import kr.krd.dao.MemberDAO;
 
 public class UserMain {
@@ -24,7 +26,8 @@ public class UserMain {
 	private static final String INDENT = "      ";
 
 	private BufferedReader br;
-	private MemberDAO dao;
+	private MemberDAO dao;	//공통클래스
+	private CMY_MemberDAO revdao; //평가위원클래스
 	private String cust_id;
 	private String role; 
 	private String field;
@@ -34,6 +37,7 @@ public class UserMain {
 		try {
 			br = new BufferedReader(new InputStreamReader(System.in));
 			dao = new MemberDAO();
+			revdao = new CMY_MemberDAO();
 			// 콘솔 화면 화면 초기화 (지원하는 터미널에서만 작동)
 			System.out.print("\033[H\033[2J");  
 			System.out.flush();
@@ -198,7 +202,7 @@ public class UserMain {
 			
 			// 기존 리스너/게스트 메뉴 호출 (DAO쪽 UI도 이 스타일로 맞추는 것을 추천)
 			if(role.equals("REV")) {
-				dao.callReviewerMenu(cust_id, role, field);
+				revdao.callReviewerMenu(cust_id, role, field);
 			} else if(role.equals("GST")) {
 				callGuestMenu(cust_id, role, field);
 			} else if(role.equals("ADM") || role.equals("AGY") || role.equals("RESI") || role.equals("RESO")) {

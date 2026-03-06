@@ -54,7 +54,7 @@ public class CMY_MemberDAO {
 		return real_id;
 	}
 
-	//회원가입 메서드(권한 선택 버전)
+	//회원가입 메서드(일반회원 버전)
 	public void insertMember() {
 
 		Connection conn = null;
@@ -173,8 +173,6 @@ public class CMY_MemberDAO {
 
 
 			}
-
-
 			int your_field;
 			while(true) {
 				System.out.println("		Choose your Field");
@@ -436,6 +434,83 @@ public class CMY_MemberDAO {
 		return affiliation;
 	}
 
+	//비밀번호 재설정
+	public void resetPassword() {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
+		
+		//비밀번호 검사 정규식 
+		String passwordRegex =
+				"^(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).{8,}$";
+		
+		try {
+			System.out.println();
+			System.out.println("[비밀번호 재설정]");
+			System.out.print("아이디 : ");
+			String userId = br.readLine();
+			System.out.print("이름 : ");
+			String userName = br.readLine();
+			System.out.print("이메일 : ");
+			String userEmail = br.readLine();
+			
+			conn = DBUtil.getConnection();
+			sql = "SELECT user_id FROM userInfo WHERE user_id = ? AND user_name = ? AND user_email = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userId);
+			pstmt.setString(2, userName);
+			pstmt.setString(3, userEmail);
+			
+			rs = pstmt.executeQuery();
+			
+			if(!rs.next()) {
+				System.out.println("일치하는 회원 정보가 없습니다.");
+				return;
+			}
+			
+			rs.close();
+			pstmt.close();
+			
+			String newPw;
+			while(true) {
+				System.out.println("※ 새 비밀번호 규칙 : 특수문자 1개 포함, 8자 이상");
+				System.out.print("새 비밀번호 : ");
+				newPw = br.readLine();
+				
+				if(!newPw.matches(passwordRegex)) {
+					System.out.println("비밀번호 규칙에 맞지 않습니다.");
+					continue;
+				}
+				
+				System.out.print("새 비밀번호 확인 : ");
+				String confirmPw = br.readLine();
+				
+				if(!newPw.equals(confirmPw)) {
+					System.out.println("비밀번호 확인이 일치하지 않습니다.");
+					continue;
+				}
+				break;
+			}
+			
+			sql = "UPDATE userInfo SET user_pwd = ? WHERE user_id = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, newPw);
+			pstmt.setString(2, userId);
+			
+			int count = pstmt.executeUpdate();
+			
+			if(count == 1) {
+				System.out.println("비밀번호가 성공적으로 변경되었습니다.");
+			}else {
+				System.out.println("비밀번호 변경에 실패했습니다.");
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+		}finally {
+			DBUtil.executeClose(rs, pstmt, conn);
+		}
+	}
 
 	//사용자의 권한을 반환하는 메서드
 	public String getUserRole(String user_id) {
@@ -619,6 +694,7 @@ public class CMY_MemberDAO {
 					System.out.println("┌───────────────────────────────┐");
 					System.out.println("│평가할 대상 목록이 없습니다.		│");
 					System.out.println("└───────────────────────────────┘");
+					return;
 				}
 				System.out.println();
 				System.out.println();
@@ -654,6 +730,7 @@ public class CMY_MemberDAO {
 			String ann_title="";			//공고명
 			String ann_desc="";			//공고 설명
 			String ann_budget="";	//총 예산
+			String ann_field="";
 
 			int app_budget_amt=0;		//신청자의 요구 예산
 			String app_user_id="";		//신청자 아이디
@@ -675,13 +752,14 @@ public class CMY_MemberDAO {
 						+ "		a.APPLICATION_ID,\r\n"
 						+ "		a.APPLICATION_BUDGET_AMT,\r\n"
 						+ "		a.APPLICATION_USER_ID,\r\n"
-						+ "        a.APPLICATION_ATTACH_PATH,\r\n"
-						+ "        ag.AGENCY_AGY_NAME,\r\n"
+						+ "     a.APPLICATION_ATTACH_PATH,\r\n"
+						+ "     ag.AGENCY_AGY_NAME,\r\n"
 						+ "		an.ANNOUNCEMENT_START_DT,\r\n"
-						+ "        an.ANNOUNCEMENT_END_DT,\r\n"
+						+ "     an.ANNOUNCEMENT_END_DT,\r\n"
 						+ "		an.ANNOUNCEMENT_TITLE,\r\n"
+						+ "		an.ANNOUNCEMENT_FIELD,\r\n"
 						+ "		an.ANNOUNCEMENT_DESC,\r\n"
-						+ "        an.ANNOUNCEMENT_TOTAL_BUDGET\r\n"
+						+ "     an.ANNOUNCEMENT_TOTAL_BUDGET\r\n"
 						+ "FROM EVALUATIONS e\r\n"
 						+ "JOIN APPLICATIONS a \r\n"
 						+ "ON e.EVALUATION_APPLICATION_ID = a.APPLICATION_ID\r\n"
@@ -714,6 +792,7 @@ public class CMY_MemberDAO {
 					ann_title = rs.getString("ANNOUNCEMENT_TITLE");			//공고명
 					ann_desc = rs.getString("ANNOUNCEMENT_DESC");			//공고 설명
 					ann_budget = rs.getString("ANNOUNCEMENT_TOTAL_BUDGET");	//총 예산
+					ann_field = rs.getString("ANNOUNCEMENT_FIELD");			//신청 분야
 
 					app_budget_amt = rs.getInt("APPLICATION_BUDGET_AMT");		//신청자의 요구 예산
 					app_user_id = rs.getString("APPLICATION_USER_ID");		//신청자 아이디
@@ -725,24 +804,25 @@ public class CMY_MemberDAO {
 						eval_comment = "";
 					}
 					System.out.println("");
-					System.out.print("평가번호\t");
-					System.out.print("과제명\t\t\t");
-					System.out.print("신청자\t");
-					System.out.print("기관명\t\t");
-					System.out.print("분야\t");
-					System.out.print("평가 상태\t\t");
-					System.out.print("평가 마감일\t");
-					System.out.print("연구 수행 기간\n");
-					System.out.println("=".repeat(100));
-					System.out.print(eval_id+"\t");
-					System.out.print(ann_title+"\t");
-					System.out.print(app_user_id+"\t");
-					System.out.print(ag_name+"\t\t");
-					System.out.print(eval_field+"\t");
-					System.out.print(eval_status+"\t");
-					System.out.print(eval_deadline+"\t");
-					System.out.print(ann_start_dt+"-"+ann_end_dt+"\n");
-					System.out.println(eval_rev_id);
+					System.out.println("=".repeat(50));
+					System.out.print("과제명 : "+ ann_title +"\n");
+					System.out.print("신청자 ID : " + app_user_id + "\n");
+					
+					System.out.print("기관명 : "+ ag_name +"\t\t\t");
+					System.out.printf("신청예산 : %,d원\n",app_budget_amt);
+					System.out.print("신청 분야 : "+ ann_field +"\n");
+					System.out.print("평가 상태 : "+ eval_status +"\n");
+					System.out.print("평가 마감일 : " + deadline + "\n");
+					System.out.print("평가 점수 : "+ eval_score +" \n");
+					System.out.println("-".repeat(70));
+					System.out.println("	평가 의견");
+					int commentLeng = eval_comment.length();
+					int lengstartcnt = 0;
+					for(int i = 0; i < eval_comment.length(); i += 40) {
+					    int end = Math.min(i + 40, eval_comment.length());
+					    System.out.println(eval_comment.substring(i, end));
+					}
+					System.out.println("=".repeat(50));
 				}else {
 					System.out.println("┌────────────────────────────────────┐");
 					System.out.println("│본인의 평가목록에 존재하는 번호를 입력하세요! │");
@@ -857,6 +937,7 @@ public class CMY_MemberDAO {
 					pstmt.setString(3, submit);
 					int cnt = pstmt.executeUpdate();
 					System.out.println(cnt + "건의 평가를 작성 완료 하였습니다");
+					evalCount(cust_id);
 					break;
 				}else if(save_eval_no == 2) {
 					//나가기를 했을 때 작성한 평가에 대해 임시저장 여부를 묻는다.
@@ -987,10 +1068,45 @@ public class CMY_MemberDAO {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, eval_id);
 			pstmt.executeUpdate();	//평가에 반영후 임시저장에 있는 값은 삭제 된다.
+			pstmt.close();
+			
+			evalCount(cust_id); //평가위원의 평가 카운트를 1 늘리는 메서드
 
 		}
 		catch(Exception e){e.printStackTrace();}
 		finally {DBUtil.executeClose(rs, pstmt, conn);}	
+	}
+	
+	public void evalCount(String rev_id) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
+		int revCount =0;
+		
+		try {
+			conn = DBUtil.getConnection();
+			sql = "select EVALUATOR_EVAL_CNT from evaluator where evaluator_reviewer_id = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, rev_id);
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				revCount = rs.getInt("EVALUATOR_EVAL_CNT");
+			}
+			rs.close();
+			pstmt.close();
+			
+			sql = "update EVALUATOR set EVALUATOR_EVAL_CNT = ? where EVALUATOR_REVIEWER_ID = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, ++revCount);
+			pstmt.setString(2, rev_id);
+			pstmt.executeUpdate();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}finally {
+			DBUtil.executeClose(null, pstmt, conn);
+		}
 	}
 
 	//평가하기에서 점수를 올바르게 작성했는지 검사하는 메서드
@@ -1047,7 +1163,6 @@ public class CMY_MemberDAO {
 
 
 	//임시평가 체크 메서드
-	//아직 임시평가값을 사용하는 부분 분기를 완성해야함
 	public boolean checkTempEval(int eval_id) {
 
 		Connection conn = null;
@@ -1068,11 +1183,7 @@ public class CMY_MemberDAO {
 
 			if(rs.next()) {
 				checkFlag = true;
-
-			}else {
-				System.out.println("임시평가한 데이터가 없습니다.");
 			}
-
 			while(checkFlag) {//true면 임시평가한 값이 있음 false면 없음
 				//검색 결과가 있다는것 = 임시저장을 한 경우
 				System.out.println("해당 과제에 대해 임시평가 기록이 존재합니다 해당 평가를 그대로 평가에 사용하시겠습니까?");
@@ -1142,24 +1253,112 @@ public class CMY_MemberDAO {
 		finally {DBUtil.executeClose(null, pstmt, conn);}	
 	}
 
-
+	
+	public void myInfo(String myCust_id) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
+		int choose_no;
+		
+		try {
+			conn = DBUtil.getConnection();
+			sql = "select u.user_id, u.user_name, u.user_email, u.user_birth_dt, \r\n"
+					+ "u.user_addr, u.user_country_cd, u.user_gender_cd, u.user_affiliation, \r\n"
+					+ "u.user_field, e.EVALUATOR_EVAL_CNT, u.user_created_at from userinfo u\r\n"
+					+ "join evaluator e\r\n"
+					+ "on u.user_id = e.EVALUATOR_REVIEWER_ID\r\n"
+					+ "where u.user_id = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, myCust_id);
+			rs = pstmt.executeQuery();
+			
+			if(rs.next()) {
+				System.out.println();
+				System.out.println("    		내 정보");
+				System.out.println("-".repeat(40));
+				System.out.println("ID : " + rs.getString("user_id"));
+				System.out.println("이름 : " + rs.getString("user_name"));
+				System.out.println("이메일 : " + rs.getString("user_email"));
+				
+				String birth = rs.getString("user_birth_dt");
+				System.out.println("생년월일 : "
+				+birth.substring(0, 4)+"년 "+birth.substring(4, 6)
+				+ "월 " + birth.substring(6, 8) + "일");
+				
+				System.out.println("주소 : " + rs.getString("user_addr"));
+				System.out.println("국적 : " + rs.getString("user_country_cd"));
+				
+				int gender = rs.getInt("user_gender_cd");
+				if(gender == 1) {
+					System.out.println("성별 : 남성");
+				}else {
+					System.out.println("성별 : 여성");
+				}
+				if(rs.getString("user_affiliation") == null) {
+					System.out.println("소속 : 무소속");
+				}
+				System.out.println("소속 : " + rs.getString("user_affiliation"));
+				System.out.println("분야 : " + rs.getString("user_field"));
+				System.out.println("평가 횟수 : " + rs.getInt("evaluator_eval_cnt"));
+				String myDate = rs.getString("user_created_at");
+				System.out.println("계정 생성 날짜 : " + myDate.substring(0, 4) + "년 " +
+						myDate.substring(5, 7) + "월 " + myDate.substring(8, 10) + 
+						"일 " + myDate.substring(11, 13) + "시 " + 
+						myDate.substring(14, 16) + "분 " + myDate.substring(17, 19) +
+						"초");
+				
+				while(true) {
+					System.out.println();
+					System.out.println();
+					System.out.println("[1] 비밀번호 변경");
+					System.out.println("[2] 나가기");
+					try {
+						choose_no = Integer.parseInt(br.readLine());
+						if(choose_no > 2 || choose_no < 1) {
+							System.out.println("1 혹은 2를 입력 해주세요.");
+							continue;
+						}
+						break;
+					}
+					catch(NumberFormatException e) {
+						System.out.println("숫자를 입력 해주세요.");
+					}
+					
+				}
+				switch(choose_no) {
+				case 1:
+					resetPassword();
+					break;
+				
+				case 2:
+					return;
+				}
+			}
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		finally {
+			DBUtil.executeClose(rs, pstmt, conn);
+		}
+	}
 
 	//평가목록 화면 메서드
 	public void callReviewerMenu(String myCust_id, String myRole, String myField) {
 		cust_id = myCust_id; //UserMain에서 가져온 사용자 ID를 MemberDAO에 있는 cust_id로 삽입
 		role = myRole;	//UserMain에서 가져온 사용자의 권한을 role에 삽입
 		field = myField;
-		System.out.println("전달된 cust_id = [" + cust_id + "]");
 		while(true) {
 			System.out.println("┌────────────────────────────────────────────────────────┐");
 			System.out.println("│							 │");
 			System.out.println("│	국가 연구과제 관리 프로그램	「KRD Hubs」		 │");
 			System.out.println("│							 │");
 			System.out.println("│	1. 평가배정목록조회					 │");
-			System.out.println("│	2. 평가기록조회					 │");
-			System.out.println("│	3. 내정보						 │");
-			System.out.println("│	4. 로그아웃					 │");
-			System.out.println("│	5. 종료						 │");
+			System.out.println("│	2. 내정보						 │");
+			System.out.println("│	3. 로그아웃					 │");
+			System.out.println("│	4. 종료						 │");
+			System.out.println("│							 │");
 			System.out.println("│							 │");
 			System.out.println("│등급 : 평가위원					ver.1.0	 │");
 			System.out.println("└────────────────────────────────────────────────────────┘");
@@ -1171,13 +1370,11 @@ public class CMY_MemberDAO {
 					//평가배정목록조회
 					readEval();
 				}else if(rev_choose == 2) {
-					//평가기록조회
+					myInfo(cust_id);
 				}else if(rev_choose == 3) {
-					//내정보
-				}else if(rev_choose == 4) {
 					//로그아웃
 					return;
-				}else if(rev_choose == 5) {
+				}else if(rev_choose == 4) {
 					System.out.println("프로그램 종료");
 					System.exit(0);
 				}
