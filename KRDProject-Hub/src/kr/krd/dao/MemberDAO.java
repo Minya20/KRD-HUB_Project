@@ -602,49 +602,7 @@ public class MemberDAO {
 	}
 
 
-	//일반회원 화면 메서드
-	public void callGuestMenu(String myCust_id, String myRole, String myField) {
-		cust_id = myCust_id; //UserMain에서 가져온 사용자 ID를 MemberDAO에 있는 cust_id로 삽입
-		role = myRole;	//UserMain에서 가져온 사용자의 권한을 role에 삽입
-		field = myField;
-		System.out.println("전달된 cust_id = [" + cust_id + "]");
-		while(true) {
-			System.out.println("┌────────────────────────────────────────────────────────┐");
-			System.out.println("│							 │");
-			System.out.println("│	국가 연구과제 관리 프로그램	「KRD Hubs」		 │");
-			System.out.println("│							 │");
-			System.out.println("│	1. 공고조회					 │");
-			System.out.println("│	2. 권한신청					 │");
-			System.out.println("│	3. 내정보						 │");
-			System.out.println("│	4. 로그아웃					 │");
-			System.out.println("│	5. 종료						 │");
-			System.out.println("│							 │");
-			System.out.println("│등급 : 일반회원					ver.1.0	 │");
-			System.out.println("└────────────────────────────────────────────────────────┘");
-			System.out.println("［원하시는 메뉴를 선택하세요 ]");
-			System.out.print(">>");
-			try {
-				int gst_choose = Integer.parseInt(br.readLine());
-				if(gst_choose == 1) {
-					//공고조회
-					System.out.println("공고조회임");
-				}else if(gst_choose == 2) {
-					//권한신청
-					applyRole(cust_id);
-				}else if(gst_choose == 3) {
-					//내정보
-				}else if(gst_choose == 4) {
-					//로그아웃
-					return;
-				}else if(gst_choose == 5) {
-					System.out.println("프로그램 종료");
-					System.exit(0);
-				}
-			}
-			catch(Exception e) {e.printStackTrace();}
-			//finally {if(br != null)try{br.close();}catch(IOException e) {}}
-		}
-	}
+
 	//일반 회원 권한 신청
 	public void applyRole(String user_id) {
 		Connection conn = null;
@@ -728,46 +686,4 @@ public class MemberDAO {
 		return false;
 	}
 	
-	//평가목록 화면 메서드
-	public void callReviewerMenu(String myCust_id, String myRole, String myField) {
-		cust_id = myCust_id; //UserMain에서 가져온 사용자 ID를 MemberDAO에 있는 cust_id로 삽입
-		role = myRole;	//UserMain에서 가져온 사용자의 권한을 role에 삽입
-		field = myField;
-		System.out.println("전달된 cust_id = [" + cust_id + "]");
-		while(true) {
-			System.out.println("┌────────────────────────────────────────────────────────┐");
-			System.out.println("│							 │");
-			System.out.println("│	국가 연구과제 관리 프로그램	「KRD Hubs」		 │");
-			System.out.println("│							 │");
-			System.out.println("│	1. 평가배정목록조회					 │");
-			System.out.println("│	2. 평가기록조회					 │");
-			System.out.println("│	3. 내정보						 │");
-			System.out.println("│	4. 로그아웃					 │");
-			System.out.println("│	5. 종료						 │");
-			System.out.println("│							 │");
-			System.out.println("│등급 : 평가위원					ver.1.0	 │");
-			System.out.println("└────────────────────────────────────────────────────────┘");
-			System.out.println("［원하시는 메뉴를 선택하세요 ]");
-			System.out.print(">>");
-			try {
-				int rev_choose = Integer.parseInt(br.readLine());
-				if(rev_choose == 1) {
-					//평가배정목록조회
-					readEval();
-				}else if(rev_choose == 2) {
-					//평가기록조회
-				}else if(rev_choose == 3) {
-					//내정보
-				}else if(rev_choose == 4) {
-					//로그아웃
-					return;
-				}else if(rev_choose == 5) {
-					System.out.println("프로그램 종료");
-					System.exit(0);
-				}
-			}
-			catch(Exception e) {e.printStackTrace();}
-			//finally {if(br != null)try{br.close();}catch(IOException e) {}}
-		}
-	}
 }

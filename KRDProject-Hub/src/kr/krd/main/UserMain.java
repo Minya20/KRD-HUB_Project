@@ -7,22 +7,21 @@ import kr.krd.dao.MemberDAO;
 
 public class UserMain {
 	// ------------------------------------------------
-	// ANSI Escape Codes (화려하면서도 절제된 색상)
+	// ANSI Escape Codes & UI Elements
 	// ------------------------------------------------
 	public static final String RESET = "\u001B[0m";
 	public static final String BOLD = "\u001B[1m";
 	public static final String UNBOLD = "\u001B[22m";
 	
-	public static final String CLR_PRIMARY = "\u001B[36m"; // Cyan (주요 포인트)
-	public static final String CLR_WHT = "\u001B[37m";    // White (기본 텍스트)
-	public static final String CLR_GRY = "\u001B[90m";    // Gray (부제목, 버전)
-	public static final String CLR_ERR = "\u001B[31m";    // Red (에러)
-	public static final String CLR_SUC = "\u001B[32m";    // Green (성공)
+	public static final String CLR_PRIMARY = "\u001B[36m"; // Cyan
+	public static final String CLR_WHT = "\u001B[37m";    // White
+	public static final String CLR_GRY = "\u001B[90m";    // Gray
+	public static final String CLR_ERR = "\u001B[31m";    // Red
+	public static final String CLR_SUC = "\u001B[32m";    // Green
 	
-	// UI Elements
 	private static final String LN_SINGLE = "─";
 	private static final String LN_DOUBLE = "═";
-	private static final String INDENT = "      "; // 6 spaces for layout
+	private static final String INDENT = "      ";
 
 	private BufferedReader br;
 	private MemberDAO dao;
@@ -201,7 +200,7 @@ public class UserMain {
 			if(role.equals("REV")) {
 				dao.callReviewerMenu(cust_id, role, field);
 			} else if(role.equals("GST")) {
-				dao.callGuestMenu(cust_id, role, field);
+				callGuestMenu(cust_id, role, field);
 			} else if(role.equals("ADM") || role.equals("AGY") || role.equals("RESI") || role.equals("RESO")) {
 				// 미구현 권한에 대한 깔끔한 처리
 				System.out.println("\n" + INDENT + CLR_WHT + "[" + role + "] 권한 전용 화면을 로드 중입니다..." + RESET);
@@ -263,6 +262,48 @@ public class UserMain {
 				printError("숫자를 입력해주세요.");
 			} catch(Exception e) {
 				printError("오류가 발생했습니다.");
+			}
+		}
+	}
+
+	// 2. 일반회원 화면 (추가된 부분 UI 개선)
+	public void callGuestMenu(String myCust_id, String myRole, String myField) {
+		this.cust_id = myCust_id;
+		this.role = myRole;
+		this.field = myField;
+
+		while(true) {
+			System.out.println("\n\n" + INDENT + CLR_PRIMARY + BOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + RESET);
+			System.out.println(INDENT + BOLD + "   KRD Hubs | " + RESET + CLR_WHT + "일반회원 메인메뉴" + RESET);
+			System.out.println(INDENT + CLR_PRIMARY + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + RESET);
+			System.out.println(INDENT + CL_GRY + "  접속 계정: " + RESET + cust_id + CL_GRY + " | 등급: 일반회원" + RESET);
+			System.out.println();
+
+			printMenuOption("1", "공고 조회 (Announcement)");
+			printMenuOption("2", "권한 신청 (Request Role)");
+			printMenuOption("3", "내 정보 관리 (My Profile)");
+			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
+			printMenuOption("4", "시스템 로그아웃 (Logout)");
+			printMenuOption("5", "프로그램 종료 (Exit)");
+
+			printInputTag("메뉴 선택");
+			try {
+				int gst_choose = Integer.parseInt(br.readLine());
+				if(gst_choose == 1) {
+					System.out.println("\n" + INDENT + CLR_WHT + ">> 공고 조회 모듈을 로드합니다..." + RESET);
+				} else if(gst_choose == 2) {
+					dao.applyRole(cust_id);
+				} else if(gst_choose == 3) {
+					System.out.println("\n" + INDENT + CLR_WHT + ">> 내 정보 관리 화면으로 이동합니다." + RESET);
+				} else if(gst_choose == 4) {
+					printSuccess("안전하게 로그아웃 되었습니다.");
+					return;
+				} else if(gst_choose == 5) {
+					System.out.println("\n" + INDENT + "프로그램을 종료합니다.");
+					System.exit(0);
+				} else printError("잘못된 선택입니다.");
+			} catch(Exception e) {
+				printError("입력 오류가 발생했습니다.");
 			}
 		}
 	}
