@@ -276,7 +276,7 @@ public class UserMain {
 			System.out.println("\n\n" + INDENT + CLR_PRIMARY + BOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + RESET);
 			System.out.println(INDENT + BOLD + "   KRD Hubs | " + RESET + CLR_WHT + "일반회원 메인메뉴" + RESET);
 			System.out.println(INDENT + CLR_PRIMARY + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + RESET);
-			System.out.println(INDENT + CL_GRY + "  접속 계정: " + RESET + cust_id + CL_GRY + " | 등급: 일반회원" + RESET);
+			System.out.println(INDENT + CLR_GRY + "  접속 계정: " + RESET + cust_id + CLR_GRY + " | 등급: 일반회원" + RESET);
 			System.out.println();
 
 			printMenuOption("1", "공고 조회 (Announcement)");
