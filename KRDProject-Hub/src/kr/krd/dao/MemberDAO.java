@@ -22,7 +22,7 @@ public class MemberDAO {
 	public static final String CLR_SUC = "\u001B[32m";    // Green
 	private static final String INDENT = "      ";
 
-	private BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+	private BufferedReader br; /*= new BufferedReader(new InputStreamReader(System.in));*/
 	private String cust_id;
 	private String role;
 	private String field;
@@ -31,6 +31,9 @@ public class MemberDAO {
 	// ------------------------------------------------
 	// UI Utility Methods
 	// ------------------------------------------------
+	public MemberDAO(BufferedReader br) {
+		this.br = br;
+	}
 	private void printSubTitle(String title) {
 		System.out.println("\n" + INDENT + CLR_PRIMARY + BOLD + "◈ " + title + RESET);
 		System.out.println(INDENT + CL_GRY + "────────────────────────────────────────" + RESET);
@@ -66,7 +69,6 @@ public class MemberDAO {
 			rs = pstmt.executeQuery();
 			if(rs.next()) {
 				String user_name = rs.getString("USER_NAME");
-				System.out.println(user_name + "님 환영합니다.");
 				real_id = rs.getString("user_id");	//일치하면 real_id에 유저 아이디를 넣는다
 
 			}else {
@@ -344,11 +346,11 @@ public class MemberDAO {
 			pstmt.setString(4, user_email);
 			pstmt.setString(5, user_birthDate);
 			pstmt.setString(6, user_phoneNo);
-			pstmt.setString(7, "KOREA"); // 예시
-			pstmt.setString(8, "Address Info");
-			pstmt.setInt(9, 1);
-			pstmt.setString(10, "무소속");
-			pstmt.setString(11, "기획");
+			pstmt.setString(7, userCountry);
+			pstmt.setString(8, user_addr);
+			pstmt.setInt(9, your_Gender);
+			pstmt.setString(10, userAffiliation);
+			pstmt.setString(11, userField);
 
 			int count = pstmt.executeUpdate();
 			if (count == 1) printSuccess("회원가입이 완료되었습니다. 환영합니다!");
@@ -829,7 +831,9 @@ public class MemberDAO {
 
 		try {
 			conn = DBUtil.getConnection();
-			String sqlCheck = "SELECT role_app_user_id FROM role_application WHERE ROLE_APP_USER_ID = ?";
+			String sqlCheck = "SELECT ROLE_APP_USER_ID FROM ROLE_APPLICATION "
+					+ "WHERE ROLE_APP_USER_ID = ? AND ROLE_APP_STATUS = 'PENDING'";
+			//	String sqlCheck = "SELECT role_app_user_id FROM role_application WHERE ROLE_APP_USER_ID = ?";
 			pstmt = conn.prepareStatement(sqlCheck);
 			pstmt.setString(1, user_id);
 			rs = pstmt.executeQuery();
@@ -950,11 +954,314 @@ public class MemberDAO {
 		catch(Exception e){e.printStackTrace();}
 		finally {DBUtil.executeClose(null, pstmt, conn);}
 	}*/
-	//내 정보 보기 메서드
+	// 내 정보 조회
+	public void showMyInfo(String userId) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
 
+		try {
+			conn = DBUtil.getConnection();
+			sql = "SELECT user_id, user_name, user_email, user_phone_no, "
+					+ "user_country_cd, user_addr, user_gender_cd, "
+					+ "user_role_cd, user_affiliation, user_field "
+					+ "FROM USERINFO WHERE user_id = ?";
+
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userId);
+			rs = pstmt.executeQuery();
+
+			printSubTitle("내 정보 상세 조회 (Profile)");
+
+			if(rs.next()) {
+				// 카드 상단 테두리
+				System.out.println(INDENT + CLR_PRIMARY + "┌──────────────────────────────────────────────────┐" + RESET);
+				
+				// 정보 출력 (간격 정렬)
+				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CL_GRY + "%-6s : " + CLR_WHT + "%s\n" + RESET, "아이디", rs.getString("user_id"));
+				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CL_GRY + "%-6s : " + CLR_WHT + "%s\n" + RESET, "이름", rs.getString("user_name"));
+				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CL_GRY + "%-6s : " + CLR_WHT + "%s\n" + RESET, "이메일", rs.getString("user_email"));
+				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CL_GRY + "%-6s : " + CLR_WHT + "%s\n" + RESET, "연락처", rs.getString("user_phone_no"));
+				System.out.println(INDENT + CLR_PRIMARY + "├──────────────────────────────────────────────────┤" + RESET);
+				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CL_GRY + "%-6s : " + CLR_WHT + "%s\n" + RESET, "소속", rs.getString("user_affiliation"));
+				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CL_GRY + "%-6s : " + CLR_WHT + "%s\n" + RESET, "분야", rs.getString("user_field"));
+				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CL_GRY + "%-6s : " + CLR_WHT + "%s\n" + RESET, "권한", rs.getString("user_role_cd"));
+				System.out.println(INDENT + CLR_PRIMARY + "├──────────────────────────────────────────────────┤" + RESET);
+				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CL_GRY + "%-6s : " + CLR_WHT + "%s\n" + RESET, "국가", rs.getString("user_country_cd"));
+				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CL_GRY + "%-6s : " + CLR_WHT + "%s\n" + RESET, "성별", convertGender(rs.getInt("user_gender_cd")));
+				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CL_GRY + "%-6s : " + CLR_WHT + "%s\n" + RESET, "주소", rs.getString("user_addr"));
+				
+				// 카드 하단 테두리
+				System.out.println(INDENT + CLR_PRIMARY + "└──────────────────────────────────────────────────┘" + RESET);
+			} else {
+				printError("회원 정보를 찾을 수 없습니다.");
+			}
+
+		} catch(Exception e) {
+			printError("내 정보 조회 중 오류가 발생했습니다.");
+			e.printStackTrace();
+		} finally {
+			DBUtil.executeClose(rs, pstmt, conn);
+		}
+	}
+
+	// 이메일 변경
+	public void updateEmail(String userId) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		String sql = null;
+
+		try {
+			printSubTitle("이메일 변경");
+
+			printInputTag("새 이메일");
+			String newEmail = br.readLine();
+
+			if(newEmail == null || newEmail.trim().isEmpty()) {
+				printError("이메일을 입력해주세요.");
+				return;
+			}
+
+			if(!newEmail.contains("@")) {
+				printError("이메일 형식을 확인해주세요.");
+				return;
+			}
+
+			conn = DBUtil.getConnection();
+			sql = "UPDATE USERINFO SET user_email = ? WHERE user_id = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, newEmail.trim());
+			pstmt.setString(2, userId);
+
+			int count = pstmt.executeUpdate();
+
+			if(count == 1) {
+				printSuccess("이메일이 변경되었습니다.");
+			} else {
+				printError("이메일 변경에 실패했습니다.");
+			}
+
+		} catch(Exception e) {
+			printError("이메일 변경 중 오류가 발생했습니다.");
+			e.printStackTrace();
+		} finally {
+			DBUtil.executeClose(null, pstmt, conn);
+		}
+	}
+
+	// 연락처 변경
+	public void updatePhone(String userId) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		String sql = null;
+
+		try {
+			printSubTitle("연락처 변경");
+
+			printInputTag("새 연락처(숫자만 입력)");
+			String newPhone = br.readLine();
+
+			if(newPhone == null || !newPhone.matches("\\d{11}")) {
+				printError("연락처는 11자리 숫자로 입력해주세요.");
+				return;
+			}
+
+			conn = DBUtil.getConnection();
+			sql = "UPDATE USERINFO SET user_phone_no = ? WHERE user_id = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, newPhone);
+			pstmt.setString(2, userId);
+
+			int count = pstmt.executeUpdate();
+
+			if(count == 1) {
+				printSuccess("연락처가 변경되었습니다.");
+			} else {
+				printError("연락처 변경에 실패했습니다.");
+			}
+
+		} catch(Exception e) {
+			printError("연락처 변경 중 오류가 발생했습니다.");
+			e.printStackTrace();
+		} finally {
+			DBUtil.executeClose(null, pstmt, conn);
+		}
+	}
+
+	// 비밀번호 변경
+	public void changeMyPassword(String userId) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
+
+		String passwordRegex =
+				"^(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).{8,}$";
+
+		try {
+			printSubTitle("비밀번호 변경");
+
+			printInputTag("현재 비밀번호");
+			String currentPw = br.readLine();
+
+			conn = DBUtil.getConnection();
+			sql = "SELECT user_id FROM USERINFO WHERE user_id = ? AND user_pwd = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userId);
+			pstmt.setString(2, currentPw);
+			rs = pstmt.executeQuery();
+
+			if(!rs.next()) {
+				printError("현재 비밀번호가 일치하지 않습니다.");
+				return;
+			}
+
+			rs.close();
+			pstmt.close();
+
+			String newPw;
+			while(true) {
+				System.out.println(INDENT + CL_GRY + "  ※ 특수문자 1개 포함, 8자 이상" + RESET);
+				printInputTag("새 비밀번호");
+				newPw = br.readLine();
+
+				if(!newPw.matches(passwordRegex)) {
+					printError("비밀번호 규칙에 맞지 않습니다.");
+					continue;
+				}
+
+				printInputTag("새 비밀번호 확인");
+				String confirmPw = br.readLine();
+
+				if(!newPw.equals(confirmPw)) {
+					printError("새 비밀번호 확인이 일치하지 않습니다.");
+					continue;
+				}
+
+				if(newPw.equals(currentPw)) {
+					printError("현재 비밀번호와 다른 비밀번호를 입력해주세요.");
+					continue;
+				}
+				break;
+			}
+
+			sql = "UPDATE USERINFO SET user_pwd = ? WHERE user_id = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, newPw);
+			pstmt.setString(2, userId);
+
+			int count = pstmt.executeUpdate();
+
+			if(count == 1) {
+				printSuccess("비밀번호가 변경되었습니다.");
+			} else {
+				printError("비밀번호 변경에 실패했습니다.");
+			}
+
+		} catch(Exception e) {
+			printError("비밀번호 변경 중 오류가 발생했습니다.");
+			e.printStackTrace();
+		} finally {
+			DBUtil.executeClose(rs, pstmt, conn);
+		}
+	}
+
+	// 권한 신청 처리상태 조회
+	public void showRoleApplicationStatus(String userId) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
+
+		try {
+			conn = DBUtil.getConnection();
+			sql = "SELECT ROLE_APP_ID, ROLE_APP_ROLE_CD, ROLE_APP_APPLIED_AT, "
+					+ "ROLE_APP_APPLY_REASON, ROLE_APP_STATUS, ROLE_APPROVED_AT, "
+					+ "ROLE_APPROVED_BY, ROLE_REJECT_REASON "
+					+ "FROM ROLE_APPLICATION "
+					+ "WHERE ROLE_APP_USER_ID = ? "
+					+ "ORDER BY ROLE_APP_ID DESC";
+
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userId);
+			rs = pstmt.executeQuery();
+
+			printSubTitle("권한 신청 처리상태 조회");
+
+			if(!rs.isBeforeFirst()) {
+				System.out.println(INDENT + CL_GRY + "  권한 신청 이력이 없습니다." + RESET);
+				return;
+			}
+
+			// 표 헤더 생성
+			System.out.println(INDENT + BOLD + CLR_WHT + String.format("%-5s | %-6s | %-10s | %-12s | %-15s", 
+					"신청번호", "신청권한", "신청일자", "처리상태", "비고(승인일/반려사유)") + RESET);
+			System.out.println(INDENT + CL_GRY + "----------------------------------------------------------------------" + RESET);
+
+			while(rs.next()) {
+				String status = rs.getString("ROLE_APP_STATUS");
+				String statusKr = convertRoleAppStatus(status);
+				String statusColor = CLR_PRIMARY; // 기본 대기 색상
+				String remarks = "-";
+
+				// 상태에 따른 색상 및 비고란 데이터 변경
+				if("APPROVED".equalsIgnoreCase(status)) {
+					statusColor = CLR_SUC; // 승인은 초록색
+					remarks = rs.getDate("ROLE_APPROVED_AT") != null ? rs.getDate("ROLE_APPROVED_AT").toString() : "-";
+				} else if("REJECTED".equalsIgnoreCase(status)) {
+					statusColor = CLR_ERR; // 반려는 빨간색
+					String rejectReason = rs.getString("ROLE_REJECT_REASON");
+					// 반려 사유가 길면 잘라주기
+					if(rejectReason != null && rejectReason.length() > 8) {
+						rejectReason = rejectReason.substring(0, 6) + "..";
+					}
+					remarks = rejectReason != null ? rejectReason : "사유 없음";
+				}
+
+				// 그리드 라인 출력
+				System.out.println(INDENT + String.format("%-8d | %-8s | %-12s | " + statusColor + "%-12s" + RESET + " | %-15s", 
+						rs.getInt("ROLE_APP_ID"),
+						rs.getString("ROLE_APP_ROLE_CD"),
+						rs.getDate("ROLE_APP_APPLIED_AT"),
+						statusKr,
+						remarks));
+			}
+			System.out.println();
+
+		} catch(Exception e) {
+			printError("권한 신청 조회 중 오류가 발생했습니다.");
+			e.printStackTrace();
+		} finally {
+			DBUtil.executeClose(rs, pstmt, conn);
+		}
+	}
+
+	private String convertGender(int genderCd) {
+		if(genderCd == 1) return "남성";
+		if(genderCd == 2) return "여성";
+		return "미지정";
+	}
+
+	private String convertRoleAppStatus(String status) {
+		if(status == null) return "알 수 없음";
+
+		switch(status.trim().toUpperCase()) {
+		case "PENDING":
+			return "승인 대기";
+		case "APPROVED":
+			return "승인 완료";
+		case "REJECTED":
+			return "반려";
+		default:
+			return status;
+		}
+	}
+	
 	//로그아웃 메서드
 	public boolean logout() {
-		return false;
+	//	return false; //-> GST메뉴에서 로그아웃 시도할 때 항상 오류 문구가 먼저 찍힘.
+		return true;
 	}
 
 }

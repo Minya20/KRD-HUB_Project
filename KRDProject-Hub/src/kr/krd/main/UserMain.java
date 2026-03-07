@@ -3,9 +3,12 @@ package kr.krd.main;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.List;
 
 import kr.krd.dao.CMY_MemberDAO;
 import kr.krd.dao.MemberDAO;
+import kr.krd.dao.USH_AnnouncementDAO;
+import kr.krd.vo.USH_AnnSummaryVO;
 
 
 public class UserMain {
@@ -29,6 +32,7 @@ public class UserMain {
 	private BufferedReader br;
 	private MemberDAO dao;	//공통클래스
 	private CMY_MemberDAO revdao; //평가위원클래스
+	private USH_AnnouncementDAO annDao;
 	private String cust_id;
 	private String role; 
 	private String field;
@@ -37,8 +41,9 @@ public class UserMain {
 	public UserMain() {
 		try {
 			br = new BufferedReader(new InputStreamReader(System.in));
-			dao = new MemberDAO();
+			dao = new MemberDAO(br);
 			revdao = new CMY_MemberDAO();
+			annDao = new USH_AnnouncementDAO();
 			// 콘솔 화면 화면 초기화 (지원하는 터미널에서만 작동)
 			callMenu();
 
@@ -59,6 +64,11 @@ public class UserMain {
 		for(int i=0; i<width; i++) sb.append(lineType);
 		sb.append(end).append(RESET);
 		System.out.println(sb.toString());
+	}
+	
+	private void printSubTitle(String title) {
+		System.out.println("\n" + INDENT + CLR_PRIMARY + BOLD + "◈ " + title + RESET);
+		System.out.println(INDENT + CLR_GRY + "────────────────────────────────────────" + RESET);
 	}
 
 	private void printMenuOption(String key, String description) {
@@ -106,7 +116,7 @@ public class UserMain {
 
 			printMenuOption("1", "시스템 로그인 (Login)");
 			printMenuOption("2", "신규 회원가입 (Sign Up)");
-
+			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
 			printMenuOption("3", "프로그램 종료 (Exit)");
 
 			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
@@ -151,6 +161,7 @@ public class UserMain {
 
 			printMenuOption("1", "로그인 진행");
 			printMenuOption("2", "아이디 / 비밀번호 찾기");
+			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
 			printMenuOption("0", "이전 화면으로");
 
 			System.out.println(INDENT + CLR_GRY + "║" + RESET);
@@ -201,89 +212,40 @@ public class UserMain {
 			System.out.println(INDENT + "========================================" + RESET);
 
 			// 기존 리스너/게스트 메뉴 호출 (DAO쪽 UI도 이 스타일로 맞추는 것을 추천)
-			if(role.equals("REV")) {
+			//  if(role.equals("REV")) {
+			if("REV".equals(role)) {
 				revdao.callReviewerMenu(cust_id, role, field);
-				
-				printInputTag("로그아웃 하시겠습니까? (Y/N)");
-				String logoutInput = br.readLine();
-				if(logoutInput.equalsIgnoreCase("Y")) {
-					login = dao.logout(); 
+
+				//  } else if(role.equals("GST")) {
+			} else if("GST".equals(role)) {
+				boolean isLogout = callGuestMenu(cust_id, role, field);
+				if(isLogout) {
+					login = false;
 					cust_id = null;
 					role = null;
 					field = null;
-					printSuccess("안전하게 로그아웃 되었습니다.");
 					break;
 				}
-			} else if(role.equals("GST")) {
-				callGuestMenu(cust_id, role, field);
-				
-				printInputTag("로그아웃 하시겠습니까? (Y/N)");
-				String logoutInput = br.readLine();
-				if(logoutInput.equalsIgnoreCase("Y")) {
-					login = dao.logout(); 
-					cust_id = null;
-					role = null;
-					field = null;
-					printSuccess("안전하게 로그아웃 되었습니다.");
-					break;
-				}
-				
-			} else if(role.equals("AGY")) {
+				//	} else if(role.equals("AGY")) {
+			} else if("AGY".equals(role)) {
 				RR_KRDAdminMain agyMain = new RR_KRDAdminMain();
 				agyMain.callMenu();
 
-				printInputTag("로그아웃 하시겠습니까? (Y/N)");
-				String logoutInput = br.readLine();
-				if(logoutInput.equalsIgnoreCase("Y")) {
-					login = dao.logout(); 
-					cust_id = null;
-					role = null;
-					field = null;
-					printSuccess("안전하게 로그아웃 되었습니다.");
-					break;
-				}
-			}else if(role.equals("RESO")) {
-				HYJ_KRDRESOUserMain ResoMain = new HYJ_KRDRESOUserMain();
-				ResoMain.callMenu();
+				//	}else if(role.equals("RESO")) {
+			} else if("RESO".equals(role)) {
+				HYJ_KRDRESOUserMain resoMain = new HYJ_KRDRESOUserMain();
+				resoMain.callMenu();
 
-				printInputTag("로그아웃 하시겠습니까? (Y/N)");
-				String logoutInput = br.readLine();
-				if(logoutInput.equalsIgnoreCase("Y")) {
-					login = dao.logout(); 
-					cust_id = null;
-					role = null;
-					field = null;
-					printSuccess("안전하게 로그아웃 되었습니다.");
-					break;
-				}
-			}else if(role.equals("RESI")) {
-				HYJ_KRDRESOUserMain ResoMain = new HYJ_KRDRESOUserMain();
-				ResoMain.callMenu();
+				//	}else if(role.equals("RESI")) {
+			} else if("RESI".equals(role)) {
+				RESIUserMain resiMain = new RESIUserMain();
+				resiMain.callMenu();
 
-				printInputTag("로그아웃 하시겠습니까? (Y/N)");
-				String logoutInput = br.readLine();
-				if(logoutInput.equalsIgnoreCase("Y")) {
-					login = dao.logout(); 
-					cust_id = null;
-					role = null;
-					field = null;
-					printSuccess("안전하게 로그아웃 되었습니다.");
-					break;
-				}
-			}else if(role.equals("ADM")) {
-			    USH_KRDAdminMain admMain = new USH_KRDAdminMain(br, cust_id);
-			    admMain.callMenu();
+				//	}else if(role.equals("ADM")) {
+			} else if("ADM".equals(role)) {
+				USH_KRDAdminMain admMain = new USH_KRDAdminMain(br, cust_id);
+				admMain.callMenu();
 
-			    printInputTag("로그아웃 하시겠습니까? (Y/N)");
-			    String logoutInput = br.readLine();
-			    if(logoutInput.equalsIgnoreCase("Y")) {
-			        login = dao.logout();
-			        cust_id = null;
-			        role = null;
-			        field = null;
-			        printSuccess("안전하게 로그아웃 되었습니다.");
-			        break;
-			    }
 			} else {
 				printError("정의되지 않은 권한입니다. 관리자에게 문의하세요.");
 				login = false;
@@ -308,6 +270,7 @@ public class UserMain {
 				System.out.println(INDENT + "┃");
 				printMenuOption("1", "아이디(ID) 찾기");
 				printMenuOption("2", "비밀번호 재설정");
+				System.out.println(INDENT + CLR_GRY + "┃" + RESET);
 				printMenuOption("0", "이전 화면으로");
 				System.out.println(INDENT + "┃");
 				printDrawLine("└", LN_SINGLE, "┘", LN_SINGLE, 35);
@@ -334,19 +297,20 @@ public class UserMain {
 	}
 
 	// 2. 일반회원 화면 (추가된 부분 UI 개선)
-	public void callGuestMenu(String myCust_id, String myRole, String myField) {
+	public boolean callGuestMenu(String myCust_id, String myRole, String myField) {
+		//	public void callGuestMenu(String myCust_id, String myRole, String myField) { true -> 실제 로그아웃 false -> 상위메뉴로 돌아감
 		this.cust_id = myCust_id;
 		this.role = myRole;
 		this.field = myField;
 
 		while(true) {
-			System.out.println("\n\n" + INDENT + CLR_PRIMARY + BOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + RESET);
+			System.out.println("\n\n" + INDENT + CLR_PRIMARY + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + RESET);
 			System.out.println(INDENT + BOLD + "   KRD Hubs | " + RESET + CLR_WHT + "일반회원 메인메뉴" + RESET);
 			System.out.println(INDENT + CLR_PRIMARY + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + RESET);
 			System.out.println(INDENT + CLR_GRY + "  접속 계정: " + RESET + cust_id + CLR_GRY + " | 등급: 일반회원" + RESET);
 			System.out.println();
 
-			printMenuOption("1", "공고 조회 (Announcement)");
+			printMenuOption("1", "공고 목록 조회 (Announcements)");
 			printMenuOption("2", "권한 신청 (Request Role)");
 			printMenuOption("3", "내 정보 관리 (My Profile)");
 			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
@@ -357,20 +321,138 @@ public class UserMain {
 			try {
 				int gst_choose = Integer.parseInt(br.readLine());
 				if(gst_choose == 1) {
-					System.out.println("\n" + INDENT + CLR_WHT + ">> 공고 조회 모듈을 로드합니다..." + RESET);
+					printGuestAnnouncementList();
 				} else if(gst_choose == 2) {
 					dao.applyRole(cust_id);
 				} else if(gst_choose == 3) {
-					System.out.println("\n" + INDENT + CLR_WHT + ">> 내 정보 관리 화면으로 이동합니다." + RESET);
+					callGuestMyPageMenu();
 				} else if(gst_choose == 4) {
-					printSuccess("안전하게 로그아웃 되었습니다.");
-					return;
+					printInputTag("로그아웃 하시겠습니까? (Y/N)");
+					String logoutInput = br.readLine();
+					if("Y".equalsIgnoreCase(logoutInput)) {
+						boolean logoutResult = dao.logout();
+						if(!logoutResult) {
+							// printError("로그아웃 처리 중 문제가 발생했습니다."); (DAO 로직에 따라 활성화 필요)
+						}
+						printSuccess("안전하게 로그아웃 되었습니다.");
+						return true; // 로그아웃 처리
+					} else if("N".equalsIgnoreCase(logoutInput)) {
+						continue;
+					} else {
+						printError("Y 또는 N만 입력하세요.");
+					}
 				} else if(gst_choose == 5) {
 					System.out.println("\n" + INDENT + "프로그램을 종료합니다.");
 					System.exit(0);
-				} else printError("잘못된 선택입니다.");
+				} else {
+					printError("잘못된 선택입니다.");
+				}
 			} catch(Exception e) {
 				printError("입력 오류가 발생했습니다.");
+			}
+		}
+	}
+
+	//일반회원 메뉴 - 공고 목록 조회
+	private void printGuestAnnouncementList() {
+	    List<USH_AnnSummaryVO> list = annDao.findAnnSummaryList();
+
+	    printSubTitle("공고 목록 조회 (Announcements)");
+
+	    if(list == null || list.isEmpty()) {
+	        System.out.println(INDENT + CLR_GRY + "  조회 가능한 공고가 없습니다." + RESET);
+	        return;
+	    }
+
+	    // 표 헤더 생성 (String.format으로 간격 고정)
+	    System.out.println(INDENT + BOLD + CLR_WHT + String.format("%-5s | %-15s | %-8s | %-20s | %-10s", 
+	    		"번호", "공고명", "상태", "진행 기간", "기관명") + RESET);
+	    System.out.println(INDENT + CLR_GRY + "-----------------------------------------------------------------------" + RESET);
+
+	    for(USH_AnnSummaryVO ann : list) {
+	    	// 공고명이 너무 길 경우 잘라주기 (UI 깨짐 방지)
+	    	String shortTitle = ann.title;
+	    	if(shortTitle != null && shortTitle.length() > 12) {
+	    		shortTitle = shortTitle.substring(0, 10) + "..";
+	    	}
+	    	
+	    	// 상태별 색상 부여
+	    	String statusStr = String.valueOf(ann.statusCd);
+	    	String statusColor = statusStr.equals("ACTIVE") ? CLR_SUC : CLR_PRIMARY;
+
+	        System.out.println(INDENT + String.format("%-6d | %-15s | " + statusColor + "%-8s" + RESET + " | %-10s ~ %-10s | %-10s", 
+	                ann.annId, 
+	                shortTitle, 
+	                statusStr, 
+	                ann.startDt, 
+	                ann.endDt, 
+	                ann.agencyName));
+	    }
+	    System.out.println();
+	}
+
+	//일반회원 메뉴 - 내 정보 관리
+	private void callGuestMyPageMenu() throws IOException {
+		while(true) {
+			printSubTitle("내 정보 관리 (My Profile)");
+			
+			printMenuOption("1", "내 정보 상세 조회");
+			printMenuOption("2", "내 정보 수정 (이메일/연락처 등)");
+			printMenuOption("3", "권한 신청 진행 현황 조회");
+			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
+			printMenuOption("0", "이전 화면으로 돌아가기");
+
+			printInputTag("메뉴 선택");
+
+			try {
+				int menu = Integer.parseInt(br.readLine());
+
+				if(menu == 1) {
+					dao.showMyInfo(cust_id);
+				} else if(menu == 2) {
+					callGuestMyInfoEditMenu();
+				} else if(menu == 3) {
+					dao.showRoleApplicationStatus(cust_id);
+				} else if(menu == 0) {
+					return;
+				} else {
+					printError("잘못된 선택입니다.");
+				}
+			} catch(NumberFormatException e) {
+				printError("숫자를 입력해주세요.");
+			}
+		}
+	}
+
+	//일반 회원 메뉴 - 내 정보 관리 - 내 정보 변경
+	private void callGuestMyInfoEditMenu() throws IOException {
+		while(true) {
+			printSubTitle("내 정보 변경 (Edit Profile)");
+			
+			printMenuOption("1", "이메일(E-mail) 주소 변경");
+			printMenuOption("2", "연락처(Phone) 번호 변경");
+			printMenuOption("3", "비밀번호(Password) 변경");
+			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
+			printMenuOption("0", "이전 화면으로 돌아가기");
+
+			printInputTag("메뉴 선택");
+
+			try {
+				int menu = Integer.parseInt(br.readLine());
+
+				if(menu == 1) {
+					dao.updateEmail(cust_id);
+				} else if(menu == 2) {
+					dao.updatePhone(cust_id);
+				} else if(menu == 3) {
+					dao.changeMyPassword(cust_id);
+				} else if(menu == 0) {
+					return;
+				} else {
+					printError("잘못된 선택입니다.");
+				}
+			} catch(NumberFormatException e) {
+				printError("숫자를 입력해주세요.");
 			}
 		}
 	}
