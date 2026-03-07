@@ -8,6 +8,7 @@ import java.util.List;
 
 import kr.krd.vo.RR_AnnouncementVO;
 import kr.util.DBUtil;
+import kr.krd.constant.RR_AnnouncementStatus;
 
 public class RR_AnnouncementDAO {
 
@@ -272,4 +273,35 @@ public class RR_AnnouncementDAO {
 
         return count;
     }
+    
+    
+    public int promoteClosedToSelectPending(int agyId) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+
+        try {
+            conn = DBUtil.getConnection();
+
+            String sql =
+                "UPDATE ANNOUNCEMENT a "
+              + "SET a.ANNOUNCEMENT_STATUS = ? "
+              + "WHERE a.ANNOUNCEMENT_AGY_ID = ? "
+              + "  AND a.ANNOUNCEMENT_HIDDEN_YN = 0 "
+              + "  AND a.ANNOUNCEMENT_STATUS = ? " // 마감인 것만
+              + "  AND EXISTS (SELECT 1 FROM APPLICATIONS ap WHERE ap.APPLICATION_ANN_ID = a.ANNOUNCEMENT_ANN_ID)";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, RR_AnnouncementStatus.SELECT_PENDING); // 선정대기
+            pstmt.setInt(2, agyId);
+            pstmt.setString(3, RR_AnnouncementStatus.CLOSED);        // 마감
+            return pstmt.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        } finally {
+            DBUtil.executeClose(null, pstmt, conn);
+        }
+    }
+    
 }

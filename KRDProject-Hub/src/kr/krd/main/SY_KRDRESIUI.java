@@ -181,7 +181,7 @@ public class SY_KRDRESIUI{
 			}
 		}
 		
-		String statusCd = "APPLIED";
+		String statusCd = "심사중";
 		
 		int count = appDao.insertApplication(annId, custId, attachPath, statusCd, budgetAmt);
 		
