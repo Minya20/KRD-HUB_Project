@@ -15,13 +15,13 @@ public class UserMain {
 	public static final String RESET = "\u001B[0m";
 	public static final String BOLD = "\u001B[1m";
 	public static final String UNBOLD = "\u001B[22m";
-	
+
 	public static final String CLR_PRIMARY = "\u001B[36m"; // Cyan
 	public static final String CLR_WHT = "\u001B[37m";    // White
 	public static final String CLR_GRY = "\u001B[90m";    // Gray
 	public static final String CLR_ERR = "\u001B[31m";    // Red
 	public static final String CLR_SUC = "\u001B[32m";    // Green
-	
+
 	private static final String LN_SINGLE = "─";
 	private static final String LN_DOUBLE = "═";
 	private static final String INDENT = "      ";
@@ -40,10 +40,9 @@ public class UserMain {
 			br = new BufferedReader(new InputStreamReader(System.in));
 			dao = new MemberDAO();
 			revdao = new CMY_MemberDAO();
-			agy = new RR_KRDAdminMain();
 			// 콘솔 화면 화면 초기화 (지원하는 터미널에서만 작동)
 			callMenu();
-			
+
 		} catch(Exception e) {
 			printError("시스템 초기화 중 예상치 못한 오류가 발생했습니다.");
 			e.printStackTrace();
@@ -62,16 +61,16 @@ public class UserMain {
 		sb.append(end).append(RESET);
 		System.out.println(sb.toString());
 	}
-	
+
 	private void printMenuOption(String key, String description) {
 		System.out.print(INDENT + "  " + CLR_PRIMARY + BOLD + "[" + key + "]" + RESET + " ");
 		System.out.println(CLR_WHT + description + RESET);
 	}
-	
+
 	private void printInputTag(String tag) {
 		System.out.print("\n" + INDENT + CLR_PRIMARY + BOLD + "▶ " + tag + RESET + " : ");
 	}
-	
+
 	private void printError(String msg) {
 		System.out.println("\n" + INDENT + CLR_ERR + BOLD + "✘ Error: " + UNBOLD + msg + RESET);
 	}
@@ -83,7 +82,7 @@ public class UserMain {
 	// ------------------------------------------------
 	// Screen Outputs (실제 화면 출력)
 	// ------------------------------------------------
-	
+
 	// 1. 메인 로고 (ASCII Art - 화려함 담당)
 	private void printLogo() {
 		System.out.println(CLR_PRIMARY + BOLD);
@@ -101,26 +100,26 @@ public class UserMain {
 		while(true) {
 			System.out.println("\n\n"); // Upper padding
 			printLogo();
-			
+
 			System.out.println(INDENT + CLR_WHT + BOLD + "  국가 연구과제 관리 플랫폼" + RESET + CLR_GRY + " | Version 1.0" + RESET);
 			printDrawLine("┏", LN_SINGLE, "┓", LN_SINGLE, 50);
 			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
-			
+
 			printMenuOption("1", "시스템 로그인 (Login)");
 			printMenuOption("2", "신규 회원가입 (Sign Up)");
-			
+
 			printMenuOption("3", "프로그램 종료 (Exit)");
-			
+
 			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
 			printDrawLine("┗", LN_SINGLE, "┛", LN_SINGLE, 50);
-			
+
 			printInputTag("메뉴 선택");
-			
+
 			try {
 				String input = br.readLine();
 				if(input == null) break;
 				int MenuNo = Integer.parseInt(input);
-				
+
 				if(MenuNo == 1) {
 					// 로그인 화면 로직
 					if(handleLoginScreen()) {
@@ -150,16 +149,16 @@ public class UserMain {
 			System.out.println(INDENT + CLR_GRY + "║" + RESET + "  " + CLR_WHT + BOLD + "접속 인증" + RESET);
 			printDrawLine("╠", LN_SINGLE, "╣", LN_SINGLE, 40);
 			System.out.println(INDENT + CLR_GRY + "║" + RESET);
-			
+
 			printMenuOption("1", "로그인 진행");
 			printMenuOption("2", "아이디 / 비밀번호 찾기");
 			printMenuOption("0", "이전 화면으로");
-			
+
 			System.out.println(INDENT + CLR_GRY + "║" + RESET);
 			printDrawLine("╚", LN_DOUBLE, "╝", LN_DOUBLE, 40);
-			
+
 			printInputTag("진행 선택");
-			
+
 			try {
 				int secMenuNo = Integer.parseInt(br.readLine());
 				if(secMenuNo == 1) {
@@ -172,7 +171,7 @@ public class UserMain {
 					System.out.println(INDENT + CLR_GRY + LN_SINGLE.repeat(42) + RESET);
 
 					cust_id = dao.userLogin(user_id, user_pw);
-					
+
 					if(cust_id != null && !cust_id.equals("0")) {
 						login = true;
 						role = dao.getUserRole(cust_id);
@@ -201,18 +200,19 @@ public class UserMain {
 			System.out.println("\n\n" + INDENT + CLR_PRIMARY + BOLD + "========================================");
 			System.out.println(INDENT + "   USER SESSION 활성화 [" + role + "]");
 			System.out.println(INDENT + "========================================" + RESET);
-			
+
 			// 기존 리스너/게스트 메뉴 호출 (DAO쪽 UI도 이 스타일로 맞추는 것을 추천)
 			if(role.equals("REV")) {
 				revdao.callReviewerMenu(cust_id, role, field);
 			} else if(role.equals("GST")) {
 				callGuestMenu(cust_id, role, field);
 			} else if(role.equals("AGY")) {
-				agy.callMenu();
+				RR_KRDAdminMain agyMain = new RR_KRDAdminMain();
+				agyMain.callMenu();
+
 				printInputTag("로그아웃 하시겠습니까? (Y/N)");
 				String logoutInput = br.readLine();
 				if(logoutInput.equalsIgnoreCase("Y")) {
-					// 세션 클리어 로직
 					login = dao.logout(); 
 					cust_id = null;
 					role = null;
@@ -225,7 +225,7 @@ public class UserMain {
 				// 미구현 권한에 대한 깔끔한 처리
 				System.out.println("\n" + INDENT + CLR_WHT + "[" + role + "] 권한 전용 화면을 로드 중입니다..." + RESET);
 				System.out.println(INDENT + CLR_GRY + "(현재 버전에서는 데모 화면만 제공됩니다)" + RESET);
-				
+
 				printInputTag("로그아웃 하시겠습니까? (Y/N)");
 				String logoutInput = br.readLine();
 				if(logoutInput.equalsIgnoreCase("Y")) {
@@ -242,14 +242,14 @@ public class UserMain {
 				login = false;
 				break;
 			}
-			
+
 			// DAO 메뉴에서 돌아왔을 때 로그인 상태 확인
 			if(!login) {
 				break;
 			}
 		}
 	}
-	
+
 	// 5. 아이디/비밀번호 찾기 메뉴 (깔끔하게 정리)
 	public void findIdPwMenu() {
 		while(true) {
@@ -264,7 +264,7 @@ public class UserMain {
 				printMenuOption("0", "이전 화면으로");
 				System.out.println(INDENT + "┃");
 				printDrawLine("└", LN_SINGLE, "┘", LN_SINGLE, 35);
-				
+
 				printInputTag("선택");
 
 				int menu = Integer.parseInt(br.readLine());
