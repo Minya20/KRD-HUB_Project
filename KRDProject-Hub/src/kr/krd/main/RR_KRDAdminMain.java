@@ -50,8 +50,9 @@ public class RR_KRDAdminMain {
     private String loginUserId = "agy01";
 
     public RR_KRDAdminMain() {
-        callMenu();
-        
+        //callMenu();
+        //코드 통합과정에서 생성자로 바로 콜메뉴를 해버리면 기관관리자가 먼저 호출 되서
+    	//주석처리 진행함.
     }
 
     // ===== 기관 담당자 메뉴 =====

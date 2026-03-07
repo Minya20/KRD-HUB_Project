@@ -33,7 +33,7 @@ public class UserMain {
 	private String cust_id;
 	private String role; 
 	private String field;
-	private boolean login = false;
+	private boolean login;
 
 	public UserMain() {
 		try {
@@ -42,7 +42,6 @@ public class UserMain {
 			revdao = new CMY_MemberDAO();
 			agy = new RR_KRDAdminMain();
 			// 콘솔 화면 화면 초기화 (지원하는 터미널에서만 작동)
-			
 			callMenu();
 			
 		} catch(Exception e) {
