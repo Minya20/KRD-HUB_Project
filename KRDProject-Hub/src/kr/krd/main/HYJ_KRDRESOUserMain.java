@@ -35,7 +35,7 @@ public class HYJ_KRDRESOUserMain {
 			dao4 = new HYJ_APPLICATIONCheakDAO();
 			dao5 = new HYJ_ReportDAO();
 			dao6 = new HYJ_RESISearch();
-			
+
 			callMenu();
 		}catch(Exception e) {
 			e.printStackTrace();
@@ -82,25 +82,21 @@ public class HYJ_KRDRESOUserMain {
 		//로그인시 보여지는 메뉴
 		while(login) {
 			System.out.print(
-					"1.공고 조회,2.과제 신청,3.내 신청조회,4.선정 결과 확인,5.보고서 제출,6.내 정보 수정,7.인재 열람,8.종료>");
+					"1.공고 조회,2.내 신청조회,3.보고서 제출,4.내 정보 수정,5.인재 열람,6.종료>");
 			try {
 				int no = Integer.parseInt(
 						br.readLine());
 				if(no == 1) {//공고 조회
 					dao1.selectAnn();
 				}else if(no == 2) {
-
-				}else if(no == 3) {
 					dao4.CheckMyApp(cust_id);
-				}else if(no == 4) {
-
-				}else if(no == 5) {
+				}else if(no == 3) {
 					dao5.InsertReport(cust_id);
-				}else if(no == 6) {
+				}else if(no == 4) {
 					dao3.SelectInfo(cust_id);
-				}else if(no == 7) {
+				}else if(no == 5) {
 					dao6.RESISearch();
-				}else if(no == 8) {
+				}else if(no == 6) {
 					System.out.println("프로그램을 종료합니다.");
 					break;
 				}else {
