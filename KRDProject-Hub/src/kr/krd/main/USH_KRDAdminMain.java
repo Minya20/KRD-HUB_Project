@@ -22,13 +22,13 @@ public class USH_KRDAdminMain {
 	private final USH_AdminRoleApplicationService roleAppService;
 
 	public USH_KRDAdminMain(BufferedReader br, String adminId) {
-		this.br = br;
-		this.service = new USH_AdminMemberService(br, adminId);
-		this.budgetService = new USH_AdminBudgetService(br, adminId);
-		this.statsService = new USH_AdminStatsService(br, adminId);
-		this.annService = new USH_AdminAnnouncementService(br, adminId);
-		this.io = new USH_ConsoleUtil(br);
-		this.roleAppService = new USH_AdminRoleApplicationService(br, adminId);
+	    this.br = br;
+	    this.service = new USH_AdminMemberService(br, adminId);
+	    this.budgetService = new USH_AdminBudgetService(br, adminId);
+	    this.statsService = new USH_AdminStatsService(br, adminId);
+	    this.annService = new USH_AdminAnnouncementService(br, adminId);
+	    this.io = new USH_ConsoleUtil(br);
+	    this.roleAppService = new USH_AdminRoleApplicationService(br, adminId);
 
 		//adminId는 나중에 changedBy 같은데 쓰려고 저장해둠
 		//this.adminId = adminId;
@@ -43,7 +43,7 @@ public class USH_KRDAdminMain {
 		}
 	}
 	//최상위(시스템 관리자) 메뉴
-	private void callMenu()throws IOException{
+	public void callMenu()throws IOException{
 		//while(true) : 사용자가 로그아웃 선택하기 전까지 계속 메뉴를 보여준다.
 		while(true) {
 			System.out.println("===== 시스템 관리자 메뉴 =====");

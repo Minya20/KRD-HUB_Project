@@ -203,8 +203,31 @@ public class UserMain {
 			// 기존 리스너/게스트 메뉴 호출 (DAO쪽 UI도 이 스타일로 맞추는 것을 추천)
 			if(role.equals("REV")) {
 				revdao.callReviewerMenu(cust_id, role, field);
+				
+				printInputTag("로그아웃 하시겠습니까? (Y/N)");
+				String logoutInput = br.readLine();
+				if(logoutInput.equalsIgnoreCase("Y")) {
+					login = dao.logout(); 
+					cust_id = null;
+					role = null;
+					field = null;
+					printSuccess("안전하게 로그아웃 되었습니다.");
+					break;
+				}
 			} else if(role.equals("GST")) {
 				callGuestMenu(cust_id, role, field);
+				
+				printInputTag("로그아웃 하시겠습니까? (Y/N)");
+				String logoutInput = br.readLine();
+				if(logoutInput.equalsIgnoreCase("Y")) {
+					login = dao.logout(); 
+					cust_id = null;
+					role = null;
+					field = null;
+					printSuccess("안전하게 로그아웃 되었습니다.");
+					break;
+				}
+				
 			} else if(role.equals("AGY")) {
 				RR_KRDAdminMain agyMain = new RR_KRDAdminMain();
 				agyMain.callMenu();
@@ -233,15 +256,13 @@ public class UserMain {
 					printSuccess("안전하게 로그아웃 되었습니다.");
 					break;
 				}
-			}else if(role.equals("ADM") || role.equals("RESI")) {
-				// 미구현 권한에 대한 깔끔한 처리
-				System.out.println("\n" + INDENT + CLR_WHT + "[" + role + "] 권한 전용 화면을 로드 중입니다..." + RESET);
-				System.out.println(INDENT + CLR_GRY + "(현재 버전에서는 데모 화면만 제공됩니다)" + RESET);
+			}else if(role.equals("RESI")) {
+				HYJ_KRDRESOUserMain ResoMain = new HYJ_KRDRESOUserMain();
+				ResoMain.callMenu();
 
 				printInputTag("로그아웃 하시겠습니까? (Y/N)");
 				String logoutInput = br.readLine();
 				if(logoutInput.equalsIgnoreCase("Y")) {
-					// 세션 클리어 로직
 					login = dao.logout(); 
 					cust_id = null;
 					role = null;
@@ -249,6 +270,20 @@ public class UserMain {
 					printSuccess("안전하게 로그아웃 되었습니다.");
 					break;
 				}
+			}else if(role.equals("ADM")) {
+			    USH_KRDAdminMain admMain = new USH_KRDAdminMain(br, cust_id);
+			    admMain.callMenu();
+
+			    printInputTag("로그아웃 하시겠습니까? (Y/N)");
+			    String logoutInput = br.readLine();
+			    if(logoutInput.equalsIgnoreCase("Y")) {
+			        login = dao.logout();
+			        cust_id = null;
+			        role = null;
+			        field = null;
+			        printSuccess("안전하게 로그아웃 되었습니다.");
+			        break;
+			    }
 			} else {
 				printError("정의되지 않은 권한입니다. 관리자에게 문의하세요.");
 				login = false;
