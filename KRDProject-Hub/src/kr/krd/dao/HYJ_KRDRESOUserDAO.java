@@ -29,7 +29,7 @@ public class HYJ_KRDRESOUserDAO {
 			try {
 				conn = DBUtil.getConnection();
 
-				String sql = "SELECT * FROM ANNOUNCEMENT ORDER BY ANNOUNCEMENT_ANN_ID";
+				String sql = "SELECT * FROM ANNOUNCEMENT WHERE ANNOUNCEMENT_HIDDEN_YN = 0 ORDER BY ANNOUNCEMENT_ANN_ID";
 				pstmt = conn.prepareStatement(sql);
 				rs = pstmt.executeQuery();
 
@@ -53,18 +53,27 @@ public class HYJ_KRDRESOUserDAO {
 				System.out.println("-".repeat(40));
 				System.out.print("1. 상세조회  2. 이전화면 : ");
 				int sel = Integer.parseInt(br.readLine());
-
+				
 				if (sel == 1) {
-					System.out.print("상세조회할 번호 입력 : ");
-					int annId = Integer.parseInt(br.readLine());
-					detailAnn(annId);   // 상세 메서드 분리
+						try {
+							System.out.print("상세조회할 번호 입력 : ");
+							int annId = Integer.parseInt(br.readLine());
+							System.out.println("해당 목록에 있는 번호를 입력하세요");
+							detailAnn(annId);   // 상세 메서드 분리
+							
+						}catch(NumberFormatException e) {
+							System.out.println("숫자를 입력하세요.");
+						}
 				} else if (sel == 2) {
 					return;   // 이전 화면으로 복귀
 				} else {
 					System.out.println("잘못된 입력입니다.");
 				}
 
-			} catch (Exception e) {
+			} catch(NumberFormatException e) {
+				System.out.println("숫자를 입력하세요");
+			}
+			catch (Exception e) {
 				e.printStackTrace();
 			} finally {
 				DBUtil.executeClose(rs, pstmt, conn);
@@ -85,7 +94,8 @@ public class HYJ_KRDRESOUserDAO {
 			try {
 				conn = DBUtil.getConnection();
 
-				String sql = "SELECT * FROM ANNOUNCEMENT WHERE ANNOUNCEMENT_ANN_ID = ?";
+				String sql = "SELECT * FROM ANNOUNCEMENT WHERE ANNOUNCEMENT_ANN_ID = ?"
+						+ " AND ANNOUNCEMENT_HIDDEN_YN = 0";
 				pstmt = conn.prepareStatement(sql);
 				pstmt.setInt(1, annId);
 				rs = pstmt.executeQuery();

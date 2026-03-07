@@ -72,7 +72,8 @@ public class HYJ_APPLICATIONCheakDAO {
                     System.out.println("잘못된 입력입니다.");
                 }
 
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 e.printStackTrace();
             } finally {
                 DBUtil.executeClose(rs, pstmt, conn);
