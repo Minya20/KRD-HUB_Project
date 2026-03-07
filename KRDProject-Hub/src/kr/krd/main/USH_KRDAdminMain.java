@@ -73,7 +73,7 @@ public class USH_KRDAdminMain {
 			}else if(no == 6) {
 				//로그아웃 서택시 while문 종료
 				System.out.println("시스템 관리자 계정에서 로그아웃합니다.");
-				return;
+				break;
 			}else {
 				//메뉴 범위 밖 숫자 입력
 				System.out.println();
