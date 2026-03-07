@@ -6,7 +6,7 @@ import java.io.InputStreamReader;
 
 import kr.krd.dao.CMY_MemberDAO;
 import kr.krd.dao.MemberDAO;
-import kr.krd.main.RR_KRDAdminMain;
+
 
 public class UserMain {
 	// ------------------------------------------------
@@ -29,7 +29,6 @@ public class UserMain {
 	private BufferedReader br;
 	private MemberDAO dao;	//공통클래스
 	private CMY_MemberDAO revdao; //평가위원클래스
-	private RR_KRDAdminMain agy; //기관관리자 클래스
 	private String cust_id;
 	private String role; 
 	private String field;
@@ -220,8 +219,21 @@ public class UserMain {
 					printSuccess("안전하게 로그아웃 되었습니다.");
 					break;
 				}
-			}
-			else if(role.equals("ADM") || role.equals("RESI") || role.equals("RESO")) {
+			}else if(role.equals("RESO")) {
+				HYJ_KRDRESOUserMain ResoMain = new HYJ_KRDRESOUserMain();
+				ResoMain.callMenu();
+
+				printInputTag("로그아웃 하시겠습니까? (Y/N)");
+				String logoutInput = br.readLine();
+				if(logoutInput.equalsIgnoreCase("Y")) {
+					login = dao.logout(); 
+					cust_id = null;
+					role = null;
+					field = null;
+					printSuccess("안전하게 로그아웃 되었습니다.");
+					break;
+				}
+			}else if(role.equals("ADM") || role.equals("RESI")) {
 				// 미구현 권한에 대한 깔끔한 처리
 				System.out.println("\n" + INDENT + CLR_WHT + "[" + role + "] 권한 전용 화면을 로드 중입니다..." + RESET);
 				System.out.println(INDENT + CLR_GRY + "(현재 버전에서는 데모 화면만 제공됩니다)" + RESET);
