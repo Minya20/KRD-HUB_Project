@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 
 import kr.krd.dao.CMY_MemberDAO;
 import kr.krd.dao.MemberDAO;
+import kr.krd.main.RR_KRDAdminMain;
 
 public class UserMain {
 	// ------------------------------------------------
@@ -28,20 +29,22 @@ public class UserMain {
 	private BufferedReader br;
 	private MemberDAO dao;	//공통클래스
 	private CMY_MemberDAO revdao; //평가위원클래스
+	private RR_KRDAdminMain agy; //기관관리자 클래스
 	private String cust_id;
 	private String role; 
 	private String field;
-	private boolean login;
+	private boolean login = false;
 
 	public UserMain() {
 		try {
 			br = new BufferedReader(new InputStreamReader(System.in));
 			dao = new MemberDAO();
 			revdao = new CMY_MemberDAO();
+			agy = new RR_KRDAdminMain();
 			// 콘솔 화면 화면 초기화 (지원하는 터미널에서만 작동)
-			System.out.print("\033[H\033[2J");  
-			System.out.flush();
+			
 			callMenu();
+			
 		} catch(Exception e) {
 			printError("시스템 초기화 중 예상치 못한 오류가 발생했습니다.");
 			e.printStackTrace();
@@ -205,7 +208,21 @@ public class UserMain {
 				revdao.callReviewerMenu(cust_id, role, field);
 			} else if(role.equals("GST")) {
 				callGuestMenu(cust_id, role, field);
-			} else if(role.equals("ADM") || role.equals("AGY") || role.equals("RESI") || role.equals("RESO")) {
+			} else if(role.equals("AGY")) {
+				agy.callMenu();
+				printInputTag("로그아웃 하시겠습니까? (Y/N)");
+				String logoutInput = br.readLine();
+				if(logoutInput.equalsIgnoreCase("Y")) {
+					// 세션 클리어 로직
+					login = dao.logout(); 
+					cust_id = null;
+					role = null;
+					field = null;
+					printSuccess("안전하게 로그아웃 되었습니다.");
+					break;
+				}
+			}
+			else if(role.equals("ADM") || role.equals("RESI") || role.equals("RESO")) {
 				// 미구현 권한에 대한 깔끔한 처리
 				System.out.println("\n" + INDENT + CLR_WHT + "[" + role + "] 권한 전용 화면을 로드 중입니다..." + RESET);
 				System.out.println(INDENT + CLR_GRY + "(현재 버전에서는 데모 화면만 제공됩니다)" + RESET);

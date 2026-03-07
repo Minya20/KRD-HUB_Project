@@ -76,6 +76,6 @@ public class RR_KRDUserMain {
 	}
 	
 	public static void main(String[] args) {
-		new RR_KRDUserMain();
+		//new RR_KRDUserMain();
 	}
 }

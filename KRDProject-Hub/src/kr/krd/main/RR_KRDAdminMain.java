@@ -51,17 +51,18 @@ public class RR_KRDAdminMain {
 
     public RR_KRDAdminMain() {
         callMenu();
+        
     }
 
     // ===== 기관 담당자 메뉴 =====
-    private void callMenu() {
+    public void callMenu() {
         while (true) {
             // 날짜 기준 상태 자동 갱신(공고예정/공고중/마감)
             syncAnnouncementStatusByDate();
 
             System.out.println("\n===== 기관 담당자 메뉴 =====");
             System.out.println("1. 공고 등록");
-            System.out.println("2. 공고 수정 / 삭제");
+            System.out.println("2. 공고 조회 및 관리");
             System.out.println("3. 신청자 목록 조회");
             System.out.println("4. 선정 관리");
             System.out.println("5. 연구 진행 관리");
@@ -1681,6 +1682,6 @@ public class RR_KRDAdminMain {
     }
 
     public static void main(String[] args) {
-        new RR_KRDAdminMain();
+        //new RR_KRDAdminMain();
     }
 }
