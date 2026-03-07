@@ -41,13 +41,13 @@ public class HYJ_ReportDAO {
             // INSERT
             // ===============================
             sql = "INSERT INTO REPORTS(" +
-                    "repot_rpt_id, report_project_id, report_rpt_type_cd, report_submitted_at, " +
+                    "report_rpt_id, report_project_id, report_rpt_type_cd, report_submitted_at, " +
                     "report_status_cd, report_content, report_keywords, report_progress_rate, report_approved_by) "
-                    + "VALUES(REPORTS_SEQ.NEXTVAL, ?, ?, SYSDATE, '심사중', ?, ?, ?, '미정')";
+                    + "VALUES(REPORTS_SEQ.NEXTVAL, ?, ?, SYSDATE, 'APPLIED', ?, ?, ?,?)";
 
             pstmt = conn.prepareStatement(sql);
 
-            System.out.print("보고서 타입 : ");
+            System.out.print("보고서 타입[중간 / 최종] : ");
             String type = br.readLine();
 
             System.out.print("내용 : ");
@@ -56,7 +56,7 @@ public class HYJ_ReportDAO {
             System.out.print("키워드 : ");
             String keywords = br.readLine();
 
-            System.out.print("진행률 : ");
+            System.out.print("진행률[숫자만 입력] : ");
             int progress = Integer.parseInt(br.readLine());
 
             pstmt.setString(++cnt, project_id);
@@ -64,6 +64,7 @@ public class HYJ_ReportDAO {
             pstmt.setString(++cnt, content);
             pstmt.setString(++cnt, keywords);
             pstmt.setInt(++cnt, progress);
+            pstmt.setString(++cnt, "agy01");
 
             int result = pstmt.executeUpdate();
 
