@@ -49,8 +49,8 @@ public class HYJ_KRDRESOUserMain {
 	
 
 	//메뉴
-	public void callMenu()throws IOException{
-		System.out.println(cust_id);
+	public void callMenu(String myUser_id, String role, boolean login)throws IOException{
+		cust_id = 
 		System.out.println(role);
 		System.out.println(login);
 		while(true) {
