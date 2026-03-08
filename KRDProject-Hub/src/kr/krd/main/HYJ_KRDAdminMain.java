@@ -15,7 +15,7 @@ public class HYJ_KRDAdminMain {
 			br = new BufferedReader(
 					new InputStreamReader(
 							       System.in));
-			dao = new MemberDAO();
+			//dao = new MemberDAO();
 			callMenu();
 		}catch(Exception e) {
 			e.printStackTrace();

@@ -122,8 +122,9 @@ public class SY_ApplicationDAO {
     }
     
     //선정팀 조회
+    /*
     public List<RR_AnnouncementVO> getSelectTeam(int project_id){
-    	List<RR_AnnouncementVO> list=new Arraylist<>();
+    	//List<RR_AnnouncementVO> list=new Arraylist<>();
     	Connection conn= null;
     	PreparedStatement pstmt=null;
     	ResultSet rs= null;
@@ -132,11 +133,12 @@ public class SY_ApplicationDAO {
     	try {
     		conn=DBUtil.getConnection();
     		
-    		sql="SELECT "
+    		//sql="SELECT "
     	}catch (Exception e) {
             e.printStackTrace();
         } finally {
             DBUtil.executeClose(rs, pstmt, conn);
         }
     }
+    */
 }
