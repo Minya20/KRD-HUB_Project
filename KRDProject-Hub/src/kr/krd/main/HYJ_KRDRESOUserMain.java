@@ -23,6 +23,7 @@ public class HYJ_KRDRESOUserMain {
 	private HYJ_ReportDAO dao5;
 	private HYJ_RESISearch dao6;
 
+	
 	public HYJ_KRDRESOUserMain() {
 		try {
 			br = new BufferedReader(
@@ -45,9 +46,13 @@ public class HYJ_KRDRESOUserMain {
 			catch(IOException e) {}
 		}
 	}
+	
 
 	//메뉴
 	public void callMenu()throws IOException{
+		System.out.println(cust_id);
+		System.out.println(role);
+		System.out.println(login);
 		while(true) {
 			System.out.print("1.로그인,2.회원가입,3.종료>");
 			try {
