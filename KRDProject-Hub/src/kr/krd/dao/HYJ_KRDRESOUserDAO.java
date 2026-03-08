@@ -18,7 +18,7 @@ public class HYJ_KRDRESOUserDAO {
 	// ===========================
 	// 공고 목록
 	// ===========================
-	public void selectAnn() {
+	public void selectAnn(String cust_id) {
 
 		while (true) {
 
@@ -45,7 +45,7 @@ public class HYJ_KRDRESOUserDAO {
 				do {
 					System.out.print(rs.getInt("ANNOUNCEMENT_ANN_ID") + "\t" + "\t");
 					System.out.print(rs.getString("ANNOUNCEMENT_TITLE") + "\t" + "\t");
-					System.out.printf("%,d\t", rs.getInt("ANNOUNCEMENT_TOTAL_BUDGET"));
+					System.out.printf("%,d\t", rs.getLong("ANNOUNCEMENT_TOTAL_BUDGET"));
 					System.out.print(rs.getString("ANNOUNCEMENT_START_DT") + "\t");
 					System.out.println(rs.getString("ANNOUNCEMENT_END_DT"));
 				} while (rs.next());
@@ -59,7 +59,7 @@ public class HYJ_KRDRESOUserDAO {
 							System.out.print("상세조회할 번호 입력 : ");
 							int annId = Integer.parseInt(br.readLine());
 							System.out.println("해당 목록에 있는 번호를 입력하세요");
-							detailAnn(annId);   // 상세 메서드 분리
+							detailAnn(annId, cust_id);   // 상세 메서드 분리
 							
 						}catch(NumberFormatException e) {
 							System.out.println("숫자를 입력하세요.");
@@ -83,7 +83,7 @@ public class HYJ_KRDRESOUserDAO {
 	// ===========================
 	// 공고 상세보기
 	// ===========================
-	private void detailAnn(int annId) {
+	private void detailAnn(int annId, String cust_id) {
 
 		while (true) {
 
@@ -124,18 +124,21 @@ public class HYJ_KRDRESOUserDAO {
 				int sel = Integer.parseInt(br.readLine());
 
 				if (sel == 1) {
-
-					System.out.print("신청자 아이디 입력 : ");
-					String userId = br.readLine();
+					
+					//이미 로그인했는데 굳이 다시 신청자 아이디를 입력할 이유가 없어 보여서 로그인 시 유저 아이디 값을 받아서 사용하도록
+					// 수정 하였음
+					//System.out.print("신청자 아이디 입력 : ");
+					//String userId = br.readLine();
 
 					System.out.print("첨부파일 경로 입력 : ");
 					String attachPath = br.readLine();
 
 					System.out.print("신청 예산 입력 : ");
 					int budgetAmt = Integer.parseInt(br.readLine());
+					//if(budgetAmt)
 
 					// 신청 처리 (DB 처리 전부 여기서 수행)
-					dao1.applyAnnouncement(annId, userId, attachPath, budgetAmt);
+					dao1.applyAnnouncement(annId, cust_id, attachPath, budgetAmt);
 
 				} 
 				else if (sel == 2) {
@@ -145,7 +148,9 @@ public class HYJ_KRDRESOUserDAO {
 					System.out.println("잘못된 입력입니다.");
 				}
 
-			} catch (Exception e) {
+			}catch (NumberFormatException e) {
+				System.out.println("숫자를 입력하세요");
+			}catch (Exception e) {
 				e.printStackTrace();
 			} finally {
 				DBUtil.executeClose(rs, pstmt, conn);

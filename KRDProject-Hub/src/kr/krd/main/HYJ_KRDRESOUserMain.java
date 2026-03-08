@@ -24,7 +24,7 @@ public class HYJ_KRDRESOUserMain {
 	private HYJ_RESISearch dao6;
 
 	
-	public HYJ_KRDRESOUserMain() {
+	/*public HYJ_KRDRESOUserMain() {
 		try {
 			br = new BufferedReader(
 					new InputStreamReader(
@@ -46,14 +46,16 @@ public class HYJ_KRDRESOUserMain {
 			catch(IOException e) {}
 		}
 	}
-	
+	*/
 
 	//메뉴
-	public void callMenu(String myUser_id, String role, boolean login)throws IOException{
-		cust_id = 
-		System.out.println(role);
-		System.out.println(login);
-		while(true) {
+	public boolean callMenu(String myUser_id, String myRole, boolean myLogin) throws IOException{
+		br = new BufferedReader(new InputStreamReader(System.in));
+		cust_id = myUser_id;
+		role = myRole;
+		login = myLogin;
+		/*
+		while(!login) { //login이 false 이면
 			System.out.print("1.로그인,2.회원가입,3.종료>");
 			try {
 				int no = Integer.parseInt(br.readLine());
@@ -84,26 +86,35 @@ public class HYJ_KRDRESOUserMain {
 				System.out.println("잘못 입력했습니다.");
 			}
 		}//end of while
+		*/
 		//로그인시 보여지는 메뉴
 		while(login) {
 			System.out.print(
-					"1.공고 조회,2.내 신청조회,3.보고서 제출,4.내 정보 수정,5.인재 열람,6.종료>");
+					"1.공고 조회,2.내 신청조회,3.보고서 제출,4.내 정보 수정,5.인재 열람,6.로그아웃 7.종료>");
 			try {
 				int no = Integer.parseInt(
 						br.readLine());
 				if(no == 1) {//공고 조회
-					dao1.selectAnn();
+					dao1 = new HYJ_KRDRESOUserDAO();
+					dao1.selectAnn(cust_id);
 				}else if(no == 2) {
+					dao4 = new HYJ_APPLICATIONCheakDAO();
 					dao4.CheckMyApp(cust_id);
 				}else if(no == 3) {
+					dao5 = new HYJ_ReportDAO();
 					dao5.InsertReport(cust_id);
 				}else if(no == 4) {
+					dao3 = new HYJ_MyInfoDAO();
 					dao3.SelectInfo(cust_id);
 				}else if(no == 5) {
+					dao6 = new HYJ_RESISearch();
 					dao6.RESISearch();
 				}else if(no == 6) {
-					System.out.println("프로그램을 종료합니다.");
+					System.out.println("로그아웃을 진행합니다.");
 					break;
+				}else if(no == 7) {
+					System.out.println("프로그램을 종료합니다.");
+					System.exit(1);
 				}else {
 					System.out.println("잘못 입력했습니다.");
 				}
@@ -111,9 +122,10 @@ public class HYJ_KRDRESOUserMain {
 				System.out.println("[숫자만 입력 가능]");
 			}
 		}//end of while
+		return login;	//리턴 값을 true로 보내야지 UserMain에서 로그인 처리를 할 수 있음
 	}
 
 	public static void main(String[] args) {
-		new HYJ_KRDRESOUserMain();
+		//new HYJ_KRDRESOUserMain();
 	}
 }

@@ -240,8 +240,15 @@ public class UserMain {
 				//	}else if(role.equals("RESO")) {
 			} else if("RESO".equals(role)) {
 				HYJ_KRDRESOUserMain resoMain = new HYJ_KRDRESOUserMain();
+				boolean isLogout = resoMain.callMenu(cust_id, role, login);
+				if(isLogout) {
+					login = false;
+					cust_id = null;
+					role = null;
+					field = null;
+					break;
+				}
 				//resoMain.callMenu();
-
 				//	}else if(role.equals("RESI")) {
 			} else if("RESI".equals(role)) {
 				RESIUserMain resiMain = new RESIUserMain(cust_id, role, field);
