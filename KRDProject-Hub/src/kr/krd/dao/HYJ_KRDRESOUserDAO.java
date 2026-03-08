@@ -58,7 +58,7 @@ public class HYJ_KRDRESOUserDAO {
 						try {
 							System.out.print("상세조회할 번호 입력 : ");
 							int annId = Integer.parseInt(br.readLine());
-							System.out.println("해당 목록에 있는 번호를 입력하세요");
+							//System.out.println("해당 목록에 있는 번호를 입력하세요");
 							detailAnn(annId, cust_id);   // 상세 메서드 분리
 							
 						}catch(NumberFormatException e) {
@@ -132,10 +132,17 @@ public class HYJ_KRDRESOUserDAO {
 
 					System.out.print("첨부파일 경로 입력 : ");
 					String attachPath = br.readLine();
-
-					System.out.print("신청 예산 입력 : ");
-					int budgetAmt = Integer.parseInt(br.readLine());
-					//if(budgetAmt)
+					int budgetAmt;
+					while(true) {
+						System.out.print("신청 예산 입력[10억미만] : ");
+						budgetAmt = Integer.parseInt(br.readLine());
+						if(budgetAmt > 999999999) {
+							System.out.println("정해진 범위 내에서 입력 해주 세요.");
+							continue;
+						}
+						break;
+					}
+					
 
 					// 신청 처리 (DB 처리 전부 여기서 수행)
 					dao1.applyAnnouncement(annId, cust_id, attachPath, budgetAmt);

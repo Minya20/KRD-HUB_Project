@@ -104,7 +104,8 @@ public class CMY_MemberDAO {
 					int eval_no = Integer.parseInt(br.readLine());
 					if(eval_no == 1) {
 						printInputTag("상세 보기할 대상의 번호 입력");
-						viewAppDetail(br.readLine());
+						int chooseEval_no = Integer.parseInt(br.readLine());
+						viewAppDetail(chooseEval_no);
 					} else if(eval_no == 2) break;
 
 				} else {
@@ -118,7 +119,7 @@ public class CMY_MemberDAO {
 	}
 
 	// 상세 조회 메서드 (프로필 카드 레이아웃 적용)
-	public void viewAppDetail(String eval_no) {
+	public void viewAppDetail(int eval_no) {
 		mother:while(true) {
 			Connection conn = null; PreparedStatement pstmt = null; ResultSet rs = null;
 			try {
@@ -131,7 +132,7 @@ public class CMY_MemberDAO {
 						+ "JOIN ANNOUNCEMENT an ON a.APPLICATION_ANN_ID = an.ANNOUNCEMENT_ann_ID JOIN AGENCY ag ON an.ANNOUNCEMENT_AGY_ID = ag.AGENCY_AGY_ID "
 						+ "WHERE e.EVALUATION_ID = ? AND e.EVALUATION_REVIEWER_ID = ? AND an.ANNOUNCEMENT_HIDDEN_YN = 0";
 				pstmt = conn.prepareStatement(sql);
-				pstmt.setString(1, eval_no);
+				pstmt.setInt(1, eval_no);
 				pstmt.setString(2, cust_id);
 				rs = pstmt.executeQuery();
 
@@ -185,15 +186,16 @@ public class CMY_MemberDAO {
 						}
 
 						boolean checkYN = checkTempEval(eval_id);
-						if(!checkYN) { submiteval(eval_id); return; }
-						else { useSaveEval(eval_id); return; }
+						if(!checkYN) { submiteval(eval_id); return; }	//임시저장을 사용 안하고 다시 작성
+						else { useSaveEval(eval_id); return; }	//임시저장을 사용하는 메서드
 					} else if(do_eval_no == 2) return;
 
 				} else {
 					printError("본인의 평가 목록에 존재하는 번호를 입력하세요!");
 					return;
 				}
-			} catch(Exception e){ e.printStackTrace(); }
+			}catch(NumberFormatException e){ printError("숫자만 입력 가능합니다."); } 
+			catch(Exception e){ e.printStackTrace(); }
 			finally { DBUtil.executeClose(rs, pstmt, conn); }	
 		}
 	}
@@ -230,7 +232,8 @@ public class CMY_MemberDAO {
 					}
 				}
 			}
-		} catch(Exception e){ e.printStackTrace(); } finally { DBUtil.executeClose(null, pstmt, conn); }	
+		} catch(NumberFormatException e){ printError("숫자를 입력하세요"); }
+		catch(Exception e){ e.printStackTrace(); } finally { DBUtil.executeClose(null, pstmt, conn); }	
 	}
 
 	public void reSubmiteval(int eval_id) {
@@ -255,7 +258,8 @@ public class CMY_MemberDAO {
 					break;
 				} else if(save_eval_no == 2) return;
 			}
-		} catch(Exception e){ e.printStackTrace(); } finally { DBUtil.executeClose(null, pstmt, conn); }	
+		} catch(NumberFormatException e){ printError("숫자만 입력 가능합니다."); }
+		catch(Exception e){ e.printStackTrace(); } finally { DBUtil.executeClose(null, pstmt, conn); }	
 	}
 
 	public void useSaveEval(int eval_id) {
@@ -335,9 +339,22 @@ public class CMY_MemberDAO {
 			if(rs.next()) checkFlag = true;
 
 			while(checkFlag) {
-				System.out.println(INDENT + CLR_PRIMARY + "  해당 과제에 대해 임시저장된 평가 기록이 존재합니다." + RESET);
-				printInputTag("1: 임시저장 데이터 사용   2: 폐기 후 새로 작성");
-				int temp_choose = Integer.parseInt(br.readLine());
+				int temp_choose;
+				while(true) {
+					try {
+						System.out.println(INDENT + CLR_PRIMARY + "  해당 과제에 대해 임시저장된 평가 기록이 존재합니다." + RESET);
+						printInputTag("1: 임시저장 데이터 사용   2: 폐기 후 새로 작성");
+						temp_choose = Integer.parseInt(br.readLine());
+						if(temp_choose > 2 || temp_choose < 1) {	
+							continue;
+						}
+						break;
+					}catch(NumberFormatException e) {
+						printError("숫자를 입력하세요.");
+					}catch(Exception e) {
+						e.printStackTrace();
+					}
+				}
 				if(temp_choose == 1) break;
 				else if(temp_choose == 2) {
 					rs.close(); pstmt.close();
@@ -345,9 +362,15 @@ public class CMY_MemberDAO {
 					pstmt.setInt(1, eval_id); pstmt.executeUpdate();
 					printSuccess("기존 임시평가 데이터를 삭제했습니다.");
 					checkFlag = false;
-				} else printError("1 또는 2를 입력하세요.");
+				} else {
+					printError("1 또는 2를 입력해주세요.");
+					printInputTag("평가를 직접 작성합니다.");
+					checkFlag = false;
+					//return 
+				}
 			}
-		} catch(Exception e){ e.printStackTrace(); } finally { DBUtil.executeClose(rs, pstmt, conn); }	
+		}catch(NumberFormatException e){ printError("숫자만 입력 가능합니다."); }
+		catch(Exception e){ e.printStackTrace(); } finally { DBUtil.executeClose(rs, pstmt, conn); }	
 		return checkFlag;
 	}
 
@@ -384,7 +407,7 @@ public class CMY_MemberDAO {
 				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-10s : " + CLR_WHT + "%s\n" + RESET, "이름", rs.getString("user_name"));
 				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-10s : " + CLR_WHT + "%s\n" + RESET, "이메일", rs.getString("user_email"));
 				String birth = rs.getString("user_birth_dt");
-				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-10s : " + CLR_WHT + "%s\n" + RESET, "생년월일", birth.substring(0, 4) + "-" + birth.substring(4, 6) + "-" + birth.substring(6, 8));
+				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-10s : " + CLR_WHT + "%s\n" + RESET, "생년월일", birth.substring(0, 4) + "-" + birth.substring(5, 7) + "-" + birth.substring(8, 10));
 				System.out.println(INDENT + CLR_PRIMARY + "├──────────────────────────────────────────────────────────────┤" + RESET);
 				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-10s : " + CLR_WHT + "%s\n" + RESET, "국적", rs.getString("user_country_cd"));
 				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-10s : " + CLR_WHT + "%s\n" + RESET, "성별", (rs.getInt("user_gender_cd") == 1 ? "남성" : "여성"));
