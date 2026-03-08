@@ -201,9 +201,13 @@ public class MemberDAO {
 	//회원가입 메서드(권한 선택 버전)
 	// 1. 회원가입 (비주얼 폼 개선)
 	public void insertMember() {
-		String userCountry = null;
-		String userAffiliation = null;
-		String userField = null;
+	    Connection conn = null;
+	    PreparedStatement pstmt = null;
+	    String sql = null;
+
+	    String userCountry = null;
+	    String userAffiliation = null;
+	    String userField = null;
 
 		printSubTitle("신규 회원 등록 (Sign Up)");
 
@@ -333,13 +337,13 @@ public class MemberDAO {
 		    }
 
 			// JDBC 처리
-			Connection conn = DBUtil.getConnection();
-			String sql = "INSERT INTO USERINFO (user_id, user_pwd, user_name, user_email, "
+			conn = DBUtil.getConnection();
+			sql = "INSERT INTO USERINFO (user_id, user_pwd, user_name, user_email, "
 					+ "user_birth_dt, user_phone_no, user_country_cd, user_addr, "
 					+ "user_gender_cd, user_role_cd, user_acct_status_cd, user_affiliation, user_field) "
 					+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'GST', 'ACTIVE', ?, ?)";
 
-			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, user_id);
 			pstmt.setString(2, user_pw);
 			pstmt.setString(3, user_name);
@@ -355,10 +359,13 @@ public class MemberDAO {
 			int count = pstmt.executeUpdate();
 			if (count == 1) printSuccess("회원가입이 완료되었습니다. 환영합니다!");
 
-			DBUtil.executeClose(null, pstmt, conn);
+
 
 		} catch (Exception e) {
 			printError("데이터베이스 처리 중 오류가 발생했습니다.");
+			e.printStackTrace();
+		}finally {
+			DBUtil.executeClose(null, pstmt, conn);
 		}
 	}
 	/*public void insertMember() {
@@ -876,7 +883,7 @@ public class MemberDAO {
 		} catch (Exception e) {
 			printError("신청 처리 중 오류가 발생했습니다.");
 		} finally {
-			DBUtil.executeClose(null, pstmt, conn);
+			DBUtil.executeClose(rs, pstmt, conn);
 		}
 	}
 	/*public void applyRole(String user_id) {

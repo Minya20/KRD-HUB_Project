@@ -243,9 +243,16 @@ public class UserMain {
 
 				//	}else if(role.equals("ADM")) {
 			} else if("ADM".equals(role)) {
-				USH_KRDAdminMain admMain = new USH_KRDAdminMain(br, cust_id);
-				admMain.callMenu();
+			    USH_KRDAdminMain admMain = new USH_KRDAdminMain(br, cust_id);
+			    boolean isLogout = admMain.callMenu();
 
+			    if(isLogout) {
+			        login = false;
+			        cust_id = null;
+			        role = null;
+			        field = null;
+			        break;
+			    }
 			} else {
 				printError("정의되지 않은 권한입니다. 관리자에게 문의하세요.");
 				login = false;

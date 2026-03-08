@@ -12,235 +12,237 @@ import kr.krd.vo.USH_UserSummary;
 import kr.krd.vo.USH_UserDetail;
 
 public class USH_AdminMemberService {
+	// ------------------------------------------------
+	// ANSI Escape Codes & UI Elements
+	// ------------------------------------------------
+	public static final String RESET = "\u001B[0m";
+	public static final String BOLD = "\u001B[1m";
+	public static final String UNBOLD = "\u001B[22m";
+
+	public static final String CLR_PRIMARY = "\u001B[36m"; // Cyan
+	public static final String CLR_WHT = "\u001B[37m";    // White
+	public static final String CLR_GRY = "\u001B[90m";    // Gray
+	public static final String CLR_ERR = "\u001B[31m";    // Red
+	public static final String CLR_SUC = "\u001B[32m";    // Green
+
+	private static final String INDENT = "      ";
+
+	// ------------------------------------------------
+	// Fields
+	// ------------------------------------------------
 	private final USH_ConsoleUtil io;
 	private final USH_MemberDAO dao;
 	private final String adminId;
 	private static final Set<String> ALLOWED_ROLES = Set.of("GST","RESI","RESO","AGY","REV");
 	private static final Set<String> ALLOWED_STATUS = Set.of("ACTIVE","SUSPENDED");
 
-	
 	public USH_AdminMemberService(BufferedReader br, String adminId) {
 		this.io = new USH_ConsoleUtil(br);
 		this.dao = new USH_MemberDAO();
 		this.adminId = adminId;
-		
 	}
-	
+
+	// ------------------------------------------------
+	// UI Helper Methods
+	// ------------------------------------------------
+	private void printSubTitle(String title) {
+		System.out.println("\n" + INDENT + CLR_PRIMARY + BOLD + "◈ " + title + RESET);
+		System.out.println(INDENT + CLR_GRY + "────────────────────────────────────────────────────────" + RESET);
+	}
+
+	private void printMenuOption(String key, String description) {
+		System.out.print(INDENT + "  " + CLR_PRIMARY + BOLD + "[" + key + "]" + RESET + " ");
+		System.out.println(CLR_WHT + description + RESET);
+	}
+
+	private void printError(String msg) {
+		System.out.println("\n" + INDENT + CLR_ERR + BOLD + "✘ Error: " + UNBOLD + RESET + msg);
+	}
+
+	private void printSuccess(String msg) {
+		System.out.println("\n" + INDENT + CLR_SUC + BOLD + "✔ Success: " + UNBOLD + RESET + msg);
+	}
+
+	private String getInputPrompt(String tag) {
+		return "\n" + INDENT + CLR_PRIMARY + BOLD + "▶ " + tag + RESET + " : ";
+	}
+
+	// ------------------------------------------------
+	// Business Logic
+	// ------------------------------------------------
 	public int restoreExpiredSuspendedUsers() {
 		return dao.restoreExpiredSuspendedUsers();
 	}
 	
 	public void userListFlow() throws IOException {
 		List<USH_UserSummary> list = dao.findUserExcludeDeleted();
-		printUserSummaryList("회원 목록 조회 (DELETED 제외)", list);
+		printUserSummaryList("회원 목록 전체 조회 (DELETED 제외)", list);
 		afterUserListMenu();
 	}
 	
-	//회원 조건 검색: 사용자가 조건을 입력하고 DAO로 넘김
+	// 회원 조건 검색
 	public void userSearchFlow() throws IOException {
-		System.out.println("===== 회원 조건 검색 =====");
-		System.out.println("[안내] 엔터만 치면 해당 조건은 생략됩니다.");
+		printSubTitle("회원 조건 검색 (Search Users)");
+		System.out.println(INDENT + CLR_GRY + "  [안내] 입력하지 않고 엔터(Enter)를 치면 해당 조건은 생략됩니다." + RESET);
 
-		//문자열 조건들은 trim() 후 빈 문자열이면 "조건 없음"처리
-		String id = io.readOptional("ID(부분일치) > ");
-		String name = io.readOptional("이름(부분일치) > ");
-		String email = io.readOptional("이메일(부분일치) > ");
-		String role = io.readOptional("권한 코드(예: ADM/AGY/RESI/RESO/REV) > ");
-		String status = io.readOptional("상태 코드(예: ACTIVE / (빈값 허용)) > ");
+		String id = io.readOptional(getInputPrompt("ID(부분일치)"));
+		String name = io.readOptional(getInputPrompt("이름(부분일치)"));
+		String email = io.readOptional(getInputPrompt("이메일(부분일치)"));
+		String role = io.readOptional(getInputPrompt("권한 코드 (ADM/AGY/RESI/RESO/REV)"));
+		String status = io.readOptional(getInputPrompt("상태 코드 (ACTIVE/SUSPENDED)"));
 		
 		if(role != null) role = role.toUpperCase();
 		if(status != null) status = status.toUpperCase();
 
-		//날짜는 잘못 입력하면 ORA-01861 오류 발생
-		//그래서 readDateOrEmpty()로 YYYY-MM-DD 형식을 강제 + 실제 날짜 검증까지 함
-		String regStart = io.readDateOrEmpty("가입일 시작(YYYY-MM-DD) > ");
-		String regEnd = io.readDateOrEmpty("가입일 끝(YYYY-MM-DD) > ");
-		String lastStart = io.readDateOrEmpty("마지막접속 시작(YYYY-MM-DD) > ");
-		String lastEnd = io.readDateOrEmpty("마지막접속 끝(YYYY-MM-DD) > ");
+		System.out.println("\n" + INDENT + CLR_WHT + "[ 가입일 및 접속일 조건 ]" + RESET);
+		String regStart = io.readDateOrEmpty(getInputPrompt("가입일 시작(YYYY-MM-DD)"));
+		String regEnd = io.readDateOrEmpty(getInputPrompt("가입일 끝(YYYY-MM-DD)"));
+		String lastStart = io.readDateOrEmpty(getInputPrompt("마지막접속 시작(YYYY-MM-DD)"));
+		String lastEnd = io.readDateOrEmpty(getInputPrompt("마지막접속 끝(YYYY-MM-DD)"));
 
-		//DAO는 입력값을 기반으로 동적 SQL을 만들어 조건 검색 실행 + 출력
 		List<USH_UserSummary> list = dao.searchUsers(id, name, email, role, status, regStart, regEnd, lastStart, lastEnd);
 		printUserSummaryList("회원 조건 검색 결과", list);
 		afterUserListMenu();
 	}
 	
-	//회원 상태(패널티 부여/해제) 변경
+	// 회원 상태(패널티 부여/해제) 변경
 	public void changeUserStatusFlow() throws IOException {
-		System.out.println("================회원 상태 변경(패널티 부여/해제)===============");
-		String userId = io.readRequired("상태 변경할 사용자 ID 입력 > ");
+		printSubTitle("회원 상태 변경 (패널티 부여/해제)");
+		String userId = io.readRequired(getInputPrompt("상태 변경할 사용자 ID 입력"));
 
-		//ID 존재 확인
-		boolean chk = dao.existsUser(userId);
-
-		if(!chk) {
-			System.out.println("존재하지 않는 ID입니다.");
+		if(!dao.existsUser(userId)) {
+			printError("존재하지 않는 ID입니다.");
 			return;
 		}
 
-
-		String status = io.readFromSetRequired("변경할 상태 입력(ACTIVE/SUSPENDED) > ", ALLOWED_STATUS);
-
+		String status = io.readFromSetRequired(getInputPrompt("변경할 상태 입력 (ACTIVE/SUSPENDED)"), ALLOWED_STATUS);
 		String current = dao.getAcctStatus(userId);
 
 		if(current == null) {
-			System.out.println("상태 조회 실패");
+			printError("상태 조회 실패");
 			return;
 		}
 
-		//DELETED일 경우 상태 변경 자체 금지
 		if("DELETED".equalsIgnoreCase(current)) {
-			System.out.println("이미 삭제된 계정입니다.(DELETED 상태는 변경 금지) 담당자에게 문의하십시오.");
+			printError("이미 삭제된 계정입니다. (DELETED 상태는 변경 불가)");
 			return;
 		}
 
-		//연장 모드인지 판단
 		boolean isExtend = "SUSPENDED".equalsIgnoreCase(current) && "SUSPENDED".equals(status);
-		if(isExtend) System.out.println("======기간 연장======");
-
+		if(isExtend) {
+			System.out.println("\n" + INDENT + CLR_PRIMARY + "[ 패널티 기간 연장 모드 ]" + RESET);
+		}
 
 		if("ACTIVE".equalsIgnoreCase(current) && "ACTIVE".equals(status)) {
-			System.out.println("이미 ACTIVE한 상태입니다.");
+			printError("이미 ACTIVE한 상태입니다.");
 			return;
 		}
 
-		//SUSPEDED 일 경우
 		if(status.equals("SUSPENDED")) {
-
 			if(isExtend) {
-				//기간 연장 모드 : 종료일만 다시 받고, 기존 종료일보다 뒤여야 함.
-				String oldEndStr = dao.getPenaltyEndDt(userId); //기존 종료일(YYYY-MM-DD) 또는 null
-				String endStr = io.readDateRequired("연장할 패널티 종료일(YYYY-MM-DD) > ");
+				String oldEndStr = dao.getPenaltyEndDt(userId); 
+				String endStr = io.readDateRequired(getInputPrompt("연장할 패널티 종료일(YYYY-MM-DD)"));
 				LocalDate newEnd = LocalDate.parse(endStr);
 
-				//종료일이 오늘보다 과거면 불가
 				if(newEnd.isBefore(LocalDate.now())) {
-					System.out.println("종료일이 오늘보다 이전입니다. 다시 입력하세요.");
+					printError("종료일이 오늘보다 이전입니다. 다시 시도하세요.");
 					return;
 				}
 
-				//기존 종료일이 있으면, 새 종료일은 반드시 더 뒤여야 "연장"
 				if(oldEndStr == null || oldEndStr.trim().isEmpty()) {
-					System.out.println("기존 종료일이 없어 연장 비교를 생략합니다.");
-				}else if(!oldEndStr.trim().matches("\\d{4}-\\d{2}-\\d{2}")) {
-					System.out.println("기존 종료일 형식이 올바르지 않아 연장 비교를 생략합니다.");
-				}else {
+					System.out.println(INDENT + CLR_GRY + "  (기존 종료일이 없어 연장 비교를 생략합니다.)" + RESET);
+				} else if(!oldEndStr.trim().matches("\\d{4}-\\d{2}-\\d{2}")) {
+					System.out.println(INDENT + CLR_GRY + "  (기존 종료일 형식이 올바르지 않아 연장 비교를 생략합니다.)" + RESET);
+				} else {
 					LocalDate oldEnd = LocalDate.parse(oldEndStr.trim());
 					if(!newEnd.isAfter(oldEnd)) {
-						System.out.println("연장은 기존 종료일("+ oldEndStr.trim() + ") 이후 날짜로만 가능합니다.");
+						printError("연장은 기존 종료일(" + oldEndStr.trim() + ") 이후 날짜로만 가능합니다.");
 						return;
 					}
 				}
 
-				if(!io.confirmYN("정말 변경하시겠습니까? (Y/N) > ")) {
-					System.out.println("변경을 취소했습니다.");
+				if(!io.confirmYN(getInputPrompt("정말 변경하시겠습니까? (Y/N)"))) {
+					printError("변경을 취소했습니다.");
 					return;
 				}
 
 				int result = dao.updateUserStatus(userId, "SUSPENDED", endStr);
-				if(result == 1) System.out.println("변경이 완료되었습니다.");
-				else System.out.println("변경 실패(처리 중 오류 또는 조건 변경)");
+				if(result == 1) printSuccess("상태 변경(기간 연장)이 완료되었습니다.");
+				else printError("변경 실패 (처리 중 오류 발생)");
 
-			}else {
-				String startStr = io.readDateRequired("패널티 시작일(YYYY-MM-DD) > ");
-				String endStr = io.readDateRequired("패널티 종료일(YYYY-MM-DD) > ");
+			} else {
+				String startStr = io.readDateRequired(getInputPrompt("패널티 시작일(YYYY-MM-DD)"));
+				String endStr = io.readDateRequired(getInputPrompt("패널티 종료일(YYYY-MM-DD)"));
 
 				LocalDate start = LocalDate.parse(startStr);
 				LocalDate end = LocalDate.parse(endStr);
 
 				if(start.isAfter(end)) {
-					System.out.println("종료일이 시작일보다 날짜가 빠릅니다. 다시 입력하세요.");
+					printError("종료일이 시작일보다 빠를 수 없습니다.");
 					return;
 				}
-
 				if(start.isAfter(LocalDate.now())) {
-					System.out.println("시작일이 오늘보다 미래입니다.(패널티는 입력시 바로 적용) 다시 입력하세요.");
+					printError("시작일이 오늘보다 미래일 수 없습니다. (패널티는 즉시 적용)");
 					return;
 				}
-
 				if(end.isBefore(LocalDate.now())) {
-					System.out.println("종료일이 오늘보다 과거입니다. 다시 입력하세요.");
+					printError("종료일이 오늘보다 과거일 수 없습니다.");
 					return;
 				}
 
-				if(!io.confirmYN("정말 변경하시겠습니까? (Y/N) > ")) {
-					System.out.println("변경을 취소했습니다.");
+				if(!io.confirmYN(getInputPrompt("정말 변경하시겠습니까? (Y/N)"))) {
+					printError("변경을 취소했습니다.");
 					return;
 				}
 
 				int result = dao.updateUserStatus(userId, "SUSPENDED", endStr);
-				if(result == 1) System.out.println("변경이 완료되었습니다.");
-				else System.out.println("변경 실패(처리 중 오류 또는 조건 변경)");
+				if(result == 1) printSuccess("상태 변경(패널티 부여)이 완료되었습니다.");
+				else printError("변경 실패 (처리 중 오류 발생)");
 			}
-
-
-
-		}else {
-			//ACTIVE일 경우
-			//해결할 것 ACTIVE 상태에 ACTIVE로 변환하면 막아야함.
-
-			if(!io.confirmYN("정말 변경하시겠습니까? (Y/N) > ")) {
-				System.out.println("변경을 취소했습니다.");
+		} else {
+			// ACTIVE로 변환
+			if(!io.confirmYN(getInputPrompt("정말로 ACTIVE 상태로 변경하시겠습니까? (Y/N)"))) {
+				printError("변경을 취소했습니다.");
 				return;
 			}
 
 			int result = dao.updateUserStatus(userId, "ACTIVE", null);
-
-
-			if(result == 1) System.out.println("변경이 완료되었습니다.");
-			else System.out.println("변경 실패(처리 중 오류 또는 조건 변경)");
+			if(result == 1) printSuccess("계정이 ACTIVE 상태로 복구되었습니다.");
+			else printError("변경 실패 (처리 중 오류 발생)");
 		}
-
 	}
 	
-	//삭제 UI/흐름 처리
+	// 삭제 UI/흐름 처리
 	public void deleteUserFlow() throws IOException {
-		//1) 삭제할 회원 ID 입력
-		String userId = io.readRequired("삭제할 회원 ID 입력 > ");
+		printSubTitle("회원 계정 삭제 (Delete User)");
+		String userId = io.readRequired(getInputPrompt("삭제할 회원 ID 입력"));
 
-		//2) DB에서 삭제 가능한 상태인지 먼저 판단
 		String chk = dao.canSoftDelete(userId);
 
-		//3) 판단 결과에 따라 메시지 출력하고 종료(삭제 수행x)
-		if("NOT_FOUND".equals(chk)) {
-			System.out.println("삭제 실패: 존재하지 않는 회원 ID");
-			return;
-		}
-		if("ALREADY_DELETED".equals(chk)) {
-			System.out.println("삭제 실패: 이미 삭제된 계정입니다.");
-			return;
-		}
-		if("ADMIN_BLOCK".equals(chk)) {
-			System.out.println("삭제 실패: 관리자(ADM) 계정은 삭제할 수 없습니다. 담당자에게 문의하십시오.");
-			return;
-		}
-		if("ERROR".equals(chk)) {
-			System.out.println("삭제 실패: DB 오류");
+		if("NOT_FOUND".equals(chk)) { printError("존재하지 않는 회원 ID입니다."); return; }
+		if("ALREADY_DELETED".equals(chk)) { printError("이미 삭제된 계정입니다."); return; }
+		if("ADMIN_BLOCK".equals(chk)) { printError("관리자(ADM) 계정은 삭제할 수 없습니다."); return; }
+		if("ERROR".equals(chk)) { printError("삭제 검증 중 DB 오류가 발생했습니다."); return; }
+
+		System.out.println(INDENT + CLR_ERR + "  ※ 경고: 삭제 시 계정 상태가 DELETED로 변경되며 복구가 불가능할 수 있습니다." + RESET);
+		if(!io.confirmYN(getInputPrompt("정말 삭제하시겠습니까? (Y/N)"))) {
+			printError("삭제 처리를 취소했습니다.");
 			return;
 		}
 
-		//4) 여기가지 통과했으면 삭제 가능한 상태
-		//실수 방지를 위해 Y/N 확인을 올바르게 입력받을 때까지 반복
-		if(!io.confirmYN("정말 삭제(계정 상태 = DELETED)하시겠습니까? (Y/N) > ")) {
-			System.out.println("삭제를 취소했습니다.");
-			return;
-		}
-
-		//5) 실제 삭제(논리삭제) 실행(DAO)
 		int result = dao.softDeleteUser(userId);
-
-		if(result == 1) System.out.println("삭제 처리 완료되었습니다.");
-		else System.out.println("삭제 실패(처리 중 오류 또는 조건 변경)");
+		if(result == 1) printSuccess("해당 계정이 성공적으로 삭제(DELETED) 되었습니다.");
+		else printError("삭제 실패 (처리 중 오류 발생)");
 	}
 	
-	//권한 변경
+	// 권한 변경
 	public void roleChangeFlow() throws IOException {
-		System.out.println("======권한(역할) 변경======");
-		String userId = io.readRequired("권한을 변경할 대상 ID 입력 > ");
+		printSubTitle("회원 권한(역할) 변경 (Change Role)");
+		String userId = io.readRequired(getInputPrompt("권한을 변경할 대상 ID 입력"));
 
 		String[] info = dao.getRoleAndStatus(userId);
-
 		if(info == null) {
-			System.out.println("존재하지 않는 ID입니다.");
+			printError("존재하지 않는 ID입니다.");
 			return;
 		}
 
@@ -248,125 +250,126 @@ public class USH_AdminMemberService {
 		String status = info[1];
 
 		if(!(status == null || "ACTIVE".equalsIgnoreCase(status))) {
-			System.out.println("계정 상태가 ACTIVE가 아니면 권한(역할)을 변경할 수 없습니다.");
+			printError("계정 상태가 ACTIVE가 아니면 권한을 변경할 수 없습니다.");
 			return;
 		}
 
+		System.out.println(INDENT + CLR_GRY + "  현재 권한: " + RESET + currentRole);
+
 		String newRole = null;
 		while(true) {
-			newRole = io.readFromSetRequired("바꾸고 싶은 권한(역할) 입력 > ", ALLOWED_ROLES);
-
+			newRole = io.readFromSetRequired(getInputPrompt("변경할 권한(역할) 입력 (예: AGY, REV)"), ALLOWED_ROLES);
 			if(newRole.equalsIgnoreCase(currentRole)) {
-				System.out.println("현재 갖고 있는 권한(역할)입니다.");
+				printError("현재 보유 중인 권한과 동일합니다. 다른 권한을 입력하세요.");
 				continue;
 			}
-
-			if(!newRole.equalsIgnoreCase(currentRole)) {
-				break;
-			}
+			break;
 		}
 
-		String changedBy = adminId;// 이후 로그인한 관리자 ID로 교체
-		String reason = io.readOptional("변경 사유(엔터=생략) > ");
+		String changedBy = adminId; 
+		String reason = io.readOptional(getInputPrompt("변경 사유 (엔터=생략)"));
 
-		if(!io.confirmYN("정말로 권한(역할)을 변경하시겠습니까? (Y/N) > ")) {
-			System.out.println("권한 변경을 취소하였습니다.");
+		if(!io.confirmYN(getInputPrompt("정말로 권한을 [" + currentRole + " -> " + newRole + "]로 변경하시겠습니까? (Y/N)"))) {
+			printError("권한 변경을 취소하였습니다.");
 			return;
 		}
 
 		int result = dao.changeUserRoleWithHistory(userId, newRole, changedBy, reason);
-		if(result == 1) System.out.println("권한(역할)을 변경하였습니다.");
-		else System.out.println("권한 변경 실패.(계정 상태/DB 오류)");
-
+		if(result == 1) printSuccess("권한(역할) 변경 처리가 완료되었습니다.");
+		else printError("권한 변경 실패 (계정 상태 변경 또는 DB 오류)");
 	}
 	
-	//회원 목록 조회/조건 검색 결과 후 회원 상세 조회
+	// 회원 목록 조회/조건 검색 결과 후 회원 상세 조회
 	private void afterUserListMenu() throws IOException {
-	    while (true) {
-	        System.out.println();
-	        System.out.println("0.이전 메뉴(뒤로가기)");
-	        System.out.println("1.회원 상세 조회");
-	        System.out.println();
+		while (true) {
+			System.out.println();
+			printMenuOption("1", "특정 회원 상세 정보 조회");
+			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
+			printMenuOption("0", "목록 닫기 및 이전 메뉴로 돌아가기");
+			System.out.println();
 
-	        int no = io.readIntInRange("입력 > ", 0, 1);
+			int no = io.readIntInRange(getInputPrompt("메뉴 선택"), 0, 1);
+			if (no == 0) return;
 
-	        if (no == 0) return;
+			String userId = io.readRequired(getInputPrompt("상세 조회할 회원 ID 입력"));
+			USH_UserDetail detail = dao.findUserDetail(userId);
 
-	        // no == 1
-	        String userId = io.readRequired("조회할 회원 ID 입력 > ");
-	        USH_UserDetail detail = dao.findUserDetail(userId);
-
-	        if (detail == null) {
-	            System.out.println("해당 ID의 회원이 없습니다: " + userId);
-	            continue;
-	        }
-	        printUserDetail(detail);
-	    }
+			if (detail == null) {
+				printError("해당 ID의 회원을 찾을 수 없습니다: " + userId);
+				continue;
+			}
+			printUserDetail(detail);
+		}
 	}
 	
-	//회원 목록 조회 출력
+	// 회원 목록 출력 (Grid Layout 적용)
 	private void printUserSummaryList(String title, List<USH_UserSummary> list) {
-	    System.out.println("========== " + title + " ==========");
-	    System.out.println();
+		printSubTitle(title);
 
-	    if (list == null || list.isEmpty()) {
-	        System.out.println("조건에 맞는 회원 정보가 없습니다.");
-	        System.out.println("-".repeat(130));
-	        return;
-	    }
+		if (list == null || list.isEmpty()) {
+			System.out.println(INDENT + CLR_GRY + "  조건에 맞는 회원 정보가 없습니다." + RESET);
+			return;
+		}
 
-	    System.out.printf("%-12s %-8s %-12s %-24s %-10s %-12s %-19s %-19s%n",
-	            "ID", "이름", "생년월일", "이메일", "권한", "상태", "가입일자", "마지막접속");
-	    System.out.println("-".repeat(130));
+		// 표 헤더 생성 (문자열 길이에 맞춰 포맷팅)
+		System.out.println(INDENT + BOLD + CLR_WHT + String.format("%-12s | %-8s | %-12s | %-22s | %-6s | %-10s | %-19s | %-19s",
+				"ID", "이름", "생년월일", "이메일", "권한", "상태", "가입일자", "마지막접속") + RESET);
+		System.out.println(INDENT + CLR_GRY + "--------------------------------------------------------------------------------------------------------------------------------" + RESET);
 
-	    for (USH_UserSummary u : list) {
-	        System.out.printf("%-12s %-8s %-12s %-24s %-10s %-12s %-19s %-19s%n",
-	                nvl(u.userId),
-	                nvl(u.userName),
-	                nvl(u.birthDt),
-	                nvl(u.email),
-	                nvl(u.roleCd),
-	                nvl(u.acctStatusCd),
-	                fmtTs(u.createdAt),
-	                fmtTs(u.lastLoginAt));
-	    }
-	    System.out.println("-".repeat(130));
+		for (USH_UserSummary u : list) {
+			String stat = nvl(u.acctStatusCd);
+			String statColor = stat.equals("ACTIVE") ? CLR_SUC : (stat.equals("SUSPENDED") ? CLR_ERR : CLR_GRY);
+			
+			System.out.println(INDENT + String.format("%-12s | %-8s | %-12s | %-22s | %-6s | " + statColor + "%-10s" + RESET + " | %-19s | %-19s",
+					nvl(u.userId),
+					nvl(u.userName),
+					nvl(u.birthDt),
+					nvl(u.email),
+					nvl(u.roleCd),
+					stat,
+					fmtTs(u.createdAt),
+					fmtTs(u.lastLoginAt)));
+		}
+		System.out.println(INDENT + CLR_GRY + "--------------------------------------------------------------------------------------------------------------------------------" + RESET);
 	}
 	
-	//회원 상세 조회 출력
+	// 회원 상세 조회 출력 (Profile Card Layout)
 	private void printUserDetail(USH_UserDetail d) {
-	    System.out.println();
-	    System.out.println("===================회원 상세 조회===================");
-	    System.out.println("ID : " + nvl(d.userId));
-	    System.out.println("이름 : " + nvl(d.userName));
-	    System.out.println("생년월일 : " + nvl(d.birthDt));
-	    System.out.println("이메일 : " + nvl(d.email));
-	    System.out.println("전화번호 : " + nvl(d.phoneNo));
-	    System.out.println("국적 : " + nvl(d.countryCd));
-	    System.out.println("주소 : " + nvl(d.addr));
-	    System.out.println("성별 : " + nvl(d.genderCd));
-	    System.out.println("권한 : " + nvl(d.roleCd));
-	    System.out.println("계정 상태 : " + nvl(d.acctStatusCd));
-	    System.out.println("가입일자 : " + fmtTs(d.createdAt));
-	    System.out.println("마지막 접속 : " + fmtTs(d.lastLoginAt));
-	    System.out.println("패널티 종료일 : " + nvl(d.penaltyEndDt));
-	    System.out.println("소속 : " + nvl(d.affiliation));
-	    System.out.println("담당 분야 : " + nvl(d.field));
-	    System.out.println("업데이트 일시 : " + fmtTs(d.updatedAt));
-	    System.out.println("-".repeat(50));
+		System.out.println("\n" + INDENT + CLR_PRIMARY + BOLD + "◈ 회원 상세 정보 (User Details)" + RESET);
+		System.out.println(INDENT + CLR_PRIMARY + "┌──────────────────────────────────────────────────────────┐" + RESET);
+		
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%s\n" + RESET, "ID", nvl(d.userId));
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%s\n" + RESET, "이름", nvl(d.userName));
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%s\n" + RESET, "생년월일", nvl(d.birthDt));
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%s\n" + RESET, "이메일", nvl(d.email));
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%s\n" + RESET, "전화번호", nvl(d.phoneNo));
+		System.out.println(INDENT + CLR_PRIMARY + "├──────────────────────────────────────────────────────────┤" + RESET);
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%s\n" + RESET, "소속", nvl(d.affiliation));
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%s\n" + RESET, "담당 분야", nvl(d.field));
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%s\n" + RESET, "권한(역할)", nvl(d.roleCd));
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%s\n" + RESET, "계정 상태", nvl(d.acctStatusCd));
+		if("SUSPENDED".equals(d.acctStatusCd)) {
+			System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_ERR + "%-12s : %s\n" + RESET, "패널티 종료일", nvl(d.penaltyEndDt));
+		}
+		System.out.println(INDENT + CLR_PRIMARY + "├──────────────────────────────────────────────────────────┤" + RESET);
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%s\n" + RESET, "국적", nvl(d.countryCd));
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%s\n" + RESET, "주소", nvl(d.addr));
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%s\n" + RESET, "성별", nvl(d.genderCd));
+		System.out.println(INDENT + CLR_PRIMARY + "├──────────────────────────────────────────────────────────┤" + RESET);
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%s\n" + RESET, "가입 일자", fmtTs(d.createdAt));
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%s\n" + RESET, "마지막 접속", fmtTs(d.lastLoginAt));
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%s\n" + RESET, "업데이트 일시", fmtTs(d.updatedAt));
+		
+		System.out.println(INDENT + CLR_PRIMARY + "└──────────────────────────────────────────────────────────┘" + RESET);
 	}
 	
-	//nvl() -> DB에서 NULL로 넘어오는 값은 출력하면 null로 보이기 때문에 보기 안 좋음.
-		//		   그래서 NULL/빈 문자열이면 -로 통일해서 출력.
+	// 유틸리티 메서드
 	private String nvl(String s) {
-	    return (s == null || s.isBlank()) ? "-" : s;
+		return (s == null || s.isBlank()) ? "-" : s;
 	}
 	
-	//fmtTs() -> getTimestamp()로 가져오면 날짜+시간까지 있음
-		//			 Timestamp.toString()도 되지만, LocalDateTime으로 바꿔서 보기 좋게 만드는 방식. NULL이면 -.
 	private String fmtTs(java.sql.Timestamp ts) {
-	    if (ts == null) return "-";
-	    return ts.toLocalDateTime().toString().replace('T', ' ');
+		if (ts == null) return "-";
+		return ts.toLocalDateTime().toString().replace('T', ' ').substring(0, 19); // 밀리초 제거
 	}
-	
 }
