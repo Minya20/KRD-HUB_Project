@@ -167,82 +167,86 @@ public class MemberDAO {
 	}
 
 	//비밀번호 재설정
-	public void resetPassword() {
-		Connection conn = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		String sql = null;
+	//비밀번호 재설정
+	//비밀번호 재설정 (UI 개선)
+		public void resetPassword() {
+			Connection conn = null;
+			PreparedStatement pstmt = null;
+			ResultSet rs = null;
+			String sql = null;
 
-		//비밀번호 검사 정규식 
-		String passwordRegex =
-				"^(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).{8,}$";
+			//비밀번호 검사 정규식 
+			String passwordRegex = "^(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).{8,}$";
 
-		try {
-			System.out.println();
-			System.out.println("[비밀번호 재설정]");
-			System.out.print("아이디 : ");
-			String userId = br.readLine();
-			System.out.print("이름 : ");
-			String userName = br.readLine();
-			System.out.print("이메일 : ");
-			String userEmail = br.readLine();
+			try {
+				printSubTitle("비밀번호 재설정 (Reset Password)");
+				
+				printInputTag("아이디(ID)");
+				String userId = br.readLine();
+				
+				printInputTag("이름(Name)");
+				String userName = br.readLine();
+				
+				printInputTag("이메일(E-mail)");
+				String userEmail = br.readLine();
 
-			conn = DBUtil.getConnection();
-			sql = "SELECT user_id FROM userInfo WHERE user_id = ? AND user_name = ? AND user_email = ?";
-			pstmt = conn.prepareStatement(sql);
-			pstmt.setString(1, userId);
-			pstmt.setString(2, userName);
-			pstmt.setString(3, userEmail);
+				conn = DBUtil.getConnection();
+				sql = "SELECT user_id FROM userInfo WHERE user_id = ? AND user_name = ? AND user_email = ?";
+				pstmt = conn.prepareStatement(sql);
+				pstmt.setString(1, userId);
+				pstmt.setString(2, userName);
+				pstmt.setString(3, userEmail);
 
-			rs = pstmt.executeQuery();
+				rs = pstmt.executeQuery();
 
-			if(!rs.next()) {
-				System.out.println("일치하는 회원 정보가 없습니다.");
-				return;
-			}
-
-			rs.close();
-			pstmt.close();
-
-			String newPw;
-			while(true) {
-				System.out.println("※ 새 비밀번호 규칙 : 특수문자 1개 포함, 8자 이상");
-				System.out.print("새 비밀번호 : ");
-				newPw = br.readLine();
-
-				if(!newPw.matches(passwordRegex)) {
-					System.out.println("비밀번호 규칙에 맞지 않습니다.");
-					continue;
+				if(!rs.next()) {
+					printError("일치하는 회원 정보가 없습니다.");
+					return;
 				}
 
-				System.out.print("새 비밀번호 확인 : ");
-				String confirmPw = br.readLine();
+				rs.close();
+				pstmt.close();
 
-				if(!newPw.equals(confirmPw)) {
-					System.out.println("비밀번호 확인이 일치하지 않습니다.");
-					continue;
+				String newPw;
+				while(true) {
+					System.out.println("\n" + INDENT + CL_GRY + "  ※ 새 비밀번호 규칙 : 특수문자 1개 포함, 8자 이상" + RESET);
+					printInputTag("새 비밀번호");
+					newPw = br.readLine();
+
+					if(!newPw.matches(passwordRegex)) {
+						printError("비밀번호 규칙에 맞지 않습니다.");
+						continue;
+					}
+
+					printInputTag("새 비밀번호 확인");
+					String confirmPw = br.readLine();
+
+					if(!newPw.equals(confirmPw)) {
+						printError("비밀번호 확인이 일치하지 않습니다. 다시 입력해주세요.");
+						continue;
+					}
+					break;
 				}
-				break;
+
+				sql = "UPDATE userInfo SET user_pwd = ? WHERE user_id = ?";
+				pstmt = conn.prepareStatement(sql);
+				pstmt.setString(1, newPw);
+				pstmt.setString(2, userId);
+
+				int count = pstmt.executeUpdate();
+
+				if(count == 1) {
+					printSuccess("비밀번호가 성공적으로 변경되었습니다.");
+				} else {
+					printError("비밀번호 변경에 실패했습니다.");
+				}
+			} catch(Exception e) {
+				printError("비밀번호 재설정 처리 중 오류가 발생했습니다.");
+				e.printStackTrace();
+			} finally {
+				DBUtil.executeClose(rs, pstmt, conn);
 			}
-
-			sql = "UPDATE userInfo SET user_pwd = ? WHERE user_id = ?";
-			pstmt = conn.prepareStatement(sql);
-			pstmt.setString(1, newPw);
-			pstmt.setString(2, userId);
-
-			int count = pstmt.executeUpdate();
-
-			if(count == 1) {
-				System.out.println("비밀번호가 성공적으로 변경되었습니다.");
-			}else {
-				System.out.println("비밀번호 변경에 실패했습니다.");
-			}
-		}catch(Exception e) {
-			e.printStackTrace();
-		}finally {
-			DBUtil.executeClose(rs, pstmt, conn);
 		}
-	}
 
 	//회원가입 메서드(권한 선택 버전)
 	// 1. 회원가입 (비주얼 폼 개선)
