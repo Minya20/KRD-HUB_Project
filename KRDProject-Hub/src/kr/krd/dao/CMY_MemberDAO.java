@@ -699,6 +699,8 @@ public class CMY_MemberDAO {
 				System.out.println();
 				System.out.println();
 
+			}catch(NumberFormatException e) {
+				System.out.println("숫자를 입력하세요");
 			}
 			catch(Exception e){e.printStackTrace();}
 			finally {DBUtil.executeClose(rs, pstmt, conn);}
@@ -1345,7 +1347,7 @@ public class CMY_MemberDAO {
 	}
 
 	//평가목록 화면 메서드
-	public void callReviewerMenu(String myCust_id, String myRole, String myField) {
+	public boolean callReviewerMenu(String myCust_id, String myRole, String myField) {
 		cust_id = myCust_id; //UserMain에서 가져온 사용자 ID를 MemberDAO에 있는 cust_id로 삽입
 		role = myRole;	//UserMain에서 가져온 사용자의 권한을 role에 삽입
 		field = myField;
@@ -1373,11 +1375,13 @@ public class CMY_MemberDAO {
 					myInfo(cust_id);
 				}else if(rev_choose == 3) {
 					//로그아웃
-					return;
+					return true;
 				}else if(rev_choose == 4) {
 					System.out.println("프로그램 종료");
 					System.exit(0);
 				}
+			}catch(NumberFormatException e) {
+				System.out.println("숫자를 입력하세요.");
 			}
 			catch(Exception e) {e.printStackTrace();}
 			//finally {if(br != null)try{br.close();}catch(IOException e) {}}
