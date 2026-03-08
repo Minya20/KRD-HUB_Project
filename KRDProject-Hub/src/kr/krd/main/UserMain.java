@@ -251,7 +251,7 @@ public class UserMain {
 				//resoMain.callMenu();
 				//	}else if(role.equals("RESI")) {
 			} else if("RESI".equals(role)) {
-				RESIUserMain resiMain = new RESIUserMain(cust_id, role, field);
+				RESIUserMain resiMain = new RESIUserMain(br, cust_id, role, field);
 				boolean isLogout = resiMain.callMenu();
 				if(isLogout) {
 					login = false;
