@@ -56,32 +56,78 @@ public class MemberDAO {
 	public String userLogin(String user_id, String user_pw) {
 		Connection conn = null;
 		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
+		String real_id = null;
+
+		try {
+			conn = DBUtil.getConnection();
+			sql = "SELECT USER_ID, USER_PWD, USER_ACCT_STATUS_CD "
+					+ "FROM USERINFO WHERE USER_ID = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, user_id);
+			rs = pstmt.executeQuery();
+
+			if(!rs.next()) {
+				System.out.println("존재하지 않는 아이디입니다.");
+				return "0";
+			}
+
+			String dbPw = rs.getString("USER_PWD");
+			String status = rs.getString("USER_ACCT_STATUS_CD");
+
+			if(!user_pw.equals(dbPw)) {
+				System.out.println("비밀번호가 일치하지 않습니다.");
+				return "0";
+			}
+
+			if("DELETED".equalsIgnoreCase(status)) {
+				System.out.println("삭제된 계정은 로그인할 수 없습니다.");
+				return "0";
+			}
+
+			if(!"ACTIVE".equalsIgnoreCase(status)) {
+				System.out.println("현재 로그인할 수 없는 계정 상태입니다. 상태: " + status);
+				return "0";
+			}
+
+			real_id = rs.getString("USER_ID");
+
+		} catch(Exception e) {
+			e.printStackTrace();
+			return "0";
+		} finally {
+			DBUtil.executeClose(rs, pstmt, conn);
+		}
+		return real_id;
+	}
+/*	public String userLogin(String user_id, String user_pw) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
 		String sql = null;
 		ResultSet rs = null;
 		String real_id = null;
 
 		try {
 			conn = DBUtil.getConnection();
-			sql = "SELECT * FROM USERINFO WHERE USER_ID = ? AND USER_PWD = ?";
+			sql = "SELECT * FROM USERINFO WHERE USER_ID = ? AND USER_PWD = ? AND USER_ACCT_STATUS_CD = 'ACTIVE'";
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, user_id);
 			pstmt.setString(2, user_pw);
 			rs = pstmt.executeQuery();
+
 			if(rs.next()) {
-				String user_name = rs.getString("USER_NAME");
-				real_id = rs.getString("user_id");	//일치하면 real_id에 유저 아이디를 넣는다
-
-			}else {
-				System.out.println("아이디 혹은 비밀번호가 일치 하지 않습니다.");
-				real_id = "0";	//틀리면 "0"을 넣는다.
-
+				real_id = rs.getString("user_id");
+			} else {
+				System.out.println("아이디 혹은 비밀번호가 일치하지 않거나, 사용할 수 없는 계정입니다.");
+				real_id = "0";
 			}
 		}
 		catch(Exception e){e.printStackTrace();}
 		finally {DBUtil.executeClose(rs, pstmt, conn);}
 		return real_id;
 	}
-
+*/
 
 
 	//아이디 찾기
