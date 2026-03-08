@@ -15,10 +15,27 @@ import kr.krd.vo.USH_BudgetUsageSummary;
 import kr.krd.vo.USH_FundingLine;
 
 public class USH_AdminBudgetService {
+	// ------------------------------------------------
+	// ANSI Escape Codes & UI Elements
+	// ------------------------------------------------
+	public static final String RESET = "\u001B[0m";
+	public static final String BOLD = "\u001B[1m";
+	public static final String UNBOLD = "\u001B[22m";
+
+	public static final String CLR_PRIMARY = "\u001B[36m"; // Cyan
+	public static final String CLR_WHT = "\u001B[37m";    // White
+	public static final String CLR_GRY = "\u001B[90m";    // Gray
+	public static final String CLR_ERR = "\u001B[31m";    // Red
+	public static final String CLR_SUC = "\u001B[32m";    // Green
+
+	private static final String INDENT = "      ";
+
+	// ------------------------------------------------
+	// Fields
+	// ------------------------------------------------
 	private final BufferedReader br;
 	private final USH_ConsoleUtil io;
 	private final String adminId;
-	
 	private final USH_BudgetDAO budgetDao;
 	
 	public USH_AdminBudgetService(BufferedReader br, String adminId) {
@@ -28,76 +45,101 @@ public class USH_AdminBudgetService {
 		this.budgetDao = new USH_BudgetDAO(); 
 	}
 	
-	//1.예산 변경 이력 조회
+	// ------------------------------------------------
+	// UI Helper Methods
+	// ------------------------------------------------
+	private void printSubTitle(String title) {
+		System.out.println("\n" + INDENT + CLR_PRIMARY + BOLD + "◈ " + title + RESET);
+		System.out.println(INDENT + CLR_GRY + "────────────────────────────────────────────────────────" + RESET);
+	}
+
+	private void printMenuOption(String key, String description) {
+		System.out.print(INDENT + "  " + CLR_PRIMARY + BOLD + "[" + key + "]" + RESET + " ");
+		System.out.println(CLR_WHT + description + RESET);
+	}
+
+	private void printError(String msg) {
+		System.out.println("\n" + INDENT + CLR_ERR + BOLD + "✘ Error: " + UNBOLD + RESET + msg);
+	}
+
+	private String getInputPrompt(String tag) {
+		return "\n" + INDENT + CLR_PRIMARY + BOLD + "▶ " + tag + RESET + " : ";
+	}
+
+	// ------------------------------------------------
+	// Business Logic
+	// ------------------------------------------------
+	
+	// 1. 예산 변경 이력 조회
 	public void budgetHistFlow() throws IOException {
-		System.out.println("===== 예산 변경 이력 조회 =====");
-		System.out.println("[안내] 엔터 = 전체/생략");
-		System.out.println();
+		printSubTitle("예산 변경 이력 조회 (Budget History)");
+		System.out.println(INDENT + CLR_GRY + "  [안내] 값을 입력하지 않고 엔터(Enter)를 치면 해당 조건은 생략됩니다." + RESET);
 		
-		Long projectId = readOptionalLong("프로젝트 ID(엔터=전체) > ");
-		String start = emptyToNull(io.readDateOrEmpty("변경일 시작(YYYY-MM-DD, 엔터=생략) > "));
-		String end = emptyToNull(io.readDateOrEmpty("변경일 끝(YYYY-MM-DD) > "));
-		int limit = readOptionalIntDefault("조회 건수(엔터=100) > ", 100);
+		Long projectId = readOptionalLong(getInputPrompt("프로젝트 ID"));
+		String start = emptyToNull(io.readDateOrEmpty(getInputPrompt("변경일 시작(YYYY-MM-DD)")));
+		String end = emptyToNull(io.readDateOrEmpty(getInputPrompt("변경일 끝(YYYY-MM-DD)")));
+		int limit = readOptionalIntDefault(getInputPrompt("조회 건수(기본값: 100)"), 100);
 		
 		List<USH_BudgetHistRow> list = budgetDao.findBudgetHist(projectId, start, end, limit);
 		printBudgetHistList(list, limit);
 		
-		io.readOptional("엔터를 누르면 이전 메뉴로 돌아갑니다. > ");
+		io.readOptional(getInputPrompt("엔터를 누르면 이전 메뉴로 돌아갑니다."));
 	}
 	
-	
 	private void printBudgetHistList(List<USH_BudgetHistRow> list, int limit) {
-		System.out.println();
-		System.out.println("========== 예산 변경 이력 (최대 " + limit + "건) ==========");
+		System.out.println("\n" + INDENT + CLR_PRIMARY + BOLD + "◈ 예산 변경 이력 결과 (최대 " + limit + "건)" + RESET);
 		
 		if(list == null || list.isEmpty()) {
-			System.out.println("조회 결과가 없습니다.");
-			System.out.println("-".repeat(120));
+			System.out.println(INDENT + CLR_GRY + "  조회 결과가 없습니다." + RESET);
 			return;
 		}
 		
-		System.out.printf("%-10s %-10s %15s %15s %15s %-12s %-12s %s%n",
-                "HIST_ID", "PROJECT", "BEFORE", "AFTER", "DIFF", "CHANGED_BY", "CHANGED_AT", "REASON");
-        System.out.println("-".repeat(120));
-        
-        for(USH_BudgetHistRow r : list) {
-        	BigDecimal before = nvlAmt(r.beforeAmt);
-        	BigDecimal after = nvlAmt(r.afterAmt);
-        	BigDecimal diff = after.subtract(before);
-        	
-        	System.out.printf("%-10d %-10d %15s %15s %15s %-12s %-12s %s%n",
-        			r.histId,
-        			r.projectId,
-        			fmtAmt(before),
-        			fmtAmt(after),
-        			fmtAmt(diff),
-        			nvl(r.changedBy),
-        			fmtDate(r.changedAt),
-        			nvl(r.reason));
-        }
-        
-        System.out.println("-".repeat(120));
+		System.out.println(INDENT + BOLD + CLR_WHT + String.format("%-8s | %-8s | %15s | %15s | %15s | %-12s | %-12s | %s",
+				"HIST_ID", "PROJECT", "BEFORE(원)", "AFTER(원)", "DIFF(원)", "CHANGED_BY", "CHANGED_AT", "REASON") + RESET);
+		System.out.println(INDENT + CLR_GRY + "------------------------------------------------------------------------------------------------------------------------" + RESET);
+		
+		for(USH_BudgetHistRow r : list) {
+			BigDecimal before = nvlAmt(r.beforeAmt);
+			BigDecimal after = nvlAmt(r.afterAmt);
+			BigDecimal diff = after.subtract(before);
+			
+			// 증감액에 따른 색상 변경 (양수: 초록, 음수: 빨강)
+			String diffColor = diff.compareTo(BigDecimal.ZERO) > 0 ? CLR_SUC : (diff.compareTo(BigDecimal.ZERO) < 0 ? CLR_ERR : CLR_WHT);
+			String diffSign = diff.compareTo(BigDecimal.ZERO) > 0 ? "+" : "";
 
+			System.out.println(INDENT + String.format("%-8d | %-8d | %15s | %15s | " + diffColor + "%15s" + RESET + " | %-12s | %-12s | %s",
+					r.histId,
+					r.projectId,
+					fmtAmt(before),
+					fmtAmt(after),
+					diffSign + fmtAmt(diff),
+					nvl(r.changedBy),
+					fmtDate(r.changedAt),
+					cut(nvl(r.reason), 20)));
+		}
+		System.out.println(INDENT + CLR_GRY + "------------------------------------------------------------------------------------------------------------------------" + RESET);
 	}
 	
-	//예산 사용 현황 조회
+	// 2. 예산 사용 현황 조회
 	public void budgetUsageFlow() throws IOException {
 		while(true) {
 			List<USH_BudgetUsageSummary> list = budgetDao.findBudgetUsageAll();
 			printUsageList(list);
 			
-			System.out.println("0.이전 메뉴(뒤로가기)");
-			System.out.println("1.프로젝트 상세 조회(집행 내역 포함)");
+			System.out.println();
+			printMenuOption("1", "프로젝트 예산 상세 조회 (집행 내역 포함)");
+			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
+			printMenuOption("0", "이전 메뉴로 돌아가기 (Back)");
 			System.out.println();
 			
-			int no = io.readIntInRange("입력 > ", 0, 1);
+			int no = io.readIntInRange(getInputPrompt("메뉴 선택"), 0, 1);
 			if(no == 0) return;
 			
-			int projectId = io.readIntInRange("조회할 PROJECT_ID 입력 > ", 1, Integer.MAX_VALUE);
+			int projectId = io.readIntInRange(getInputPrompt("상세 조회할 PROJECT_ID 입력"), 1, Integer.MAX_VALUE);
 			
 			USH_BudgetUsageSummary summary = budgetDao.findBudgetUsageByProjectId(projectId);
 			if(summary == null) {
-				System.out.println("해당 PROJECT_ID가 존재하지 않거나 공고 연결이 없습니다." + projectId);
+				printError("해당 PROJECT_ID(" + projectId + ")가 존재하지 않거나 연결된 공고가 없습니다.");
 				continue;
 			}
 			
@@ -105,61 +147,78 @@ public class USH_AdminBudgetService {
 			
 			List<USH_FundingLine> lines = budgetDao.findFundingLinesByProjectId(projectId);
 			printFundingLines(lines);
-			
 		}
 	}
 	
 	private void printUsageList(List<USH_BudgetUsageSummary> list) {
-		System.out.println("========== 예산 사용 현황(전체) ==========");
+		printSubTitle("예산 사용 현황 전체 조회 (Budget Usage Overview)");
+		
 		if(list == null || list.isEmpty()) {
-			System.out.println("조회 결과가 없습니다.");
-			System.out.println("-".repeat(120));
+			System.out.println(INDENT + CLR_GRY + "  조회 가능한 프로젝트 예산 정보가 없습니다." + RESET);
 			return;
 		}
 		
-		System.out.printf("%-10s %-30s %-15s %-15s %-15s %-8s\n", "PROJECT", "공고명", "총액", "집행", "잔액", "집행률");
-		System.out.println("-".repeat(120));
+		System.out.println(INDENT + BOLD + CLR_WHT + String.format("%-8s | %-28s | %15s | %15s | %15s | %-8s", 
+				"PROJECT", "공고명", "총액(원)", "집행액(원)", "잔액(원)", "집행률(%)") + RESET);
+		System.out.println(INDENT + CLR_GRY + "--------------------------------------------------------------------------------------------------------" + RESET);
 		
 		for(USH_BudgetUsageSummary u : list) {
-			System.out.printf("%-10d %-30s %-15d %-15d %-15d %-8.2fs\n",
-							  u.projectId, cut(u.announcementTitle, 28), u.totalBudget, u.usedBudget, u.remainingBudget, u.usedPct);	
+			System.out.println(INDENT + String.format("%-8d | %-28s | %15s | %15s | %15s | %6.2f%%",
+					u.projectId, 
+					cut(u.announcementTitle, 26), 
+					fmtAmt(new BigDecimal(u.totalBudget)), 
+					fmtAmt(new BigDecimal(u.usedBudget)), 
+					fmtAmt(new BigDecimal(u.remainingBudget)), 
+					u.usedPct));	
 		}
-		System.out.println("-".repeat(120));
+		System.out.println(INDENT + CLR_GRY + "--------------------------------------------------------------------------------------------------------" + RESET);
 	}
 	
 	private void printUsageDetail(USH_BudgetUsageSummary u) {
-		System.out.println();
-		System.out.println("========== 예산 사용 현황(상세) ==========");
-		System.out.println("PROJECT_ID : " + u.projectId);
-		System.out.println("공고명 : " + (u.announcementTitle == null ? "-" : u.announcementTitle));
-		System.out.println("총액 : " + u.totalBudget);
-		System.out.println("집행(승인) : " + u.usedBudget);
-		System.out.println("잔액 : " + u.remainingBudget);
-		System.out.println("집행률(%) : " + u.usedPct);
-		System.out.println("-".repeat(60));
+		System.out.println("\n" + INDENT + CLR_PRIMARY + BOLD + "◈ 프로젝트 예산 상세 정보 (Project Detail)" + RESET);
+		System.out.println(INDENT + CLR_PRIMARY + "┌────────────────────────────────────────────────────────────┐" + RESET);
+		
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%s\n" + RESET, "PROJECT_ID", u.projectId);
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%s\n" + RESET, "공고명", nvl(u.announcementTitle));
+		System.out.println(INDENT + CLR_PRIMARY + "├────────────────────────────────────────────────────────────┤" + RESET);
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_PRIMARY + "%s 원\n" + RESET, "총 배정 예산", fmtAmt(new BigDecimal(u.totalBudget)));
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_ERR + "%s 원\n" + RESET, "집행 승인액", fmtAmt(new BigDecimal(u.usedBudget)));
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_SUC + "%s 원\n" + RESET, "현재 잔액", fmtAmt(new BigDecimal(u.remainingBudget)));
+		System.out.println(INDENT + CLR_PRIMARY + "├────────────────────────────────────────────────────────────┤" + RESET);
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%.2f %%\n" + RESET, "집행률", u.usedPct);
+		
+		System.out.println(INDENT + CLR_PRIMARY + "└────────────────────────────────────────────────────────────┘" + RESET);
 	}
 	
 	private void printFundingLines(List<USH_FundingLine> lines) {
-		System.out.println();
-		System.out.println("========== 집행(지급) 내역 ==========");
+		System.out.println("\n" + INDENT + CLR_PRIMARY + BOLD + "◈ 집행(지급) 내역 리스트" + RESET);
 		if(lines == null || lines.isEmpty()) {
-			System.out.println("지급 내역이 없습니다.");
-			System.out.println("-".repeat(100));
+			System.out.println(INDENT + CLR_GRY + "  지급 내역이 존재하지 않습니다." + RESET);
 			return;
 		}
 		
-		System.out.printf("%-8s %-12s %-12s %-12s %-10s %-12s %-12s\n", "회차", "금액", "상태", "요청일", "승인(Y/N)", "승인자", "승인일");
-		System.out.println("-".repeat(100));
+		System.out.println(INDENT + BOLD + CLR_WHT + String.format("%-6s | %15s | %-10s | %-12s | %-8s | %-10s | %-12s", 
+				"회차", "금액(원)", "상태", "요청일", "승인(Y/N)", "승인자", "승인일") + RESET);
+		System.out.println(INDENT + CLR_GRY + "----------------------------------------------------------------------------------------" + RESET);
 		
 		for(USH_FundingLine f : lines) {
-			System.out.printf("%-8d %-12s %-12s %-12s %-10d %-12s %-12s\n",
-							  f.payRound, f.amount, nvl(f.stautsCd), nvlDate(f.requestedDt), f.approvedYn, nvl(f.approvedBy), 
-							  nvlDate(f.approvedDt));
+			String appYnColor = f.approvedYn == 1 ? CLR_SUC : CLR_GRY; // 승인 완료면 녹색
+			
+			System.out.println(INDENT + String.format("%-6d | %15s | %-10s | %-12s | " + appYnColor + "%-8s" + RESET + " | %-10s | %-12s",
+					f.payRound, 
+					f.amount, // amount가 Number/String인 경우 BigDecimal로 변환
+					nvl(f.stautsCd), 
+					nvlDate(f.requestedDt), 
+					(f.approvedYn == 1 ? "Y" : "N"), 
+					nvl(f.approvedBy), 
+					nvlDate(f.approvedDt)));
 		}
-		System.out.println("-".repeat(100));
-		
+		System.out.println(INDENT + CLR_GRY + "----------------------------------------------------------------------------------------" + RESET);
 	}
 	
+	// ------------------------------------------------
+	// Utility Format Methods
+	// ------------------------------------------------
 	private String nvl(String s) {
 		return (s == null || s.isBlank()) ? "-" : s;
 	}
@@ -173,9 +232,11 @@ public class USH_AdminBudgetService {
 	}
 	
 	private String fmtAmt(BigDecimal b) {
+		if(b == null) return "0";
 		NumberFormat nf = NumberFormat.getNumberInstance(Locale.KOREA);
 		return nf.format(b);
 	}
+	
 	private String fmtDate(Timestamp ts) {
 		if (ts == null) return "-";
 		return ts.toLocalDateTime().toLocalDate().toString();
@@ -183,7 +244,7 @@ public class USH_AdminBudgetService {
 	
 	private String cut(String s, int max) {
 		if (s == null) return "-";
-		return (s.length() <= max) ? s : s.substring(0, max - 1) + "…";
+		return (s.length() <= max) ? s : s.substring(0, max - 2) + "..";
 	}
 	
 	private String emptyToNull(String s) {
@@ -192,26 +253,27 @@ public class USH_AdminBudgetService {
 		return s.isEmpty() ? null : s;
 	}
 	
+	// 입력 유틸리티 에러 UI 적용
 	private Long readOptionalLong(String prompt) throws IOException {
 		while(true) {
 			String s = io.readOptional(prompt);
-			if(s == null) return null; //엔터=생략
+			if(s == null) return null; 
 			try {
 				return Long.parseLong(s.trim());
-			}catch (NumberFormatException e) {
-				System.out.println("[숫자만 입력 가능] 예: 1001 (또는 엔터)");
+			} catch (NumberFormatException e) {
+				printError("숫자만 입력 가능합니다. (예: 1001)");
 			}
 		}
 	}
 	
 	private int readOptionalIntDefault(String prompt, int def) throws IOException {
 		while(true) {
-			String s =io.readOptional(prompt);
+			String s = io.readOptional(prompt);
 			if(s == null) return def;
 			try {
 				return Integer.parseInt(s.trim());
-			}catch (NumberFormatException e) {
-				System.out.println("[숫자만 입력 가능] 예 : 100 (또는 엔터)");
+			} catch (NumberFormatException e) {
+				printError("숫자만 입력 가능합니다. (예: 100)");
 			}
 		}
 	}
