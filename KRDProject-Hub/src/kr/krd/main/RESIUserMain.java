@@ -23,62 +23,18 @@ public class RESIUserMain {
 	private HYJ_ReportDAO dao5;
 	private HYJ_RESISearch dao6;
 
-	public RESIUserMain() {
-		try {
-			br = new BufferedReader(
-					new InputStreamReader(
-							System.in));
-
-			dao1 = new HYJ_KRDRESOUserDAO();
-			dao2 = new CMY_MemberDAO();
-			dao3 = new HYJ_MyInfoDAO();
-			dao4 = new HYJ_APPLICATIONCheakDAO();
-			dao5 = new HYJ_ReportDAO();
-			dao6 = new HYJ_RESISearch();
-
-			callMenu();
-		}catch(Exception e) {
-			e.printStackTrace();
-		}finally {
-			//자원정리
-			if(br!=null)try {br.close();}
-			catch(IOException e) {}
-		}
+	public RESIUserMain(String cust_id, String role, String field) {
+		this.br = br;
+		this.dao1 = new HYJ_KRDRESOUserDAO();
+		this.dao2 = new CMY_MemberDAO();
+		this.dao3 = new HYJ_MyInfoDAO();
+		this.dao4 = new HYJ_APPLICATIONCheakDAO();
+		this.dao5 = new HYJ_ReportDAO();
+		this.dao6 = new HYJ_RESISearch();
 	}
 
 	//메뉴
-	public void callMenu()throws IOException{
-		while(true) {
-			System.out.print("1.로그인,2.회원가입,3.종료>");
-			try {
-				int no = Integer.parseInt(br.readLine());
-				if(no == 1) {//로그인
-					//로그인 진행
-					System.out.print("ID : ");
-					String user_id = br.readLine();
-					System.out.print("PW : ");
-					String user_pw = br.readLine();
-					//메서드이름(user_id,user_pw);
-					cust_id=dao2.userLogin(user_id, user_pw);
-					if(!cust_id.equals("0") && !cust_id.equals(null)){// cust_id가 0 또는 null이 아니면 : 즉 유저 아이디 값이 존재함.
-
-						login = true;//사용자의 로그인 상태를 TRUE로 변경함
-						break;
-
-					}
-
-				}else if(no == 2) {//회원가입
-
-				}else if(no == 3) {//종료
-					System.out.println("프로그램 종료");
-					break;
-				}else {
-					System.out.println("잘못 입력했습니다.");
-				}
-			}catch(NumberFormatException e) {
-				System.out.println("잘못 입력했습니다.");
-			}
-		}//end of while
+	public boolean callMenu()throws IOException{
 		//로그인시 보여지는 메뉴
 		while(login) {
 			System.out.print(
@@ -98,7 +54,7 @@ public class RESIUserMain {
 					dao6.RESISearch();
 				}else if(no == 6) {
 					System.out.println("프로그램을 종료합니다.");
-					break;
+					return true;
 				}else {
 					System.out.println("잘못 입력했습니다.");
 				}

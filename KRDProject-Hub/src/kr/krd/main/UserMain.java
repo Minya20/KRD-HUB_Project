@@ -214,14 +214,8 @@ public class UserMain {
 			// 기존 리스너/게스트 메뉴 호출 (DAO쪽 UI도 이 스타일로 맞추는 것을 추천)
 			//  if(role.equals("REV")) {
 			if("REV".equals(role)) {
-				boolean isLogout = revdao.callReviewerMenu(cust_id, role, field);
-				if(isLogout) {
-					login = false;
-					cust_id = null;
-					role = null;
-					field = null;
-					break;
-				}
+				revdao.callReviewerMenu(cust_id, role, field);
+
 				//  } else if(role.equals("GST")) {
 			} else if("GST".equals(role)) {
 				boolean isLogout = callGuestMenu(cust_id, role, field);
@@ -244,8 +238,15 @@ public class UserMain {
 
 				//	}else if(role.equals("RESI")) {
 			} else if("RESI".equals(role)) {
-				RESIUserMain resiMain = new RESIUserMain();
-				resiMain.callMenu();
+				RESIUserMain resiMain = new RESIUserMain(cust_id, role, field);
+				boolean isLogout = resiMain.callMenu();
+				if(isLogout) {
+					login = false;
+					cust_id = null;
+					role = null;
+					field = null;
+					break;
+				}
 
 				//	}else if(role.equals("ADM")) {
 			} else if("ADM".equals(role)) {
