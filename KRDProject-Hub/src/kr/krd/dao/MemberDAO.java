@@ -169,7 +169,7 @@ public class MemberDAO {
 	//비밀번호 재설정
 	//비밀번호 재설정
 	//비밀번호 재설정 (UI 개선)
-/*		public void resetPassword() {
+		public void resetPassword() {
 			Connection conn = null;
 			PreparedStatement pstmt = null;
 			ResultSet rs = null;
@@ -246,7 +246,7 @@ public class MemberDAO {
 			} finally {
 				DBUtil.executeClose(rs, pstmt, conn);
 			}
-		} */
+		} 
 
 	//회원가입 메서드(권한 선택 버전)
 	// 1. 회원가입 (비주얼 폼 개선)

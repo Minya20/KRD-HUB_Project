@@ -423,7 +423,7 @@ public class CMY_MemberDAO {
 					printInputTag("선택");
 					try {
 						choose_no = Integer.parseInt(br.readLine());
-						if(choose_no == 1) { dao.resetPassword(); break; }
+						if(choose_no == 1) { dao.changeMyPassword(myCust_id);break; }
 						else if(choose_no == 2) return;
 						else printError("1 또는 2를 입력하세요.");
 					} catch(NumberFormatException e) { printError("숫자를 입력하세요."); }
