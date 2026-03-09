@@ -37,8 +37,17 @@ public class HYJ_RESISearch {
 						System.out.print(rs.getString("user_field") + "\n");
 					}
 					while(rs.next());
-					System.out.print("1.상세보기 2.이전화면");
-					int sel = Integer.parseInt(br.readLine());
+
+					int sel;
+					while(true) {
+						System.out.print("1.상세보기 2.이전화면");
+						sel = Integer.parseInt(br.readLine());
+						if(sel > 2 || sel < 1) {
+							System.out.println("1 혹은 2를 입력하세요.");
+							continue;
+						}
+						break;
+					}
 					if(sel == 1) {
 						System.out.print("자세히 볼 아이디를 입력해주세요.");
 						/*아래 메서드 활용 부분*/
@@ -50,7 +59,10 @@ public class HYJ_RESISearch {
 				}else {
 					System.out.println("정보가 없습니다.");
 				}
-			}catch(Exception e) {
+			}catch(NumberFormatException e) {
+				System.out.println("숫자를 입력하세요");
+			}
+			catch(Exception e) {
 				e.printStackTrace();
 			}finally {
 				DBUtil.executeClose(rs, pstmt, conn);
@@ -96,14 +108,17 @@ public class HYJ_RESISearch {
 				System.out.println("분야 : " + rs.getString("USER_FIELD"));
 				System.out.println("-".repeat(30));
 				System.out.print("1.이전 화면");
-				int sel = Integer.parseInt(br.readLine());
-				if(sel == 1) {
+				String sel = br.readLine();
+				if(sel.equals("1")) {
 					return;
 				}else {
 					System.out.println("잘못 입력하셨습니다.");
 				}
 
-			} catch (Exception e) {
+			}catch (NumberFormatException e) {
+				e.printStackTrace();
+			}
+			catch (Exception e) {
 				e.printStackTrace();
 			} finally {
 				DBUtil.executeClose(rs, pstmt, conn);
