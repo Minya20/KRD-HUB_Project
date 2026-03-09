@@ -58,7 +58,7 @@ public class HJY_CheckSystem {
 
             rs.close();
             pstmt.close();
-
+            
 
            
             /* 신청자 FIELD 조회 */
@@ -105,10 +105,10 @@ public class HJY_CheckSystem {
                 conn.rollback();
                 return;
             }
-
+            
             rs.close();
             pstmt.close();
-
+            
 
             /* 3 진행중 과제 5개 제한 */
             String countSql =
@@ -129,7 +129,7 @@ public class HJY_CheckSystem {
 
             rs.close();
             pstmt.close();
-
+            
 
             /* 4 APPLICATION INSERT */
             String insertAppSql =
@@ -153,7 +153,7 @@ public class HJY_CheckSystem {
 
             pstmt.executeUpdate();
             pstmt.close();
-
+            
 
             /* APPLICATION_ID 가져오기 */
             int applicationId = 0;
@@ -194,7 +194,7 @@ public class HJY_CheckSystem {
 
             pstmt.executeUpdate();
             pstmt.close();
-
+            
             /* 6 평가위원 랜덤 5명 조회 (중복 방지 + 신청자 제외) */
             String evalSql =
                     "SELECT DISTINCT U.USER_ID " +
@@ -209,7 +209,7 @@ public class HJY_CheckSystem {
             pstmt = conn.prepareStatement(evalSql);
             pstmt.setString(1, userId);
             rs = pstmt.executeQuery();
-
+            
 
             /* 7 EVALUATION INSERT */
             String insertEvalSql =
@@ -247,6 +247,7 @@ public class HJY_CheckSystem {
             conn.commit();
 
             System.out.println("신청 완료! 평가위원 5명이 배정되었습니다.");
+            
 
         } catch (Exception e) {
 

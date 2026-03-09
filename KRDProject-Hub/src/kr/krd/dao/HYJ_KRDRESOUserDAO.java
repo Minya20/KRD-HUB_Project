@@ -10,7 +10,7 @@ import kr.util.DBUtil;
 
 public class HYJ_KRDRESOUserDAO {
 
-	private HJY_CheckSystem dao1 = new HJY_CheckSystem();
+	public HJY_CheckSystem dao1 = new HJY_CheckSystem();
 
 	private BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
@@ -117,7 +117,7 @@ public class HYJ_KRDRESOUserDAO {
 				System.out.println("공고상태 : " + rs.getString("ANNOUNCEMENT_STATUS"));
 				System.out.println("모집분야 : " + rs.getString("ANNOUNCEMENT_FIELD"));
 				System.out.println("공고담당자 : " + rs.getString("ANNOUNCEMENT_CREATED_BY"));
-				System.out.printf("총예산 : %,d\n", rs.getInt("ANNOUNCEMENT_TOTAL_BUDGET"));
+				System.out.printf("총예산 : %,d\n", rs.getLong("ANNOUNCEMENT_TOTAL_BUDGET"));
 				System.out.println("-".repeat(60));
 
 				System.out.print("1. 신청하기  2. 목록으로 : ");
@@ -142,11 +142,12 @@ public class HYJ_KRDRESOUserDAO {
 						}
 						break;
 					}
-					
+					System.out.println("체크용");
+					System.out.println(cust_id);
 
 					// 신청 처리 (DB 처리 전부 여기서 수행)
 					dao1.applyAnnouncement(annId, cust_id, attachPath, budgetAmt);
-
+					return;
 				} 
 				else if (sel == 2) {
 					return;  // 목록으로
