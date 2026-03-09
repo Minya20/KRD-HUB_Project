@@ -33,7 +33,7 @@ public class RESIUserMain {
 		this.dao2 = new CMY_MemberDAO();
 		this.dao3 = new HYJ_MyInfoDAO();
 		this.dao4 = new HYJ_APPLICATIONCheakDAO();
-		this.dao5 = new HYJ_ReportDAO();
+		this.dao5 = new HYJ_ReportDAO(br); // 여기 수정
 		this.dao6 = new HYJ_RESISearch();
 	}
 
