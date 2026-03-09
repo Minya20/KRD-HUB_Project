@@ -140,9 +140,9 @@ public class HYJ_APPLICATIONCheakDAO {
             } while (rs.next());
 
             System.out.println("-".repeat(50));
-            System.out.print("1. 이전화면 : ");
-            br.readLine();
-
+            System.out.print("아무 키를 누르면 이전화면으로 나가집니다.");
+             br.readLine();
+             
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
