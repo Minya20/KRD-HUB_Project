@@ -14,7 +14,7 @@ public class HYJ_ReportDAO {
     public HYJ_ReportDAO(BufferedReader br) {
         this.br = br;
     }
-
+ 
     // ===============================
     // 보고서 등록
     // ===============================

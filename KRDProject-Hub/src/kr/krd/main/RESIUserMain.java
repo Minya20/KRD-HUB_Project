@@ -15,7 +15,7 @@ public class RESIUserMain {
 	private String role;
 	private String cust_id;
 	private String field;
-
+ 
 	private HYJ_KRDRESOUserDAO dao1;
 	private CMY_MemberDAO dao2;
 	private HYJ_MyInfoDAO dao3;
