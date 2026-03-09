@@ -14,10 +14,8 @@ public class HYJ_ReportDAO {
     public HYJ_ReportDAO(BufferedReader br) {
         this.br = br;
     }
- 
-    // ===============================
+
     // 보고서 등록
-    // ===============================
     public void InsertReport(String cust_id) {
 
         Connection conn = null;
@@ -40,7 +38,14 @@ public class HYJ_ReportDAO {
 
             // 3. 프로젝트 선택
             System.out.print("보고서를 제출할 프로젝트 아이디 : ");
-            String project_id = br.readLine();
+            String input = br.readLine().trim();
+
+            if (!input.matches("\\d+")) {
+                System.out.println("프로젝트 아이디는 숫자만 입력 가능합니다.");
+                return;
+            }
+
+            int project_id = Integer.parseInt(input);
 
             // 4. 프로젝트 확인 (내 프로젝트인지)
             if (!checkProject(conn, cust_id, project_id)) {
@@ -57,18 +62,25 @@ public class HYJ_ReportDAO {
             pstmt = conn.prepareStatement(sql);
 
             System.out.print("보고서 타입[중간 / 최종] : ");
-            String type = br.readLine();
+            String type = br.readLine().trim();
 
             System.out.print("내용 : ");
-            String content = br.readLine();
+            String content = br.readLine().trim();
 
             System.out.print("키워드 : ");
-            String keywords = br.readLine();
+            String keywords = br.readLine().trim();
 
             System.out.print("진행률[숫자만 입력] : ");
-            int progress = Integer.parseInt(br.readLine());
+            String progressInput = br.readLine().trim();
 
-            pstmt.setString(++cnt, project_id);
+            if (!progressInput.matches("\\d+")) {
+                System.out.println("진행률은 숫자만 입력 가능합니다.");
+                return;
+            }
+
+            int progress = Integer.parseInt(progressInput);
+
+            pstmt.setInt(++cnt, project_id);
             pstmt.setString(++cnt, type);
             pstmt.setString(++cnt, content);
             pstmt.setString(++cnt, keywords);
@@ -88,9 +100,7 @@ public class HYJ_ReportDAO {
         }
     }
 
-    // ===============================
     // 내 프로젝트가 하나라도 있는지 확인
-    // ===============================
     private boolean hasMyProject(Connection conn, String cust_id) {
 
         PreparedStatement pstmt = null;
@@ -120,9 +130,7 @@ public class HYJ_ReportDAO {
         return false;
     }
 
-    // ===============================
     // 내 프로젝트 목록 출력
-    // ===============================
     private void showMyProjects(Connection conn, String cust_id) {
 
         PreparedStatement pstmt = null;
@@ -141,7 +149,7 @@ public class HYJ_ReportDAO {
             rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                System.out.println("- 프로젝트 아이디 : " + rs.getString("project_id"));
+                System.out.println("- 프로젝트 아이디 : " + rs.getInt("project_id"));
             }
 
         } catch (Exception e) {
@@ -151,10 +159,8 @@ public class HYJ_ReportDAO {
         }
     }
 
-    // ===============================
     // 프로젝트 존재 + 소유 확인
-    // ===============================
-    private boolean checkProject(Connection conn, String cust_id, String project_id) {
+    private boolean checkProject(Connection conn, String cust_id, int project_id) {
 
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -167,7 +173,7 @@ public class HYJ_ReportDAO {
                 + "AND project_owner_id = ?";
 
             pstmt = conn.prepareStatement(sql);
-            pstmt.setString(1, project_id);
+            pstmt.setInt(1, project_id);
             pstmt.setString(2, cust_id);
 
             rs = pstmt.executeQuery();
