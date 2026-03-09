@@ -101,7 +101,7 @@ public class HYJ_KRDRESOUserMain {
 					dao4 = new HYJ_APPLICATIONCheakDAO();
 					dao4.CheckMyApp(cust_id);
 				}else if(no == 3) {
-					dao5 = new HYJ_ReportDAO();
+					dao5 = new HYJ_ReportDAO(br);
 					dao5.InsertReport(cust_id);
 				}else if(no == 4) {
 					dao3 = new HYJ_MyInfoDAO();
