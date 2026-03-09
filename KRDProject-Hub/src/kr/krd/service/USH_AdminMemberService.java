@@ -102,7 +102,9 @@ public class USH_AdminMemberService {
 
 		List<USH_UserSummary> list = dao.searchUsers(id, name, email, role, status, regStart, regEnd, lastStart, lastEnd);
 		printUserSummaryList("회원 조건 검색 결과", list);
-		afterUserListMenu();
+		if(list != null && !list.isEmpty()) { 
+			afterUserListMenu();
+		}
 	}
 	
 	// 회원 상태(패널티 부여/해제) 변경
