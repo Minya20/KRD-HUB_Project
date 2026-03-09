@@ -18,7 +18,7 @@ public class USH_KRDUserMain {
 		io = new USH_ConsoleUtil(br);
 		dao = new CMY_MemberDAO();
 		try {
-			callMenu();
+	//		callMenu();
 		}catch(Exception e) {
 			e.printStackTrace();
 		}finally {
@@ -26,7 +26,7 @@ public class USH_KRDUserMain {
 			if(br!=null)try {br.close();}catch(IOException e) {}
 		}
 	}
-     
+     /*
 	//공통 메뉴(로그인/회원가입/종료)
 	private void callMenu()throws IOException{
 		while(true) {
@@ -83,7 +83,7 @@ public class USH_KRDUserMain {
 			
 		}
 
-	}
+	} */
 
 	public static void main(String[] args) {
 		new USH_KRDUserMain();
