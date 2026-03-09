@@ -32,18 +32,16 @@ public class HYJ_MyInfoDAO {
 			new BufferedReader(new InputStreamReader(System.in));
 
 	/* =====================
-       내 정보 조회
-       ===================== */
+	   내 정보 조회 (Profile Card Layout 적용)
+	   ===================== */
 	public void SelectInfo(String cust_id) {
 
 		while (true) {
-
 			Connection conn = null;
 			PreparedStatement pstmt = null;
 			ResultSet rs = null;
 
-			String sql =
-					"SELECT * FROM USERINFO WHERE user_id = ?";
+			String sql = "SELECT * FROM USERINFO WHERE user_id = ?";
 
 			try {
 				conn = DBUtil.getConnection();
@@ -53,45 +51,49 @@ public class HYJ_MyInfoDAO {
 				rs = pstmt.executeQuery();
 
 				if (rs.next()) {
-					System.out.println("이름\t이메일\t주소\t분야");
-
-					System.out.print(rs.getString("USER_NAME") + "\t");
-					System.out.print(rs.getString("user_email") + "\t");
-					System.out.print(rs.getString("user_addr") + "\t");
-					System.out.print(rs.getString("user_field") + "\n");
+					printSubTitle("내 정보 상세 조회 (My Profile)");
+					
+					System.out.println(INDENT + CLR_PRIMARY + "┌──────────────────────────────────────────────────────────────┐" + RESET);
+					System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-10s : " + CLR_WHT + "%s\n" + RESET, "이름", rs.getString("USER_NAME"));
+					System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-10s : " + CLR_WHT + "%s\n" + RESET, "이메일", rs.getString("user_email"));
+					System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-10s : " + CLR_WHT + "%s\n" + RESET, "주소", rs.getString("user_addr"));
+					System.out.println(INDENT + CLR_PRIMARY + "├──────────────────────────────────────────────────────────────┤" + RESET);
+					System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-10s : " + CLR_WHT + "%s\n" + RESET, "연구 분야", rs.getString("user_field"));
+					System.out.println(INDENT + CLR_PRIMARY + "└──────────────────────────────────────────────────────────────┘" + RESET);
+				} else {
+					printError("회원 정보를 찾을 수 없습니다.");
+					return;
 				}
 
-
-
-				printInputTag("1. 업데이트  2. 이전화면");
+				System.out.println("\n" + INDENT + "  [1] 정보 업데이트 (Update)   [2] 이전 화면으로 (Back)");
+				printInputTag("메뉴 선택");
+				
 				int sel = Integer.parseInt(br.readLine());
 
-
-
 				if (sel == 1) {
+					System.out.println("\n" + INDENT + CLR_WHT + "[ 정보 수정 폼 ]" + RESET);
 					
-					printInputTag("이름");
+					printInputTag("변경할 이름");
 					String name = br.readLine();
 					
-					printInputTag("이메일");
+					printInputTag("변경할 이메일");
 					String email = br.readLine();
 
-					printInputTag("주소");
+					printInputTag("변경할 주소");
 					String addr = br.readLine();
-
 
 					InfoUpdate(name, email, addr, cust_id);
 
 				} else if (sel == 2) {
 					return;
 				} else {
-					printError("잘못 입력 했습니다.");
+					printError("잘못된 선택입니다. 1 또는 2를 입력하세요.");
 				}
 
-			}catch (NumberFormatException e) {
-				printError("숫자를 입력하세요.");
-			}
-			catch (Exception e) {
+			} catch (NumberFormatException e) {
+				printError("숫자만 입력 가능합니다.");
+			} catch (Exception e) {
+				printError("내 정보 조회 중 오류가 발생했습니다.");
 				e.printStackTrace();
 			} finally {
 				DBUtil.executeClose(rs, pstmt, conn);
