@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import kr.util.DBUtil;
 
@@ -101,7 +102,7 @@ public class MemberDAO {
 		}
 		return real_id;
 	}
-/*	public String userLogin(String user_id, String user_pw) {
+	/*	public String userLogin(String user_id, String user_pw) {
 		Connection conn = null;
 		PreparedStatement pstmt = null;
 		String sql = null;
@@ -127,140 +128,140 @@ public class MemberDAO {
 		finally {DBUtil.executeClose(rs, pstmt, conn);}
 		return real_id;
 	}
-*/
+	 */
 
 
 	//아이디 찾기 (UI 개선)
-		public void findUserId() {
-			Connection conn = null;
-			PreparedStatement pstmt = null;
-			ResultSet rs = null;
-			String sql = null;
+	public void findUserId() {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
 
-			try {
-				printSubTitle("아이디 찾기 (Find ID)");
-				
-				printInputTag("이름(Name)");
-				String userName = br.readLine();
-				
-				printInputTag("이메일(E-mail)");
-				String userEmail = br.readLine();
+		try {
+			printSubTitle("아이디 찾기 (Find ID)");
 
-				conn = DBUtil.getConnection();
-				sql = "SELECT user_id FROM userInfo WHERE user_name = ? AND user_email = ?";
-				pstmt = conn.prepareStatement(sql);
-				pstmt.setString(1, userName);
-				pstmt.setString(2, userEmail);
+			printInputTag("이름(Name)");
+			String userName = br.readLine();
 
-				rs = pstmt.executeQuery();
+			printInputTag("이메일(E-mail)");
+			String userEmail = br.readLine();
 
-				if(rs.next()) {
-					String foundId = rs.getString("user_id");
-					// 찾은 아이디를 CLR_PRIMARY(Cyan) 색상으로 강조하여 출력
-					printSuccess("회원님의 아이디는 [" + CLR_PRIMARY + BOLD + foundId + RESET + CLR_WHT + "] 입니다." + RESET);
-				} else {
-					printError("일치하는 회원 정보가 없습니다.");
-				}
-			} catch(Exception e) {
-				printError("아이디 찾기 처리 중 오류가 발생했습니다.");
-				e.printStackTrace();
-			} finally {
-				DBUtil.executeClose(rs, pstmt, conn);
+			conn = DBUtil.getConnection();
+			sql = "SELECT user_id FROM userInfo WHERE user_name = ? AND user_email = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userName);
+			pstmt.setString(2, userEmail);
+
+			rs = pstmt.executeQuery();
+
+			if(rs.next()) {
+				String foundId = rs.getString("user_id");
+				// 찾은 아이디를 CLR_PRIMARY(Cyan) 색상으로 강조하여 출력
+				printSuccess("회원님의 아이디는 [" + CLR_PRIMARY + BOLD + foundId + RESET + CLR_WHT + "] 입니다." + RESET);
+			} else {
+				printError("일치하는 회원 정보가 없습니다.");
 			}
+		} catch(Exception e) {
+			printError("아이디 찾기 처리 중 오류가 발생했습니다.");
+			e.printStackTrace();
+		} finally {
+			DBUtil.executeClose(rs, pstmt, conn);
 		}
+	}
 
 	//비밀번호 재설정
 	//비밀번호 재설정
 	//비밀번호 재설정 (UI 개선)
-		public void resetPassword() {
-			Connection conn = null;
-			PreparedStatement pstmt = null;
-			ResultSet rs = null;
-			String sql = null;
+	public void resetPassword() {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
 
-			//비밀번호 검사 정규식 
-			String passwordRegex = "^(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).{8,}$";
+		//비밀번호 검사 정규식 
+		String passwordRegex = "^(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).{8,}$";
 
-			try {
-				printSubTitle("비밀번호 재설정 (Reset Password)");
-				
-				printInputTag("아이디(ID)");
-				String userId = br.readLine();
-				
-				printInputTag("이름(Name)");
-				String userName = br.readLine();
-				
-				printInputTag("이메일(E-mail)");
-				String userEmail = br.readLine();
+		try {
+			printSubTitle("비밀번호 재설정 (Reset Password)");
 
-				conn = DBUtil.getConnection();
-				sql = "SELECT user_id FROM userInfo WHERE user_id = ? AND user_name = ? AND user_email = ?";
-				pstmt = conn.prepareStatement(sql);
-				pstmt.setString(1, userId);
-				pstmt.setString(2, userName);
-				pstmt.setString(3, userEmail);
+			printInputTag("아이디(ID)");
+			String userId = br.readLine();
 
-				rs = pstmt.executeQuery();
+			printInputTag("이름(Name)");
+			String userName = br.readLine();
 
-				if(!rs.next()) {
-					printError("일치하는 회원 정보가 없습니다.");
-					return;
-				}
+			printInputTag("이메일(E-mail)");
+			String userEmail = br.readLine();
 
-				rs.close();
-				pstmt.close();
+			conn = DBUtil.getConnection();
+			sql = "SELECT user_id FROM userInfo WHERE user_id = ? AND user_name = ? AND user_email = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userId);
+			pstmt.setString(2, userName);
+			pstmt.setString(3, userEmail);
 
-				String newPw;
-				while(true) {
-					System.out.println("\n" + INDENT + CL_GRY + "  ※ 새 비밀번호 규칙 : 특수문자 1개 포함, 8자 이상" + RESET);
-					printInputTag("새 비밀번호");
-					newPw = br.readLine();
+			rs = pstmt.executeQuery();
 
-					if(!newPw.matches(passwordRegex)) {
-						printError("비밀번호 규칙에 맞지 않습니다.");
-						continue;
-					}
-
-					printInputTag("새 비밀번호 확인");
-					String confirmPw = br.readLine();
-
-					if(!newPw.equals(confirmPw)) {
-						printError("비밀번호 확인이 일치하지 않습니다. 다시 입력해주세요.");
-						continue;
-					}
-					break;
-				}
-
-				sql = "UPDATE userInfo SET user_pwd = ? WHERE user_id = ?";
-				pstmt = conn.prepareStatement(sql);
-				pstmt.setString(1, newPw);
-				pstmt.setString(2, userId);
-
-				int count = pstmt.executeUpdate();
-
-				if(count == 1) {
-					printSuccess("비밀번호가 성공적으로 변경되었습니다.");
-				} else {
-					printError("비밀번호 변경에 실패했습니다.");
-				}
-			} catch(Exception e) {
-				printError("비밀번호 재설정 처리 중 오류가 발생했습니다.");
-				e.printStackTrace();
-			} finally {
-				DBUtil.executeClose(rs, pstmt, conn);
+			if(!rs.next()) {
+				printError("일치하는 회원 정보가 없습니다.");
+				return;
 			}
-		} 
+
+			rs.close();
+			pstmt.close();
+
+			String newPw;
+			while(true) {
+				System.out.println("\n" + INDENT + CL_GRY + "  ※ 새 비밀번호 규칙 : 특수문자 1개 포함, 8자 이상" + RESET);
+				printInputTag("새 비밀번호");
+				newPw = br.readLine();
+
+				if(!newPw.matches(passwordRegex)) {
+					printError("비밀번호 규칙에 맞지 않습니다.");
+					continue;
+				}
+
+				printInputTag("새 비밀번호 확인");
+				String confirmPw = br.readLine();
+
+				if(!newPw.equals(confirmPw)) {
+					printError("비밀번호 확인이 일치하지 않습니다. 다시 입력해주세요.");
+					continue;
+				}
+				break;
+			}
+
+			sql = "UPDATE userInfo SET user_pwd = ? WHERE user_id = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, newPw);
+			pstmt.setString(2, userId);
+
+			int count = pstmt.executeUpdate();
+
+			if(count == 1) {
+				printSuccess("비밀번호가 성공적으로 변경되었습니다.");
+			} else {
+				printError("비밀번호 변경에 실패했습니다.");
+			}
+		} catch(Exception e) {
+			printError("비밀번호 재설정 처리 중 오류가 발생했습니다.");
+			e.printStackTrace();
+		} finally {
+			DBUtil.executeClose(rs, pstmt, conn);
+		}
+	} 
 
 	//회원가입 메서드(권한 선택 버전)
 	// 1. 회원가입 (비주얼 폼 개선)
 	public void insertMember() {
-	    Connection conn = null;
-	    PreparedStatement pstmt = null;
-	    String sql = null;
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		String sql = null;
 
-	    String userCountry = null;
-	    String userAffiliation = null;
-	    String userField = null;
+		String userCountry = null;
+		String userAffiliation = null;
+		String userField = null;
 
 		printSubTitle("신규 회원 등록 (Sign Up)");
 
@@ -284,12 +285,39 @@ public class MemberDAO {
 			String user_email = br.readLine();
 
 			// 생년월일 & 전화번호
-			String user_birthDate;
+			int user_birthyear;
+			int user_birthmonth;
+			int user_birthday;
+			String myBirth;
+			printInputTag("생년월일을 입력하세요.");
 			while (true) {
-				printInputTag("생년월일(ex: 1998-03-13)");
-				user_birthDate = br.readLine();
-				if (user_birthDate.length() == 10) break;
-				printError("형식을 확인하세요.");
+			    try {
+			        
+			        System.out.println();
+
+			        printInputTag("연도(year)");
+			        user_birthyear = Integer.parseInt(br.readLine());
+
+			        printInputTag("월(month)");
+			        user_birthmonth = Integer.parseInt(br.readLine());
+
+			        printInputTag("일(day)");
+			        user_birthday = Integer.parseInt(br.readLine());
+
+			        // 날짜 검증
+			        LocalDate.of(user_birthyear, user_birthmonth, user_birthday);
+			        
+			        myBirth = String.format("%04d-%02d-%02d",
+			                user_birthyear, user_birthmonth, user_birthday);
+			        
+			        break;  // 정상 입력이면 탈출
+
+			    } catch(NumberFormatException e) {
+			        printError("숫자를 입력하세요.");
+
+			    } catch(DateTimeException e) {
+			    	printError("잘못된 입력입니다.");
+			    }
 			}
 
 			String user_phoneNo;
@@ -320,30 +348,30 @@ public class MemberDAO {
 				} catch(NumberFormatException e) { printError("숫자만 입력 가능합니다."); }
 			}
 
-			
-		    printSubTitle("거주지 주소 (Address)");
-		    System.out.println(INDENT + CL_GRY + "  (상세 주소까지 정확히 입력해주세요)" + RESET);
-		    printInputTag("주소 입력");
-		    String user_addr = br.readLine();
-		    if(user_addr.trim().isEmpty()) user_addr = "미지정";
-		    
-		    printSubTitle("성별 선택 (Gender)");
-		    System.out.println(INDENT + CLR_PRIMARY + "  [1] " + RESET + "Male (남성)   " + 
-		                       CLR_PRIMARY + "[2] " + RESET + "Female (여성)");
-		    
-		    int your_Gender;
-		    while(true) {
-		        printInputTag("번호 선택");
-		        try {
-		            your_Gender = Integer.parseInt(br.readLine());
-		            if(your_Gender == 1 || your_Gender == 2) break;
-		            printError("1 또는 2를 입력해주세요.");
-		        } catch(NumberFormatException e) {
-		            printError("숫자만 입력 가능합니다.");
-		        }
-		    }
-			
-			// 2. 소속 선택 (22개 - 멀티 컬럼 출력으로 깔끔하게)
+
+			printSubTitle("거주지 주소 (Address)");
+			System.out.println(INDENT + CL_GRY + "  (상세 주소까지 정확히 입력해주세요)" + RESET);
+			printInputTag("주소 입력");
+			String user_addr = br.readLine();
+			if(user_addr.trim().isEmpty()) user_addr = "미지정";
+
+			printSubTitle("성별 선택 (Gender)");
+			System.out.println(INDENT + CLR_PRIMARY + "  [1] " + RESET + "Male (남성)   " + 
+					CLR_PRIMARY + "[2] " + RESET + "Female (여성)");
+
+			int your_Gender;
+			while(true) {
+				printInputTag("번호 선택");
+				try {
+					your_Gender = Integer.parseInt(br.readLine());
+					if(your_Gender == 1 || your_Gender == 2) break;
+					printError("1 또는 2를 입력해주세요.");
+				} catch(NumberFormatException e) {
+					printError("숫자만 입력 가능합니다.");
+				}
+			}
+
+			// 2. 소속 선택 (42개 - 멀티 컬럼 출력으로 깔끔하게)
 			printSubTitle("기관 소속 선택 (Affiliation)");
 			displayAffiliations(); // 아래 정의된 헬퍼 메서드
 
@@ -351,11 +379,11 @@ public class MemberDAO {
 				printInputTag("소속 기관 번호");
 				try {
 					int no = Integer.parseInt(br.readLine());
-					if(no >= 1 && no <= 22) {
+					if(no >= 1 && no <= 42) {
 						userAffiliation = getAffiliation(no);
 						break;
 					}
-					printError("1~22 사이의 숫자를 입력하세요.");
+					printError("1~42 사이의 숫자를 입력하세요.");
 				} catch(NumberFormatException e) { printError("숫자만 입력 가능합니다."); }
 			}
 
@@ -374,20 +402,20 @@ public class MemberDAO {
 					printError("1~23 사이의 숫자를 입력하세요.");
 				} catch(NumberFormatException e) { printError("숫자만 입력 가능합니다."); }
 			}
-			
+
 			System.out.println("\n" + INDENT + CLR_PRIMARY + BOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + RESET);
-		    System.out.println(INDENT + "   입력하신 정보가 맞습니까?");
-		    System.out.println(INDENT + CL_GRY + "   - ID: " + RESET + user_id);
-		    System.out.println(INDENT + CL_GRY + "   - Name: " + RESET + user_name);
-		    System.out.println(INDENT + CL_GRY + "   - Gender: " + RESET + (your_Gender == 1 ? "남성" : "여성"));
-		    System.out.println(INDENT + CL_GRY + "   - Address: " + RESET + user_addr);
-		    System.out.println(INDENT + CLR_PRIMARY + BOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + RESET);
-		    
-		    printInputTag("가입 승인 (Y/N)");
-		    if(!br.readLine().equalsIgnoreCase("Y")) {
-		        printError("회원가입이 취소되었습니다.");
-		        return;
-		    }
+			System.out.println(INDENT + "   입력하신 정보가 맞습니까?");
+			System.out.println(INDENT + CL_GRY + "   - ID: " + RESET + user_id);
+			System.out.println(INDENT + CL_GRY + "   - Name: " + RESET + user_name);
+			System.out.println(INDENT + CL_GRY + "   - Gender: " + RESET + (your_Gender == 1 ? "남성" : "여성"));
+			System.out.println(INDENT + CL_GRY + "   - Address: " + RESET + user_addr);
+			System.out.println(INDENT + CLR_PRIMARY + BOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + RESET);
+
+			printInputTag("가입 승인 (Y/N)");
+			if(!br.readLine().equalsIgnoreCase("Y")) {
+				printError("회원가입이 취소되었습니다.");
+				return;
+			}
 
 			// JDBC 처리
 			conn = DBUtil.getConnection();
@@ -401,7 +429,7 @@ public class MemberDAO {
 			pstmt.setString(2, user_pw);
 			pstmt.setString(3, user_name);
 			pstmt.setString(4, user_email);
-			pstmt.setString(5, user_birthDate);
+			pstmt.setString(5, myBirth);
 			pstmt.setString(6, user_phoneNo);
 			pstmt.setString(7, userCountry);
 			pstmt.setString(8, user_addr);
@@ -623,7 +651,7 @@ public class MemberDAO {
 				"산업부", "서울대학교", "성균관대", "연세대학교", "중기부", "ETRI", 
 				"한양대학교", "해수부", "환경부", "법무부", "외교부", "통일부", "국토교통부",
 				"농림축산식품부", "해양수산부", "국가보훈부", "식품의약품안전처", "인사혁신처", "방위사업청", "병무청", "조달청",
-				"관세청", "산림청", "기상청", "질병관리청", "재외동포청", "우주항공청", "소방청", "새만금개발청"
+				"관세청", "산림청", "기상청", "질병관리청", "재외동포청", "우주항공청", "소방청", "새만금개발청", "없음"
 		};
 
 		for (int i = 0; i < affs.length; i++) {
@@ -1099,7 +1127,7 @@ public class MemberDAO {
 			if(rs.next()) {
 				// 카드 상단 테두리
 				System.out.println(INDENT + CLR_PRIMARY + "┌──────────────────────────────────────────────────┐" + RESET);
-				
+
 				// 정보 출력 (간격 정렬)
 				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CL_GRY + "%-6s : " + CLR_WHT + "%s\n" + RESET, "아이디", rs.getString("user_id"));
 				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CL_GRY + "%-6s : " + CLR_WHT + "%s\n" + RESET, "이름", rs.getString("user_name"));
@@ -1113,7 +1141,7 @@ public class MemberDAO {
 				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CL_GRY + "%-6s : " + CLR_WHT + "%s\n" + RESET, "국가", rs.getString("user_country_cd"));
 				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CL_GRY + "%-6s : " + CLR_WHT + "%s\n" + RESET, "성별", convertGender(rs.getInt("user_gender_cd")));
 				System.out.printf(INDENT + CLR_PRIMARY + "│  " + CL_GRY + "%-6s : " + CLR_WHT + "%s\n" + RESET, "주소", rs.getString("user_addr"));
-				
+
 				// 카드 하단 테두리
 				System.out.println(INDENT + CLR_PRIMARY + "└──────────────────────────────────────────────────┘" + RESET);
 			} else {
@@ -1379,10 +1407,10 @@ public class MemberDAO {
 			return status;
 		}
 	}
-	
+
 	//로그아웃 메서드
 	public boolean logout() {
-	//	return false; //-> GST메뉴에서 로그아웃 시도할 때 항상 오류 문구가 먼저 찍힘.
+		//	return false; //-> GST메뉴에서 로그아웃 시도할 때 항상 오류 문구가 먼저 찍힘.
 		return true;
 	}
 
