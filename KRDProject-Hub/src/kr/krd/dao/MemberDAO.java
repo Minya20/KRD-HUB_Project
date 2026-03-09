@@ -130,41 +130,44 @@ public class MemberDAO {
 */
 
 
-	//아이디 찾기
-	public void findUserId() {
-		Connection conn = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		String sql = null;
+	//아이디 찾기 (UI 개선)
+		public void findUserId() {
+			Connection conn = null;
+			PreparedStatement pstmt = null;
+			ResultSet rs = null;
+			String sql = null;
 
-		try {
-			System.out.println();
-			System.out.println("[아이디 찾기]");
-			System.out.print("이름 : ");
-			String userName = br.readLine();
-			System.out.print("이메일 : ");
-			String userEmail = br.readLine();
+			try {
+				printSubTitle("아이디 찾기 (Find ID)");
+				
+				printInputTag("이름(Name)");
+				String userName = br.readLine();
+				
+				printInputTag("이메일(E-mail)");
+				String userEmail = br.readLine();
 
-			conn = DBUtil.getConnection();
-			sql = "SELECT user_id FROM userInfo WHERE user_name = ? AND user_email = ?";
-			pstmt = conn.prepareStatement(sql);
-			pstmt.setString(1, userName);
-			pstmt.setString(2, userEmail);
+				conn = DBUtil.getConnection();
+				sql = "SELECT user_id FROM userInfo WHERE user_name = ? AND user_email = ?";
+				pstmt = conn.prepareStatement(sql);
+				pstmt.setString(1, userName);
+				pstmt.setString(2, userEmail);
 
-			rs = pstmt.executeQuery();
+				rs = pstmt.executeQuery();
 
-			if(rs.next()) {
-				String foundId = rs.getString("user_id");
-				System.out.println("회원님의 아이디는 [" + foundId + "] 입니다.");
-			}else {
-				System.out.println("일치하는 회원 정보가 없습니다.");
+				if(rs.next()) {
+					String foundId = rs.getString("user_id");
+					// 찾은 아이디를 CLR_PRIMARY(Cyan) 색상으로 강조하여 출력
+					printSuccess("회원님의 아이디는 [" + CLR_PRIMARY + BOLD + foundId + RESET + CLR_WHT + "] 입니다." + RESET);
+				} else {
+					printError("일치하는 회원 정보가 없습니다.");
+				}
+			} catch(Exception e) {
+				printError("아이디 찾기 처리 중 오류가 발생했습니다.");
+				e.printStackTrace();
+			} finally {
+				DBUtil.executeClose(rs, pstmt, conn);
 			}
-		}catch(Exception e) {
-			e.printStackTrace();
-		}finally {
-			DBUtil.executeClose(rs, pstmt, conn);
 		}
-	}
 
 	//비밀번호 재설정
 	//비밀번호 재설정
