@@ -621,7 +621,9 @@ public class MemberDAO {
 				"DGIST", "GIST", "KAIST", "POSTECH", "UNIST", "고려대학교", 
 				"과기정통부", "교육부", "국토교통부", "농림부", "문체부", "보건복지부", 
 				"산업부", "서울대학교", "성균관대", "연세대학교", "중기부", "ETRI", 
-				"한양대학교", "해수부", "환경부", "없음"
+				"한양대학교", "해수부", "환경부", "법무부", "외교부", "통일부", "국토교통부",
+				"농림축산식품부", "해양수산부", "국가보훈부", "식품의약품안전처", "인사혁신처", "방위사업청", "병무청", "조달청",
+				"관세청", "산림청", "기상청", "질병관리청", "재외동포청", "우주항공청", "소방청", "새만금개발청"
 		};
 
 		for (int i = 0; i < affs.length; i++) {
@@ -824,6 +826,66 @@ public class MemberDAO {
 			affiliation = "환경부";
 			break;
 		case 22:
+			affiliation = "법무부";
+			break;
+		case 23:
+			affiliation = "외교부";
+			break;
+		case 24:
+			affiliation = "통일부";
+			break;
+		case 25:
+			affiliation = "국토교통부";
+			break;
+		case 26:
+			affiliation = "농림축산식품부";
+			break;
+		case 27:
+			affiliation = "해양수산부";
+			break;
+		case 28:
+			affiliation = "국가보훈부";
+			break;
+		case 29:
+			affiliation = "식품의약품안전처";
+			break;
+		case 30:
+			affiliation = "인사혁신처";
+			break;
+		case 31:
+			affiliation = "방위사업청";
+			break;
+		case 32:
+			affiliation = "병무청";
+			break;
+		case 33:
+			affiliation = "조달청";
+			break;
+		case 34:
+			affiliation = "관세청";
+			break;
+		case 35:
+			affiliation = "산림청";
+			break;
+		case 36:
+			affiliation = "기상청";
+			break;
+		case 37:
+			affiliation = "질병관리청";
+			break;
+		case 38:
+			affiliation = "재외동포청";
+			break;
+		case 39:
+			affiliation = "우주항공청";
+			break;
+		case 40:
+			affiliation = "소방청";
+			break;
+		case 41:
+			affiliation = "새만금개발청";
+			break;
+		case 42:
 			affiliation = "무소속";
 			break;
 		}
