@@ -26,6 +26,7 @@ public class USH_AnnouncementDAO {
 					+ " an.announcement_status AS status_cd, an.announcement_start_dt AS start_dt,"
 					+ " an.announcement_end_dt AS end_dt, ag.agency_agy_name AS agency_name "
 					+ "FROM announcement an LEFT JOIN agency ag ON ag.agency_agy_id = an.announcement_agy_id "
+					+ "WHERE announcement_hidden_yn <> '1' "
 					+ "ORDER BY an.announcement_end_dt DESC NULLS LAST, an.announcement_ann_id";
 			pstmt = conn.prepareStatement(sql);
 			rs = pstmt.executeQuery();
