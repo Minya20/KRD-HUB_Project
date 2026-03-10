@@ -218,8 +218,9 @@ public class HJY_CheckSystem {
                     "EVALUATION_APPLICATION_ID, " +
                     "EVALUATION_REVIEWER_ID, " +
                     "EVALUATION_FIELD, " +
-                    "EVALUATION_STATUS_CD " +
-                    ") VALUES (eval_seq.nextval, ?, ?, ?, 'ASSIGNED')";
+                    "EVALUATION_STATUS_CD, " +
+                    "EVALUATION_DEADLINE_AT" +
+                    ") VALUES (eval_seq.nextval, ?, ?, ?, 'ASSIGNED',sysdate+7)";
 
             pstmt2 = conn.prepareStatement(insertEvalSql);
 
