@@ -87,7 +87,7 @@ public class CMY_MemberDAO {
 
 				if(rs.next()) {
 					System.out.println(INDENT + BOLD + CLR_WHT + String.format("%-6s | %-15s | %-10s | %-10s | %-6s | %-8s | %-10s | %-20s", 
-							"평가번호", "과제명", "신청자", "기관명", "분야", "상태", "평가마감일", "연구수행기간") + RESET);
+							"평가번호", "과제명", "신청자", "기관명", "분야", "상태", "평가마감일", "공고기간") + RESET);
 					System.out.println(INDENT + CLR_GRY + "----------------------------------------------------------------------------------------------------------------" + RESET);
 					do {
 						String status = rs.getString("EVALUATION_STATUS_CD");
