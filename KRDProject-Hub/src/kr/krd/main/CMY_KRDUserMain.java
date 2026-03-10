@@ -67,12 +67,12 @@ public class CMY_KRDUserMain {
 						System.out.print("PW : ");
 						String user_pw = br.readLine();
 						//메서드이름(user_id,user_pw);
-						cust_id=dao.userLogin(user_id, user_pw);
+						//cust_id=dao.userLogin(user_id, user_pw);
 						if(!cust_id.equals("0") && !cust_id.equals(null)) {// cust_id가 0 또는 null이 아니면 : 즉 유저 아이디 값이 존재함.
 							
 							login = true;					//사용자의 로그인 상태를 TRUE로 변경함
-							role = dao.getUserRole(cust_id);//사용자의 권한을 반환하는 메서드를 사용하여 role에 해당하는 권한을 넣음
-							field = dao.getUserField(cust_id); //사용자의 분야을 반환하는 메서드를 사용하여 field 변수에 집어넣는다.
+							//role = dao.getUserRole(cust_id);//사용자의 권한을 반환하는 메서드를 사용하여 role에 해당하는 권한을 넣음
+							//field = dao.getUserField(cust_id); //사용자의 분야을 반환하는 메서드를 사용하여 field 변수에 집어넣는다.
 							
 						}
 					}else if(secMenuNo == 2) {
@@ -81,7 +81,7 @@ public class CMY_KRDUserMain {
 						continue;
 					}
 				}else if(MenuNo == 2) {
-					dao.insertMember(); //회원가입
+					//dao.insertMember(); //회원가입
 				}else if(MenuNo == 3) {//공고조회
 					System.out.println("프로그램 종료");
 					break;
@@ -119,15 +119,15 @@ public class CMY_KRDUserMain {
 						break;
 					}else if(role.equals("REV")) {
 						dao.callReviewerMenu(cust_id,role,field); //개인 메뉴에 넘어갈 시 유저 아이디, 권한, 분야를 인자로 넣는다.
-						login = dao.logout(); //개인메뉴에서 로그아웃을 하여 로그인에 false를 반환
+						//login = dao.logout(); //개인메뉴에서 로그아웃을 하여 로그인에 false를 반환
 						cust_id = null;		  //셰션 지우기 1. 유저아이디 NULL
 						role = null;		  //셰션 지우기 2. 유저 권한 NULL
 						if(!login) {//login 세션이 false(로그아웃됨)
 							break;
 						}
 					}else if(role.equals("GST")){
-						dao.callGuestMenu(cust_id,role,field);
-						login = dao.logout();
+						//dao.callGuestMenu(cust_id,role,field);
+						//login = dao.logout();
 						cust_id = null;		  //셰션 지우기 1. 유저아이디 NULL
 						role = null;		  //셰션 지우기 2. 유저 권한 NULL
 						if(!login) {//login 세션이 false(로그아웃됨)

@@ -47,7 +47,7 @@ public class SY_KRDRESIUserMain {
 				System.out.print("PW : ");
 				String user_pw = br.readLine();
 				
-				cust_id = dao.userLogin(user_id, user_pw);
+				//cust_id = dao.userLogin(user_id, user_pw);
 				
 				if(cust_id != null && !cust_id.equals("0")) {
 					System.out.println("로그인 성공: " + cust_id);
