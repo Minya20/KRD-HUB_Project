@@ -9,28 +9,26 @@ import java.util.Scanner;
 
 import kr.krd.dao.RR_AnnouncementDAO;
 import kr.krd.dao.RR_ApplicationDAO;
+import kr.krd.dao.RR_SelectionDAO;
+import kr.krd.dao.RR_ProjectDAO;
+import kr.krd.dao.RR_FundingDAO;
+import kr.krd.dao.RR_ReportDAO;
+import kr.krd.dao.RR_TaskProgressDAO;
+
 import kr.krd.vo.RR_AnnouncementVO;
 import kr.krd.vo.RR_ApplicationVO;
-import kr.krd.constant.RR_AnnouncementStatus;
-import kr.util.DBUtil;
-import kr.krd.dao.RR_SelectionDAO;
 import kr.krd.vo.RR_SelectionVO;
-//import kr.krd.dao.RR_ProjectDAO;
-import kr.krd.vo.RR_ProjectVO;
-
-import kr.krd.dao.RR_ProjectDAO;
 import kr.krd.vo.RR_ProjectVO;
 import kr.krd.vo.RR_TaskVO;
-
-import kr.krd.dao.RR_FundingDAO;
-import kr.krd.constant.RR_FundingConst;
-import kr.krd.dao.RR_ReportDAO;
 import kr.krd.vo.RR_ReportVO;
-import kr.krd.constant.RR_ReportConst;
-
-import kr.krd.dao.RR_TaskProgressDAO;
 import kr.krd.vo.RR_TaskProgressVO;
 import kr.krd.vo.RR_TeamProgressVO;
+
+import kr.krd.constant.RR_AnnouncementStatus;
+import kr.krd.constant.RR_FundingConst;
+import kr.krd.constant.RR_ReportConst;
+
+import kr.util.DBUtil;
 
 public class RR_KRDAdminMain {
 
@@ -43,22 +41,18 @@ public class RR_KRDAdminMain {
     private RR_FundingDAO fundingDAO = new RR_FundingDAO();
     private RR_ReportDAO reportDAO = new RR_ReportDAO();
     private RR_TaskProgressDAO progressDAO = new RR_TaskProgressDAO();
-    
-    
-    // 로그인 후 실제 값으로 세팅되어야 함 (일단 테스트용)
-    private int loginAgyId = 1;
-    private String loginUserId = "agy01";
 
-    public RR_KRDAdminMain() {
-        //callMenu();
-        //코드 통합과정에서 생성자로 바로 콜메뉴를 해버리면 기관관리자가 먼저 호출 되서
-    	//주석처리 진행함.
+    private int loginAgyId;
+    private String loginUserId;
+
+    public RR_KRDAdminMain(int loginAgyId, String loginUserId) {
+        this.loginAgyId = loginAgyId;
+        this.loginUserId = loginUserId;
     }
 
     // ===== 기관 담당자 메뉴 =====
-    public void callMenu() {
+    public boolean callMenu() {
         while (true) {
-            // 날짜 기준 상태 자동 갱신(공고예정/공고중/마감)
             syncAnnouncementStatusByDate();
 
             System.out.println("\n===== 기관 담당자 메뉴 =====");
@@ -69,6 +63,7 @@ public class RR_KRDAdminMain {
             System.out.println("5. 연구 진행 관리");
             System.out.println("6. 과제 진행 현황 조회");
             System.out.println("7. 로그아웃");
+            System.out.println("8. 프로그램 종료");
             System.out.print("번호 선택 : ");
 
             int menu = readInt();
@@ -84,17 +79,21 @@ public class RR_KRDAdminMain {
                     applicantListMenu();
                     break;
                 case 4:
-                	selectionMenu();
+                    selectionMenu();
                     break;
                 case 5:
-                	researchProgressMenu();
+                    researchProgressMenu();
                     break;
                 case 6:
-                	taskProgressMenu();
+                    taskProgressMenu();
                     break;
                 case 7:
                     System.out.println("로그아웃합니다.");
-                    return;
+                    return true;
+                case 8:
+                    System.out.println("프로그램 종료");
+                    System.exit(0);
+                    break;
                 default:
                     System.out.println("잘못 입력했습니다.");
             }
@@ -102,8 +101,6 @@ public class RR_KRDAdminMain {
     }
 
     // ===== 날짜 기준 상태 자동 갱신 =====
-    // - 공고 3종 상태(공고예정/공고중/마감)만 갱신
-    // - 심사중/선정완료/진행중 등 다른 단계는 건드리지 않음
     private void syncAnnouncementStatusByDate() {
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -114,12 +111,12 @@ public class RR_KRDAdminMain {
             String sql =
                 "UPDATE ANNOUNCEMENT "
               + "SET ANNOUNCEMENT_STATUS = CASE "
-              + "  WHEN TO_DATE(ANNOUNCEMENT_START_DT, 'YYYY-MM-DD') > TRUNC(SYSDATE) THEN ? " // 공고예정
-              + "  WHEN TO_DATE(ANNOUNCEMENT_END_DT,   'YYYY-MM-DD') < TRUNC(SYSDATE) THEN ? " // 마감
-              + "  ELSE ? "                                                                     // 공고중
+              + "  WHEN TO_DATE(ANNOUNCEMENT_START_DT, 'YYYY-MM-DD') > TRUNC(SYSDATE) THEN ? "
+              + "  WHEN TO_DATE(ANNOUNCEMENT_END_DT,   'YYYY-MM-DD') < TRUNC(SYSDATE) THEN ? "
+              + "  ELSE ? "
               + "END "
               + "WHERE ANNOUNCEMENT_HIDDEN_YN = 0 "
-              + "  AND ANNOUNCEMENT_STATUS IN (?, ?, ?) "  // ✅ 이 3개 상태만 자동 갱신 대상!
+              + "  AND ANNOUNCEMENT_STATUS IN (?, ?, ?) "
               + "  AND REGEXP_LIKE(ANNOUNCEMENT_START_DT, '^\\d{4}-\\d{2}-\\d{2}$') "
               + "  AND REGEXP_LIKE(ANNOUNCEMENT_END_DT,   '^\\d{4}-\\d{2}-\\d{2}$')";
 
@@ -130,7 +127,6 @@ public class RR_KRDAdminMain {
             pstmt.setString(idx++, RR_AnnouncementStatus.CLOSED);
             pstmt.setString(idx++, RR_AnnouncementStatus.OPEN);
 
-            // ✅ 자동으로 바꿔도 되는 상태 3개만!
             pstmt.setString(idx++, RR_AnnouncementStatus.SCHEDULED);
             pstmt.setString(idx++, RR_AnnouncementStatus.OPEN);
             pstmt.setString(idx++, RR_AnnouncementStatus.CLOSED);
@@ -173,7 +169,6 @@ public class RR_KRDAdminMain {
         System.out.print("신청 마감일(yyyy-MM-dd) : ");
         String endDt = sc.nextLine().trim();
 
-        //  마감일 지난 공고는 등록 자체 막기 + 시작일/마감일 검증
         LocalDate start;
         LocalDate end;
         try {
@@ -189,7 +184,6 @@ public class RR_KRDAdminMain {
             return;
         }
 
-        // end == today 는 허용(오늘까지 접수)
         if (end.isBefore(LocalDate.now())) {
             System.out.println("⚠ 마감일이 이미 지난 공고는 등록할 수 없습니다.");
             return;
@@ -209,7 +203,6 @@ public class RR_KRDAdminMain {
             return;
         }
 
-        // VO 세팅
         vo.setAgyId(loginAgyId);
         vo.setTitle(title);
         vo.setDesc(desc);
@@ -219,11 +212,8 @@ public class RR_KRDAdminMain {
         vo.setStartDt(startDt);
         vo.setEndDt(endDt);
         vo.setPmContact(pmContact);
-
-        // 기본값
         vo.setReannYn(0);
 
-        // 시작일이 미래면 공고예정, 아니면 공고중 (마감은 등록에서 막음)
         if (start.isAfter(LocalDate.now())) {
             vo.setStatus(RR_AnnouncementStatus.SCHEDULED);
         } else {
@@ -263,16 +253,14 @@ public class RR_KRDAdminMain {
                     deleteAnnouncementFlow();
                     break;
                 case 3:
-                    return;  // 이전 메뉴
+                    return;
                 default:
                     System.out.println("잘못 입력했습니다.");
             }
         }
     }
 
-    // 공고 목록 출력
     private void printAnnouncementList() {
-        // 목록 보기 전에 상태 자동 갱신
         syncAnnouncementStatusByDate();
 
         List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
@@ -296,9 +284,7 @@ public class RR_KRDAdminMain {
         }
         System.out.println("--------------------------------------------------------------------------");
     }
-    
-    
- // 메뉴4(선정관리) 전용: 마감(CLOSED)만 출력
+
     private void printClosedAnnouncementListOnly() {
         syncAnnouncementStatusByDate();
 
@@ -313,7 +299,7 @@ public class RR_KRDAdminMain {
 
         if (list != null) {
             for (RR_AnnouncementVO vo : list) {
-                if (!RR_AnnouncementStatus.CLOSED.equals(vo.getStatus())) continue; // ✅ 마감만
+                if (!RR_AnnouncementStatus.CLOSED.equals(vo.getStatus())) continue;
                 hasAny = true;
                 System.out.printf("%-8d %-20s %-10s %-10d %-12s%n",
                         vo.getAnnId(),
@@ -327,12 +313,11 @@ public class RR_KRDAdminMain {
         if (!hasAny) System.out.println("마감된 공고가 없습니다.");
         System.out.println("--------------------------------------------------------------------------");
     }
-    
-    
-    
-    private void printSelectPendingAnnouncementListOnly() {
+
+    private boolean printSelectPendingAnnouncementListOnly() {
         syncAnnouncementStatusByDate();
         announcementDAO.promoteClosedToSelectPending(loginAgyId);
+        announcementDAO.syncSelectedDoneAnnouncements(loginAgyId);
 
         List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
 
@@ -347,20 +332,23 @@ public class RR_KRDAdminMain {
                 if (!RR_AnnouncementStatus.SELECT_PENDING.equals(vo.getStatus())) continue;
                 hasAny = true;
                 System.out.printf("%-8d %-20s %-10s %-10d %-12s%n",
-                        vo.getAnnId(), cut(vo.getTitle(), 18), vo.getStatus(), vo.getApplicantCount(), vo.getEndDt());
+                        vo.getAnnId(),
+                        cut(vo.getTitle(), 18),
+                        vo.getStatus(),
+                        vo.getApplicantCount(),
+                        vo.getEndDt());
             }
         }
+
         if (!hasAny) System.out.println("선정대기 공고가 없습니다.");
         System.out.println("--------------------------------------------------------------------------");
+        return hasAny;
     }
-    
-    
-    
-    
-    private void printSelectDoneAnnouncementListOnly() {
+
+    private boolean printSelectDoneAnnouncementListOnly() {
         syncAnnouncementStatusByDate();
-        // 선정완료는 날짜로 바꾸면 안 되므로 promote만 돌려도 SELECT_DONE은 건드리지 않음
         announcementDAO.promoteClosedToSelectPending(loginAgyId);
+        announcementDAO.syncSelectedDoneAnnouncements(loginAgyId);
 
         List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
 
@@ -375,19 +363,23 @@ public class RR_KRDAdminMain {
                 if (!RR_AnnouncementStatus.SELECT_DONE.equals(vo.getStatus())) continue;
                 hasAny = true;
                 System.out.printf("%-8d %-20s %-10s %-10d %-12s%n",
-                        vo.getAnnId(), cut(vo.getTitle(), 18), vo.getStatus(), vo.getApplicantCount(), vo.getEndDt());
+                        vo.getAnnId(),
+                        cut(vo.getTitle(), 18),
+                        vo.getStatus(),
+                        vo.getApplicantCount(),
+                        vo.getEndDt());
             }
         }
-        if (!hasAny) System.out.println("선정완료 공고가 없습니다.");
+
+        if (!hasAny) {
+            System.out.println("선정완료 공고가 없습니다.");
+        }
         System.out.println("--------------------------------------------------------------------------");
+
+        return hasAny;
     }
-    
-    
-    
-    
- // 메뉴4(선정관리) 전용: 공고중(OPEN)만 출력
+
     private void printOpenAnnouncementListOnly() {
-        // 상태 자동 갱신(공고예정/공고중/마감 정리) 후 조회
         syncAnnouncementStatusByDate();
 
         List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
@@ -401,7 +393,7 @@ public class RR_KRDAdminMain {
 
         if (list != null) {
             for (RR_AnnouncementVO vo : list) {
-                if (!RR_AnnouncementStatus.OPEN.equals(vo.getStatus())) continue; // ✅ 공고중만
+                if (!RR_AnnouncementStatus.OPEN.equals(vo.getStatus())) continue;
 
                 hasAny = true;
                 System.out.printf("%-8d %-20s %-10s %-10d %-12s%n",
@@ -419,8 +411,7 @@ public class RR_KRDAdminMain {
 
         System.out.println("--------------------------------------------------------------------------");
     }
-    
-    
+
     private void printOpenOrClosedAnnouncementListOnly() {
         syncAnnouncementStatusByDate();
         List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
@@ -433,7 +424,7 @@ public class RR_KRDAdminMain {
         boolean hasAny = false;
         if (list != null) {
             for (RR_AnnouncementVO vo : list) {
-                if (RR_AnnouncementStatus.SCHEDULED.equals(vo.getStatus())) continue; // 공고예정 제외
+                if (RR_AnnouncementStatus.SCHEDULED.equals(vo.getStatus())) continue;
                 hasAny = true;
                 System.out.printf("%-8d %-20s %-10s %-10d %-12s%n",
                         vo.getAnnId(),
@@ -446,9 +437,7 @@ public class RR_KRDAdminMain {
         if (!hasAny) System.out.println("조회 가능한 공고가 없습니다.");
         System.out.println("--------------------------------------------------------------------------");
     }
-    
 
-    // 공고 수정 흐름
     private void updateAnnouncementFlow() {
         System.out.print("\n수정할 과제 ID 입력 : ");
         int annId = readInt();
@@ -460,7 +449,6 @@ public class RR_KRDAdminMain {
             return;
         }
 
-        // 공고예정/공고중일 때만 수정 가능
         if (!(RR_AnnouncementStatus.OPEN.equals(vo.getStatus())
            || RR_AnnouncementStatus.SCHEDULED.equals(vo.getStatus()))) {
             System.out.println("⚠ 해당 공고는 이미 " + vo.getStatus() + "입니다.");
@@ -509,15 +497,13 @@ public class RR_KRDAdminMain {
                 System.out.print("새 선정 팀수 입력 : ");
                 newValue = String.valueOf(readInt());
                 break;
-
-            // 마감일 수정: (1) 오늘 이전 금지, (2) 시작일보다 빠르면 금지
             case 5:
                 System.out.print("새 마감일(yyyy-MM-dd) 입력 : ");
                 newValue = sc.nextLine().trim();
 
                 try {
                     LocalDate today = LocalDate.now();
-                    LocalDate start = LocalDate.parse(vo.getStartDt());  // 기존 시작일
+                    LocalDate start = LocalDate.parse(vo.getStartDt());
                     LocalDate newEnd = LocalDate.parse(newValue);
 
                     if (newEnd.isBefore(start)) {
@@ -534,7 +520,6 @@ public class RR_KRDAdminMain {
                     return;
                 }
                 break;
-
             default:
                 System.out.println("잘못된 번호입니다.");
                 return;
@@ -549,7 +534,6 @@ public class RR_KRDAdminMain {
         }
     }
 
-    // 공고 논리 삭제 흐름
     private void deleteAnnouncementFlow() {
         System.out.print("\n삭제할 과제 ID 입력 : ");
         int annId = readInt();
@@ -561,7 +545,6 @@ public class RR_KRDAdminMain {
             return;
         }
 
-        // 공고예정/공고중 상태만 삭제 가능
         if (!(RR_AnnouncementStatus.OPEN.equals(vo.getStatus())
            || RR_AnnouncementStatus.SCHEDULED.equals(vo.getStatus()))) {
             System.out.println("⚠ 공고예정/공고중 상태에서만 삭제 가능합니다.");
@@ -569,7 +552,6 @@ public class RR_KRDAdminMain {
             return;
         }
 
-        // 신청팀 있으면 삭제 불가
         if (vo.getApplicantCount() > 0) {
             System.out.println("⚠ 신청자가 존재합니다. (" + vo.getApplicantCount() + "팀)");
             System.out.println("신청자가 0팀일 때만 삭제 가능합니다.");
@@ -608,66 +590,83 @@ public class RR_KRDAdminMain {
             int annId = readInt();
             if (annId == 0) return;
 
+            RR_AnnouncementVO ann = announcementDAO.getAnnouncementDetail(annId, loginAgyId);
+            if (ann == null) {
+                System.out.println("해당 과제를 찾을 수 없습니다.");
+                continue;
+            }
+
             List<RR_ApplicationVO> apps = applicationDAO.getApplicationsByAnnouncement(annId);
 
-            System.out.println("\n===== 신청자 목록 =====");
-            System.out.println("현재 과제 : [" + annId + "]");
-            System.out.println("--------------------------------------------------------------");
-            System.out.printf("%-8s %-12s %-10s %-12s %-10s%n", "신청ID", "신청자ID", "이름", "신청일", "상태");
-            System.out.println("--------------------------------------------------------------");
+            while (true) {
+                System.out.println("\n===== 신청자 목록 =====");
+                System.out.println("현재 과제 : [" + annId + "] " + ann.getTitle());
+                System.out.println("--------------------------------------------------------------");
+                System.out.printf("%-8s %-12s %-10s %-12s %-10s%n", "신청ID", "신청자ID", "이름", "신청일", "상태");
+                System.out.println("--------------------------------------------------------------");
 
-            if (apps.isEmpty()) {
-                System.out.println("신청 내역이 없습니다.");
-            } else {
-                for (RR_ApplicationVO a : apps) {
-                    System.out.printf("%-8d %-12s %-10s %-12s %-10s%n",
-                            a.getApplicationId(),
-                            a.getUserId(),
-                            cut(a.getUserName(), 9),
-                            a.getAppliedAt(),
-                            a.getStatusCd());
-                }
-            }
-            System.out.println("--------------------------------------------------------------");
-
-            System.out.println("1. 신청 상세 조회");
-            System.out.println("0. 이전 메뉴");
-            System.out.print("선택 : ");
-            int sel = readInt();
-            if (sel == 0) continue;
-
-            if (sel == 1) {
-                System.out.print("신청 상세 조회할 신청ID 입력 : ");
-                int appId = readInt();
-
-                RR_ApplicationVO detail = applicationDAO.getApplicationDetail(appId);
-                if (detail == null) {
-                    System.out.println("해당 신청ID를 찾을 수 없습니다.");
-                    continue;
-                }
-
-                System.out.println("\n===== 신청 상세 =====");
-                System.out.println("신청ID : " + detail.getApplicationId());
-                System.out.println("신청자 : " + detail.getUserId() + " (" + detail.getUserName() + ")");
-                System.out.println("제출서류명 : " + (detail.getAttachPath() == null ? "-" : detail.getAttachPath()));
-                System.out.println("신청일 : " + detail.getAppliedAt());
-                System.out.println("상태 : " + detail.getStatusCd());
-                System.out.println("희망 예산 : " + detail.getBudgetAmt());
-
-                if (detail.getAvgScore() == null) {
-                    System.out.println("평균 점수 : -");
+                if (apps.isEmpty()) {
+                    System.out.println("신청 내역이 없습니다.");
                 } else {
-                    System.out.println("평균 점수 : " + detail.getAvgScore());
+                    for (RR_ApplicationVO a : apps) {
+                    	System.out.printf("%-8d %-12s %-10s %-12s %-10s%n",
+                    	        a.getApplicationId(),
+                    	        a.getUserId(),
+                    	        cut(a.getUserName(), 9),
+                    	        a.getAppliedAt(),
+                    	        toApplicationStatusKor(a.getStatusCd()));
+                    }
                 }
+                System.out.println("--------------------------------------------------------------");
 
-                System.out.println("\n0. 이전 메뉴");
-                readInt();
+                System.out.println("1. 신청 상세 조회");
+                System.out.println("0. 공고 목록으로");
+                System.out.print("선택 : ");
+                int sel = readInt();
+
+                if (sel == 0) break;
+
+                if (sel == 1) {
+                    while (true) {
+                        System.out.print("신청 상세 조회할 신청ID 입력 (0=공고 목록) : ");
+                        int appId = readInt();
+
+                        if (appId == 0) break;
+
+                        RR_ApplicationVO detail = applicationDAO.getApplicationDetail(appId);
+                        if (detail == null) {
+                            System.out.println("해당 신청ID를 찾을 수 없습니다.");
+                            continue;
+                        }
+
+                        System.out.println("\n===== 신청 상세 =====");
+                        System.out.println("신청ID : " + detail.getApplicationId());
+                        System.out.println("신청자 : " + detail.getUserId() + " (" + detail.getUserName() + ")");
+                        System.out.println("제출서류명 : " + (detail.getAttachPath() == null ? "-" : detail.getAttachPath()));
+                        System.out.println("신청일 : " + detail.getAppliedAt());
+                        System.out.println("상태 : " + toApplicationStatusKor(detail.getStatusCd()));
+                        System.out.println("희망 예산 : " + detail.getBudgetAmt());
+                        System.out.println("평균 점수 : " + (detail.getAvgScore() == null ? "-" : detail.getAvgScore()));
+
+                        System.out.println("\n1. 다른 신청 상세 조회");
+                        System.out.println("0. 공고 목록으로");
+                        System.out.print("선택 : ");
+                        int next = readInt();
+
+                        if (next == 0) break;
+                    }
+
+                    break;
+                }
             }
         }
     }
     
     
- // ===== 4. 선정 관리 =====
+    
+    
+    
+    // ===== 4. 선정 관리 =====
     private void selectionMenu() {
         while (true) {
             System.out.println("\n===== 선정 관리 =====");
@@ -685,34 +684,38 @@ public class RR_KRDAdminMain {
         }
     }
 
-    // 정책: 점수순 상위 N만 보다가 예산 초과 순간 중단(뒤는 안 봄)
     private void autoSelectFlow() {
-    	
-    	syncAnnouncementStatusByDate();
+        syncAnnouncementStatusByDate();
         announcementDAO.promoteClosedToSelectPending(loginAgyId);
-    	
+        announcementDAO.syncSelectedDoneAnnouncements(loginAgyId);
+
         System.out.println("\n===== 자동 선정 계산 =====");
         System.out.println("[공고 목록]");
-        printSelectPendingAnnouncementListOnly();
+
+        boolean hasPending = printSelectPendingAnnouncementListOnly();
+
+        // 선정대기 공고가 없으면 바로 선정 관리 메뉴로 복귀
+        if (!hasPending) {
+            System.out.println("아직 자동 선정 계산이 가능한 공고가 없습니다.");
+            return;
+        }
 
         System.out.print("과제 ID 입력 (0=이전) : ");
         int annId = readInt();
         if (annId == 0) return;
 
         RR_AnnouncementVO ann = announcementDAO.getAnnouncementDetail(annId, loginAgyId);
-        
+
         if (ann == null) {
             System.out.println("해당 공고를 찾을 수 없습니다.");
             return;
         }
-        
-        
+
         if (!RR_AnnouncementStatus.SELECT_PENDING.equals(ann.getStatus())) {
             System.out.println("⚠ 선정 계산/승인은 '선정대기' 공고에서만 가능합니다.");
             System.out.println("현재 공고 상태 : " + ann.getStatus());
             return;
         }
-        
 
         if (selectionDAO.hasSelectionResult(annId)) {
             System.out.println("⚠ 이미 선정 승인 완료된 공고입니다. (중복 승인 불가)");
@@ -725,11 +728,10 @@ public class RR_KRDAdminMain {
             return;
         }
 
-        // “모든 신청서가 5명 제출 완료”인지 체크 (미완료면 승인 막음)
         boolean allDone = selectionDAO.isAllEvaluationsSubmitted(annId, REQUIRED_REVIEWERS);
 
-        int cap = ann.getRecruitCap();              // 최대 선정팀수 N
-        long totalBudget = ann.getTotalBudget();    // 공고 총예산
+        int cap = ann.getRecruitCap();
+        long totalBudget = ann.getTotalBudget();
         int limit = Math.min(cap, ranked.size());
 
         long sum = 0;
@@ -741,7 +743,6 @@ public class RR_KRDAdminMain {
         System.out.println("최대 선정 팀수 : " + cap + "팀");
         System.out.println("---------------------------------");
 
-        // 상위 N만 출력/검토
         for (int i = 0; i < limit; i++) {
             RR_SelectionVO c = ranked.get(i);
 
@@ -759,7 +760,7 @@ public class RR_KRDAdminMain {
                         scoreTxt,
                         c.getBudgetAmt(),
                         evalTxt);
-                break; // ✅ 정책: 초과 순간 중단, 뒤는 안 봄
+                break;
             }
 
             sum = next;
@@ -778,13 +779,12 @@ public class RR_KRDAdminMain {
         System.out.println("---------------------------------");
         System.out.println("※ 최종 후보: " + selectedCount + "팀 / 누적 예산: " + sum);
 
-        // 평가 미완료가 있으면 승인 막기
         if (!allDone) {
             System.out.println("⚠ 아직 평가가 완료되지 않은 신청서가 있습니다. (SUBMITTED 5/5 미완료)");
             System.out.println("평가가 모두 제출된 뒤에 승인할 수 있습니다.");
             return;
         }
-        
+
         System.out.println("※ 후보 외 나머지 팀은 자동 탈락 예정입니다. (총 신청 "
                 + ranked.size() + "팀 / 후보 " + selectedCount + "팀)");
 
@@ -816,51 +816,78 @@ public class RR_KRDAdminMain {
     }
 
     private void viewSelectionResultFlow() {
-    	
-    	syncAnnouncementStatusByDate();
-        announcementDAO.promoteClosedToSelectPending(loginAgyId);
-    	
-        System.out.println("\n===== 선정 결과 조회 =====");
-        System.out.println("[공고 목록]");
-        printSelectDoneAnnouncementListOnly();
+        while (true) {
+            syncAnnouncementStatusByDate();
+            announcementDAO.promoteClosedToSelectPending(loginAgyId);
+            announcementDAO.syncSelectedDoneAnnouncements(loginAgyId);
 
-        System.out.print("과제 ID 입력 (0=이전) : ");
-        int annId = readInt();
-        if (annId == 0) return;
+            System.out.println("\n===== 선정 결과 조회 =====");
+            System.out.println("[공고 목록]");
 
-        List<RR_SelectionVO> results = selectionDAO.getSelectionResults(annId);
+            boolean hasDone = printSelectDoneAnnouncementListOnly();
 
-        if (results.isEmpty()) {
-            System.out.println("아직 최종 선정 승인이 완료되지 않았습니다.");
-            System.out.println("1. 자동 선정 계산으로 이동");
+            if (!hasDone) {
+                System.out.println("아직 최종 선정 승인이 완료되지 않았습니다.");
+                System.out.println("1. 자동 선정 계산으로 이동");
+                System.out.println("0. 이전 메뉴");
+                System.out.print("선택 : ");
+                int go = readInt();
+
+                if (go == 1) {
+                    autoSelectFlow();
+                }
+                return;
+            }
+
+            System.out.print("과제 ID 입력 (0=이전) : ");
+            int annId = readInt();
+            if (annId == 0) return;
+
+            List<RR_SelectionVO> results = selectionDAO.getSelectionResults(annId);
+
+            if (results.isEmpty()) {
+                System.out.println("해당 과제의 선정 결과가 없습니다.");
+                System.out.println("1. 다른 과제 선정 결과 조회");
+                System.out.println("0. 이전 메뉴");
+                System.out.print("선택 : ");
+                int next = readInt();
+
+                if (next == 1) {
+                    continue;
+                }
+                return;
+            }
+
+            System.out.println("\n--------------------------------------------");
+            System.out.printf("%-8s %-12s %-10s %-8s %-8s %-12s%n",
+                    "신청ID", "신청자ID", "이름", "점수", "결과", "승인일");
+            System.out.println("--------------------------------------------");
+
+            for (RR_SelectionVO r : results) {
+                String resultKor = "SELECTED".equals(r.getResultCd()) ? "선정" : "탈락";
+                System.out.printf("%-8d %-12s %-10s %-8.2f %-8s %-12s%n",
+                        r.getApplicationId(),
+                        r.getUserId(),
+                        cut(r.getUserName(), 9),
+                        r.getAvgScore(),
+                        resultKor,
+                        r.getApprovedAt());
+            }
+            System.out.println("--------------------------------------------");
+
+            System.out.println("1. 다른 과제 선정 결과 조회");
             System.out.println("0. 이전 메뉴");
             System.out.print("선택 : ");
-            int go = readInt();
-            if (go == 1) autoSelectFlow();
+            int next = readInt();
+
+            if (next == 1) {
+                continue;
+            }
             return;
         }
-
-        System.out.println("\n--------------------------------------------");
-        System.out.printf("%-8s %-12s %-10s %-8s %-8s %-12s%n",
-                "신청ID", "신청자ID", "이름", "점수", "결과", "승인일");
-        System.out.println("--------------------------------------------");
-
-        for (RR_SelectionVO r : results) {
-            String resultKor = "SELECTED".equals(r.getResultCd()) ? "선정" : "탈락";
-            System.out.printf("%-8d %-12s %-10s %-8.2f %-8s %-12s%n",
-                    r.getApplicationId(),
-                    r.getUserId(),
-                    cut(r.getUserName(), 9),
-                    r.getAvgScore(),
-                    resultKor,
-                    r.getApprovedAt());
-        }
-        System.out.println("--------------------------------------------");
     }
-    
-    
-    
- // ===== 5. 연구 진행 관리 (과제 -> 팀) =====
+
+    // ===== 5. 연구 진행 관리 (과제 -> 팀) =====
     private void researchProgressMenu() {
         while (true) {
             System.out.println("\n===== 연구 진행 관리 =====");
@@ -896,9 +923,25 @@ public class RR_KRDAdminMain {
         }
     }
 
+    
+    
     private void taskDetailMenu(int annId) {
+        RR_TaskVO task = projectDAO.getTaskByAnnId(loginAgyId, annId);
+
+        if (task == null) {
+            System.out.println("해당 과제를 찾을 수 없습니다.");
+            return;
+        }
+
+        boolean locked = "완료".equals(task.getTaskStatus()) || "중단".equals(task.getTaskStatus());
+
         while (true) {
             System.out.println("\n현재 과제 ID : " + annId);
+
+            if (locked) {
+                System.out.println("※ 이미 " + task.getTaskStatus() + " 상태인 과제입니다.");
+                System.out.println("※ 협약/지급/보고승인/중단 처리는 더 이상 할 수 없습니다.");
+            }
 
             System.out.println("1. 협약 상태 변경");
             System.out.println("2. 연구비 지급 승인");
@@ -911,29 +954,34 @@ public class RR_KRDAdminMain {
             int sel = readInt();
             if (sel == 0) return;
 
+            if (locked) {
+                System.out.println("완료/중단 과제는 처리 메뉴를 사용할 수 없습니다.");
+                continue;
+            }
+
             switch (sel) {
                 case 1:
-                    agreementMenuByTask(annId);  // annId = 과제(공고) ID
+                    agreementMenuByTask(annId);
                     break;
                 case 2:
-                	fundingMenuByTask(annId);   // annId = 과제(공고) ID
+                    fundingMenuByTask(annId);
                     break;
                 case 3:
-                	midReportMenuByTask(annId); // annId = 과제(공고) ID
+                    midReportMenuByTask(annId);
                     break;
                 case 4:
-                	finalReportMenuByTask(annId);  // annId = 과제(공고) ID
+                    finalReportMenuByTask(annId);
                     break;
                 case 5:
-                    stopTeamMenuByTask(annId);   // annId = 과제(공고) ID
+                    stopTeamMenuByTask(annId);
                     break;
                 default:
                     System.out.println("잘못 입력했습니다.");
             }
         }
     }
+    
 
-    // 5-1 협약: 과제 안의 선정팀 목록 보여주고 팀 선택해서 체결
     private void agreementMenuByTask(int annId) {
         while (true) {
             System.out.println("\n===== 협약 상태 변경 =====");
@@ -987,11 +1035,9 @@ public class RR_KRDAdminMain {
             if (next == 0) return;
         }
     }
-    
-    // ===== 5-2 연구비 지급 승인
+
     private void fundingMenuByTask(int annId) {
-        // 선정된 팀(프로젝트) 목록
-        List<kr.krd.vo.RR_ProjectVO> teams = projectDAO.getTeamsByTask(loginAgyId, annId);
+        List<RR_ProjectVO> teams = projectDAO.getTeamsByTask(loginAgyId, annId);
 
         if (teams == null || teams.isEmpty()) {
             System.out.println("선정된 팀(프로젝트)이 없습니다. (선정승인→PROJECTS 생성이 먼저 되어야 함)");
@@ -1006,7 +1052,7 @@ public class RR_KRDAdminMain {
             System.out.println("-------------------------------------------------------------");
 
             for (int i = 0; i < teams.size(); i++) {
-                kr.krd.vo.RR_ProjectVO t = teams.get(i);
+                RR_ProjectVO t = teams.get(i);
                 int pid = t.getProjectId();
 
                 boolean p1 = fundingDAO.isRoundPaid(pid, RR_FundingConst.ROUND1);
@@ -1028,13 +1074,11 @@ public class RR_KRDAdminMain {
                 continue;
             }
 
-            kr.krd.vo.RR_ProjectVO sel = teams.get(no - 1);
+            RR_ProjectVO sel = teams.get(no - 1);
             fundingDetailMenu(sel.getProjectId(), sel.getUserId(), sel.getUserName());
         }
     }
 
-    
-    // ===== 5-2 연구비 지급 상세
     private void fundingDetailMenu(int projectId, String userId, String userName) {
         long total = fundingDAO.getRequestedBudgetAmt(projectId);
         if (total <= 0) {
@@ -1044,30 +1088,25 @@ public class RR_KRDAdminMain {
 
         long amt1 = total * RR_FundingConst.PCT1 / 100;
         long amt2 = total * RR_FundingConst.PCT2 / 100;
-        long amt3 = total - amt1 - amt2; // 오차 방지(마지막에 몰아줌)
+        long amt3 = total - amt1 - amt2;
 
         while (true) {
-            // 지급 여부 (FUNDING 테이블 기반)
             boolean paid1 = fundingDAO.isRoundPaid(projectId, RR_FundingConst.ROUND1);
             boolean paid2 = fundingDAO.isRoundPaid(projectId, RR_FundingConst.ROUND2);
             boolean paid3 = fundingDAO.isRoundPaid(projectId, RR_FundingConst.ROUND3);
 
-            // 협약(1차 조건)
             boolean agreementSigned = fundingDAO.isAgreementSigned(projectId);
 
-            // 보고서 승인 여부는 REPORTS에서 최신 보고서 조회해서 'APPROVED'인지로 판단
-            RR_ReportVO mid = reportDAO.getLatestReport(projectId, RR_ReportConst.TYPE_MID);     // "MID"
-            RR_ReportVO fin = reportDAO.getLatestReport(projectId, RR_ReportConst.TYPE_FINAL);  // "FINAL"
+            RR_ReportVO mid = reportDAO.getLatestReport(projectId, RR_ReportConst.TYPE_MID);
+            RR_ReportVO fin = reportDAO.getLatestReport(projectId, RR_ReportConst.TYPE_FINAL);
 
-            boolean midApproved = (mid != null && RR_ReportConst.ST_APPROVED.equals(mid.getStatusCd()));   // "APPROVED"
+            boolean midApproved = (mid != null && RR_ReportConst.ST_APPROVED.equals(mid.getStatusCd()));
             boolean finApproved = (fin != null && RR_ReportConst.ST_APPROVED.equals(fin.getStatusCd()));
 
-            // 각 차수 지급 가능 조건
             boolean can1 = agreementSigned && !paid1;
             boolean can2 = paid1 && midApproved && !paid2;
             boolean can3 = paid2 && finApproved && !paid3;
 
-            // 상태 문구 만들기(조건별로 정확히)
             String msg1;
             if (paid1) msg1 = "지급완료";
             else if (!agreementSigned) msg1 = "지급불가(협약 미체결)";
@@ -1144,16 +1183,20 @@ public class RR_KRDAdminMain {
             int r = fundingDAO.insertPaidFunding(projectId, roundNo, amount, loginUserId);
             if (r > 0) {
                 System.out.println("✅ " + roundNo + "차 지급 승인 완료 (" + amount + "원)");
+
+                // 3차 지급까지 끝났으면 프로젝트 완료 처리
+                if (roundNo == RR_FundingConst.ROUND3) {
+                    projectDAO.completeProject(projectId);
+                } else {
+                    System.out.println("⚠ 프로젝트 완료 처리 실패");
+                }
+
             } else {
                 System.out.println("지급 승인 실패(중복/DB 오류 가능)");
             }
         }
     }
-    
-    
 
-
-    // ===== 5-3. 중간 보고 승인 =====
     private void midReportMenuByTask(int annId) {
         while (true) {
             System.out.println("\n===== 중간 보고 승인 =====");
@@ -1169,11 +1212,9 @@ public class RR_KRDAdminMain {
                 return;
             }
 
-            // 팀 목록 출력 + 중간보고 상태 표시
             for (int i = 0; i < teams.size(); i++) {
                 RR_ProjectVO t = teams.get(i);
 
-                // 중간보고 최신 1건 조회
                 RR_ReportVO mid = reportDAO.getLatestReport(t.getProjectId(), RR_ReportConst.TYPE_MID);
 
                 String midStatus = (mid == null) ? "미제출" : RR_ReportConst.toKor(mid.getStatusCd());
@@ -1197,15 +1238,13 @@ public class RR_KRDAdminMain {
             }
 
             RR_ProjectVO selected = teams.get(pick - 1);
-            midReportDetailMenu(selected); // 상세로 이동
+            midReportDetailMenu(selected);
         }
     }
 
- // 팀 1개(프로젝트) 중간보고 상세 + 승인/반려
     private void midReportDetailMenu(RR_ProjectVO team) {
         int projectId = team.getProjectId();
 
-        // 협약 체결 전이면 승인 불가 (정책)
         if (!"SIGNED".equalsIgnoreCase(team.getAgreementStatusCd())) {
             System.out.println("⚠ 협약이 아직 체결되지 않았습니다. 협약 체결 후 승인 가능합니다.");
             return;
@@ -1233,7 +1272,6 @@ public class RR_KRDAdminMain {
         }
         System.out.println("-------------------------------------------------");
 
-        // 승인/반려는 SUBMITTED만 가능(정책)
         if (!RR_ReportConst.ST_SUBMITTED.equals(mid.getStatusCd())) {
             System.out.println("※ 제출(SUBMITTED) 상태에서만 승인/반려 가능합니다.");
             return;
@@ -1271,9 +1309,7 @@ public class RR_KRDAdminMain {
             System.out.println("잘못 입력했습니다.");
         }
     }
-    
-    
- // ===== 5-4. 최종 보고 승인 =====
+
     private void finalReportMenuByTask(int annId) {
         while (true) {
             System.out.println("\n===== 최종 보고 승인 =====");
@@ -1292,7 +1328,7 @@ public class RR_KRDAdminMain {
             for (int i = 0; i < teams.size(); i++) {
                 RR_ProjectVO t = teams.get(i);
 
-                RR_ReportVO fin = reportDAO.getLatestReport(t.getProjectId(), RR_ReportConst.TYPE_FINAL); // "FINAL"
+                RR_ReportVO fin = reportDAO.getLatestReport(t.getProjectId(), RR_ReportConst.TYPE_FINAL);
                 String finStatus = (fin == null) ? "미제출" : RR_ReportConst.toKor(fin.getStatusCd());
                 String agStatus = ("SIGNED".equalsIgnoreCase(t.getAgreementStatusCd())) ? "체결" : "대기";
 
@@ -1322,20 +1358,18 @@ public class RR_KRDAdminMain {
     private void finalReportDetailMenu(RR_ProjectVO team) {
         int projectId = team.getProjectId();
 
-        // 협약 체결 전이면 승인 불가
         if (!"SIGNED".equalsIgnoreCase(team.getAgreementStatusCd())) {
             System.out.println("⚠ 협약이 아직 체결되지 않았습니다. 협약 체결 후 승인 가능합니다.");
             return;
         }
 
-        // (정책) 최종보고 승인은 2차 지급 완료 후 가능하게 막기 (원하면 삭제 가능)
         boolean paid2 = fundingDAO.isRoundPaid(projectId, RR_FundingConst.ROUND2);
         if (!paid2) {
             System.out.println("⚠ 2차 연구비 지급 완료 후 최종보고 승인이 가능합니다.");
             return;
         }
 
-        RR_ReportVO fin = reportDAO.getLatestReport(projectId, RR_ReportConst.TYPE_FINAL); // "FINAL"
+        RR_ReportVO fin = reportDAO.getLatestReport(projectId, RR_ReportConst.TYPE_FINAL);
 
         System.out.println("\n===== 최종 보고 상세 =====");
         System.out.println("프로젝트ID : " + projectId);
@@ -1357,7 +1391,6 @@ public class RR_KRDAdminMain {
         }
         System.out.println("-------------------------------------------------");
 
-        // 제출된 것만 승인/반려 가능
         if (!RR_ReportConst.ST_SUBMITTED.equals(fin.getStatusCd())) {
             System.out.println("※ 제출(SUBMITTED) 상태에서만 승인/반려 가능합니다.");
             return;
@@ -1373,7 +1406,6 @@ public class RR_KRDAdminMain {
             if (sel == 0) return;
 
             if (sel == 1) {
-                // approveReport는 타입 체크 없이 승인하므로, FINAL 전용 메소드가 있으면 그걸 써도 됨
                 int r = reportDAO.approveReport(fin.getReportRptId(), loginUserId);
                 if (r > 0) System.out.println("✅ 최종 보고 승인 완료");
                 else System.out.println("승인 실패(DB 오류)");
@@ -1396,10 +1428,7 @@ public class RR_KRDAdminMain {
             System.out.println("잘못 입력했습니다.");
         }
     }
-    
-    
-    
-    // 5-5 중단: 과제 안의 팀 목록 보여주고 팀 선택해서 중단
+
     private void stopTeamMenuByTask(int annId) {
         while (true) {
             System.out.println("\n===== 연구 중단 처리 =====");
@@ -1457,11 +1486,8 @@ public class RR_KRDAdminMain {
             if (next == 0) return;
         }
     }
-    
-    
-    
-    
- // ===== 6. 과제 진행 현황 조회 =====
+
+    // ===== 6. 과제 진행 현황 조회 =====
     private void taskProgressMenu() {
         while (true) {
             System.out.println("\n===== 과제 진행 현황 조회 =====");
@@ -1567,7 +1593,6 @@ public class RR_KRDAdminMain {
                 continue;
             }
 
-            //  상세 화면 출력 후 엔터 누르면 자동으로 while 루프가 다시 '과제 상세 현황'을 출력
             printTeamDetail(picked);
         }
     }
@@ -1595,7 +1620,7 @@ public class RR_KRDAdminMain {
         System.out.println("\n현재 상태 : " + toProjectKor(t.getProjectStatusCd()));
 
         System.out.println("\n(엔터를 누르면 팀 목록으로 돌아갑니다)");
-        sc.nextLine(); //  엔터 대기
+        sc.nextLine();
     }
 
     // ===== 표시 변환 유틸 =====
@@ -1617,11 +1642,9 @@ public class RR_KRDAdminMain {
         if (cd == null) return "진행중";
         if ("STOPPED".equalsIgnoreCase(cd) || "중단".equals(cd)) return "중단";
         if ("COMPLETED".equalsIgnoreCase(cd) || "완료".equals(cd)) return "완료";
-        return "진행중"; // ONGOING/IN_PROGRESS 등은 진행중 처리
+        return "진행중";
     }
 
-    // 지급단계 표시(단순 버전)
-    // paidRound: 0~3, midApproved/finalApproved는 'APPROVED' 여부(리스트 기준)
     private String toPayStageKor(int paidRound, boolean midApproved, boolean finalApproved) {
         if (paidRound >= 3) return "최종 지급 완료";
         if (paidRound == 2) return finalApproved ? "최종 지급 대기" : "2차 지급 완료";
@@ -1629,15 +1652,10 @@ public class RR_KRDAdminMain {
         return "미지급";
     }
 
-    // 돈 표시
     private String formatMoney(long v) {
         return String.format("%,d원", v);
     }
-    
-    
-    
 
-    // 상태 표시용 매핑
     private String mapAgreementStatus(String cd) {
         if (cd == null) return "대기";
         if ("SIGNED".equalsIgnoreCase(cd)) return "체결";
@@ -1652,7 +1670,19 @@ public class RR_KRDAdminMain {
         return cd;
     }
     
-    
+    // 상태 영어에서 한글로 바꿔주는
+    private String toApplicationStatusKor(String cd) {
+        if (cd == null) return "-";
+
+        switch (cd.toUpperCase()) {
+            case "APPLIED": return "신청완료";
+            case "UNDER_REVIEW": return "심사중";
+            case "SELECTED": return "선정";
+            case "REJECTED": return "탈락";
+            case "CANCELLED": return "취소";
+            default: return cd;
+        }
+    }
     
 
     // ===== 공통 입력 유틸 =====
@@ -1683,6 +1713,6 @@ public class RR_KRDAdminMain {
     }
 
     public static void main(String[] args) {
-        //new RR_KRDAdminMain();
+        // new RR_KRDAdminMain();
     }
 }

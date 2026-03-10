@@ -13,79 +13,62 @@ import kr.util.DBUtil;
 
 public class RR_TaskProgressDAO {
 
-    // 6-1) "진행중 과제만" 목록 (공고 단계 제외)
-    public List<RR_TaskProgressVO> getTaskProgressList(int agyId) {
-        List<RR_TaskProgressVO> list = new ArrayList<>();
-        Connection conn = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
+    // 6-1) "선정된 과제만" 목록 (공고 단계 제외)
+	public List<RR_TaskProgressVO> getTaskProgressList(int agyId) {
+	    List<RR_TaskProgressVO> list = new ArrayList<>();
+	    Connection conn = null;
+	    PreparedStatement pstmt = null;
+	    ResultSet rs = null;
 
-        try {
-            conn = DBUtil.getConnection();
+	    try {
+	        conn = DBUtil.getConnection();
 
-            String sql =
-                "SELECT * FROM ( "
-              + "  SELECT an.ANNOUNCEMENT_ANN_ID AS ANN_ID, "
-              + "         an.ANNOUNCEMENT_TITLE AS TITLE, "
-              + "         NVL(an.ANNOUNCEMENT_TOTAL_BUDGET,0) AS TOTAL_BUDGET, "
-              + "         COUNT(p.PROJECT_ID) AS TEAM_CNT, "
-              + "         CASE "
-              + "           WHEN SUM(CASE WHEN p.PROJECT_STATUS_CD IN ('STOPPED','중단') THEN 1 ELSE 0 END) = COUNT(*) "
-              + "                THEN ? "
-              + "           WHEN SUM(CASE WHEN p.PROJECT_STATUS_CD IN ('COMPLETED','완료') THEN 1 ELSE 0 END) = COUNT(*) "
-              + "                THEN ? "
-              + "           ELSE ? "
-              + "         END AS TASK_STATUS "
-              + "  FROM ANNOUNCEMENT an "
-              + "  JOIN APPLICATIONS ap ON ap.APPLICATION_ANN_ID = an.ANNOUNCEMENT_ANN_ID "
-              + "  JOIN PROJECTS p ON p.PROJECT_APPLICATION_ID = ap.APPLICATION_ID "
-              + "  WHERE an.ANNOUNCEMENT_AGY_ID = ? "
-              + "    AND an.ANNOUNCEMENT_HIDDEN_YN = 0 "
-              + "    AND an.ANNOUNCEMENT_STATUS IN (?, ?, ?, ?) "
-              + "  GROUP BY an.ANNOUNCEMENT_ANN_ID, an.ANNOUNCEMENT_TITLE, an.ANNOUNCEMENT_TOTAL_BUDGET "
-              + ") "
-              + "WHERE TASK_STATUS = ? "
-              + "ORDER BY ANN_ID DESC";
+	        String sql =
+	            "SELECT an.ANNOUNCEMENT_ANN_ID AS ANN_ID, "
+	          + "       an.ANNOUNCEMENT_TITLE AS TITLE, "
+	          + "       NVL(an.ANNOUNCEMENT_TOTAL_BUDGET, 0) AS TOTAL_BUDGET, "
+	          + "       COUNT(p.PROJECT_ID) AS TEAM_COUNT, "
+	          + "       CASE "
+	          + "         WHEN SUM(CASE WHEN p.PROJECT_STATUS_CD IN ('ONGOING','IN_PROGRESS') THEN 1 ELSE 0 END) > 0 "
+	          + "              THEN '진행중' "
+	          + "         WHEN SUM(CASE WHEN p.PROJECT_STATUS_CD = 'COMPLETED' THEN 1 ELSE 0 END) = COUNT(p.PROJECT_ID) "
+	          + "              THEN '완료' "
+	          + "         WHEN SUM(CASE WHEN p.PROJECT_STATUS_CD = 'STOPPED' THEN 1 ELSE 0 END) = COUNT(p.PROJECT_ID) "
+	          + "              THEN '중단' "
+	          + "         ELSE '진행중' "
+	          + "       END AS TASK_STATUS "
+	          + "FROM ANNOUNCEMENT an "
+	          + "JOIN APPLICATIONS ap "
+	          + "  ON ap.APPLICATION_ANN_ID = an.ANNOUNCEMENT_ANN_ID "
+	          + "JOIN PROJECTS p "
+	          + "  ON p.PROJECT_APPLICATION_ID = ap.APPLICATION_ID "
+	          + "WHERE an.ANNOUNCEMENT_AGY_ID = ? "
+	          + "  AND an.ANNOUNCEMENT_HIDDEN_YN = 0 "
+	          + "GROUP BY an.ANNOUNCEMENT_ANN_ID, an.ANNOUNCEMENT_TITLE, an.ANNOUNCEMENT_TOTAL_BUDGET "
+	          + "ORDER BY an.ANNOUNCEMENT_ANN_ID DESC";
 
-            pstmt = conn.prepareStatement(sql);
+	        pstmt = conn.prepareStatement(sql);
+	        pstmt.setInt(1, agyId);
+	        rs = pstmt.executeQuery();
 
-            int idx = 1;
-            pstmt.setString(idx++, RR_AnnouncementStatus.STOPPED);      // CASE 결과: 중단
-            pstmt.setString(idx++, RR_AnnouncementStatus.COMPLETED);    // CASE 결과: 완료
-            pstmt.setString(idx++, RR_AnnouncementStatus.IN_PROGRESS);  // CASE 결과: 진행중
+	        while (rs.next()) {
+	            RR_TaskProgressVO vo = new RR_TaskProgressVO();
+	            vo.setAnnId(rs.getInt("ANN_ID"));
+	            vo.setTitle(rs.getString("TITLE"));
+	            vo.setTotalBudget(rs.getLong("TOTAL_BUDGET"));
+	            vo.setTeamCount(rs.getInt("TEAM_COUNT"));
+	            vo.setTaskStatus(rs.getString("TASK_STATUS"));
+	            list.add(vo);
+	        }
 
-            pstmt.setInt(idx++, agyId);
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    } finally {
+	        DBUtil.executeClose(rs, pstmt, conn);
+	    }
 
-            // "수행단계"만 대상
-            pstmt.setString(idx++, RR_AnnouncementStatus.SELECT_DONE);
-            pstmt.setString(idx++, RR_AnnouncementStatus.IN_PROGRESS);
-            pstmt.setString(idx++, RR_AnnouncementStatus.STOPPED);
-            pstmt.setString(idx++, RR_AnnouncementStatus.COMPLETED);
-
-            // 최종 필터: 진행중만
-            pstmt.setString(idx++, RR_AnnouncementStatus.IN_PROGRESS);
-
-            rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-                RR_TaskProgressVO vo = new RR_TaskProgressVO();
-                vo.setAnnId(rs.getInt("ANN_ID"));
-                vo.setTitle(rs.getString("TITLE"));
-                vo.setTotalBudget(rs.getLong("TOTAL_BUDGET"));
-                vo.setTeamCount(rs.getInt("TEAM_CNT"));
-                vo.setTaskStatus(rs.getString("TASK_STATUS"));
-                list.add(vo);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            DBUtil.executeClose(rs, pstmt, conn);
-        }
-
-        return list;
-    }
-
+	    return list;
+	}
     // 6-2) 과제(annId) 선택 시: 팀(프로젝트) 진행 현황 목록
     public List<RR_TeamProgressVO> getTeamProgressList(int agyId, int annId) {
         List<RR_TeamProgressVO> list = new ArrayList<>();

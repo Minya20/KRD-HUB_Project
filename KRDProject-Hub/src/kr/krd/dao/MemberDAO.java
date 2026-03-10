@@ -969,6 +969,39 @@ public class MemberDAO {
 		finally {DBUtil.executeClose(rs, pstmt, conn);}
 		return real_field;
 	}
+	
+	
+	public int getAgencyId(String user_id) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
+		int agyId = 0;
+
+		try {
+			conn = DBUtil.getConnection();
+
+			sql = "SELECT a.AGENCY_AGY_ID "
+			    + "FROM USERINFO u JOIN AGENCY a "
+			    + "ON u.USER_AFFILIATION = a.AGENCY_AGY_NAME "
+			    + "WHERE u.USER_ID = ? AND u.USER_ROLE_CD = 'AGY'";
+
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, user_id);
+			rs = pstmt.executeQuery();
+
+			if (rs.next()) {
+				agyId = rs.getInt("AGENCY_AGY_ID");
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			DBUtil.executeClose(rs, pstmt, conn);
+		}
+
+		return agyId;
+	}
 
 
 

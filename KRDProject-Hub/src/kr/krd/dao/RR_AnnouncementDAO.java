@@ -6,82 +6,84 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+import kr.krd.constant.RR_AnnouncementStatus;
 import kr.krd.vo.RR_AnnouncementVO;
 import kr.util.DBUtil;
-import kr.krd.constant.RR_AnnouncementStatus;
 
 public class RR_AnnouncementDAO {
 
-    // 1) 공고 등록
-	public int insertAnnouncement(RR_AnnouncementVO vo) {
-	    Connection conn = null;
-	    PreparedStatement pstmt = null;
-	    String sql = null;
-	    int count = 0;
+    // ===== 공고 등록 =====
+    public int insertAnnouncement(RR_AnnouncementVO vo) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int cnt = 0;
 
-	    try {
-	        conn = DBUtil.getConnection();
+        try {
+            conn = DBUtil.getConnection();
 
-	        // PK(ANNOUNCEMENT_ANN_ID)를 시퀀스로 직접 넣음
-	        sql = "INSERT INTO ANNOUNCEMENT ("
-	            + "ANNOUNCEMENT_ANN_ID, "  // ← PK 컬럼 추가
-	            + "ANNOUNCEMENT_AGY_ID, ANNOUNCEMENT_TITLE, ANNOUNCEMENT_DESC, "
-	            + "ANNOUNCEMENT_REANN_YN, ANNOUNCEMENT_PM_CONTACT, ANNOUNCEMENT_RECRUIT_CAP, "
-	            + "ANNOUNCEMENT_START_DT, ANNOUNCEMENT_END_DT, ANNOUNCEMENT_STATUS, "
-	            + "ANNOUNCEMENT_FIELD, ANNOUNCEMENT_CREATED_BY, ANNOUNCEMENT_TOTAL_BUDGET, "
-	            + "ANNOUNCEMENT_HIDDEN_YN"
-	            + ") VALUES ("
-	            + "ANNOUNCEMENT_SEQ.NEXTVAL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" // ← 값 추가
-	            + ")";
+            String sql =
+                "INSERT INTO ANNOUNCEMENT ("
+              + " ANNOUNCEMENT_ANN_ID, ANNOUNCEMENT_AGY_ID, ANNOUNCEMENT_TITLE, ANNOUNCEMENT_DESC, "
+              + " ANNOUNCEMENT_REANN_YN, ANNOUNCEMENT_PM_CONTACT, ANNOUNCEMENT_RECRUIT_CAP, "
+              + " ANNOUNCEMENT_START_DT, ANNOUNCEMENT_END_DT, ANNOUNCEMENT_STATUS, "
+              + " ANNOUNCEMENT_FIELD, ANNOUNCEMENT_CREATED_BY, ANNOUNCEMENT_TOTAL_BUDGET, "
+              + " ANNOUNCEMENT_HIDDEN_YN"
+              + ") VALUES ("
+              + " ANNOUNCEMENT_SEQ.NEXTVAL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
+              + ")";
 
-	        pstmt = conn.prepareStatement(sql);
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, vo.getAgyId());
+            pstmt.setString(2, vo.getTitle());
+            pstmt.setString(3, vo.getDesc());
+            pstmt.setInt(4, vo.getReannYn());
+            pstmt.setString(5, vo.getPmContact());
+            pstmt.setInt(6, vo.getRecruitCap());
+            pstmt.setString(7, vo.getStartDt());
+            pstmt.setString(8, vo.getEndDt());
+            pstmt.setString(9, vo.getStatus());
+            pstmt.setString(10, vo.getField());
+            pstmt.setString(11, vo.getCreatedBy());
+            pstmt.setLong(12, vo.getTotalBudget());
+            pstmt.setInt(13, vo.getHiddenYn());
 
-	        int idx = 1;
-	        pstmt.setInt(idx++, vo.getAgyId());
-	        pstmt.setString(idx++, vo.getTitle());
-	        pstmt.setString(idx++, vo.getDesc());
-	        pstmt.setInt(idx++, vo.getReannYn());
-	        pstmt.setString(idx++, vo.getPmContact());
-	        pstmt.setInt(idx++, vo.getRecruitCap());
-	        pstmt.setString(idx++, vo.getStartDt());   // VARCHAR2(10)
-	        pstmt.setString(idx++, vo.getEndDt());     // VARCHAR2(10)
-	        pstmt.setString(idx++, vo.getStatus());    // 공고중
-	        pstmt.setString(idx++, vo.getField());
-	        pstmt.setString(idx++, vo.getCreatedBy());
-	        pstmt.setLong(idx++, vo.getTotalBudget());
-	        pstmt.setInt(idx++, vo.getHiddenYn());
+            cnt = pstmt.executeUpdate();
 
-	        count = pstmt.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBUtil.executeClose(null, pstmt, conn);
+        }
 
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	    } finally {
-	        DBUtil.executeClose(null, pstmt, conn);
-	    }
+        return cnt;
+    }
 
-	    return count;
-	}
-
-    // 2) 기관별 공고 목록 조회 (신청팀 수 포함)
+    // ===== 기관별 공고 목록 조회 =====
     public List<RR_AnnouncementVO> getAnnouncementListByAgency(int agyId) {
         List<RR_AnnouncementVO> list = new ArrayList<>();
         Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        String sql = null;
 
         try {
             conn = DBUtil.getConnection();
 
-            sql = "SELECT a.ANNOUNCEMENT_ANN_ID, a.ANNOUNCEMENT_TITLE, a.ANNOUNCEMENT_STATUS, "
-                + "       a.ANNOUNCEMENT_TOTAL_BUDGET, a.ANNOUNCEMENT_RECRUIT_CAP, a.ANNOUNCEMENT_END_DT, "
-                + "       NVL((SELECT COUNT(*) "
-                + "              FROM APPLICATIONS ap "
-                + "             WHERE ap.APPLICATION_ANN_ID = a.ANNOUNCEMENT_ANN_ID), 0) AS APP_CNT "
-                + "FROM ANNOUNCEMENT a "
-                + "WHERE a.ANNOUNCEMENT_AGY_ID = ? "
-                + "  AND a.ANNOUNCEMENT_HIDDEN_YN = 0 "
-                + "ORDER BY a.ANNOUNCEMENT_ANN_ID DESC";
+            String sql =
+                "SELECT a.ANNOUNCEMENT_ANN_ID, "
+              + "       a.ANNOUNCEMENT_TITLE, "
+              + "       a.ANNOUNCEMENT_STATUS, "
+              + "       a.ANNOUNCEMENT_END_DT, "
+              + "       COUNT(ap.APPLICATION_ID) AS APPLICANT_COUNT "
+              + "FROM ANNOUNCEMENT a "
+              + "LEFT JOIN APPLICATIONS ap "
+              + "       ON a.ANNOUNCEMENT_ANN_ID = ap.APPLICATION_ANN_ID "
+              + "WHERE a.ANNOUNCEMENT_AGY_ID = ? "
+              + "  AND a.ANNOUNCEMENT_HIDDEN_YN = 0 "
+              + "GROUP BY a.ANNOUNCEMENT_ANN_ID, "
+              + "         a.ANNOUNCEMENT_TITLE, "
+              + "         a.ANNOUNCEMENT_STATUS, "
+              + "         a.ANNOUNCEMENT_END_DT "
+              + "ORDER BY a.ANNOUNCEMENT_ANN_ID DESC";
 
             pstmt = conn.prepareStatement(sql);
             pstmt.setInt(1, agyId);
@@ -92,10 +94,8 @@ public class RR_AnnouncementDAO {
                 vo.setAnnId(rs.getInt("ANNOUNCEMENT_ANN_ID"));
                 vo.setTitle(rs.getString("ANNOUNCEMENT_TITLE"));
                 vo.setStatus(rs.getString("ANNOUNCEMENT_STATUS"));
-                vo.setTotalBudget(rs.getLong("ANNOUNCEMENT_TOTAL_BUDGET"));
-                vo.setRecruitCap(rs.getInt("ANNOUNCEMENT_RECRUIT_CAP"));
                 vo.setEndDt(rs.getString("ANNOUNCEMENT_END_DT"));
-                vo.setApplicantCount(rs.getInt("APP_CNT"));
+                vo.setApplicantCount(rs.getInt("APPLICANT_COUNT"));
                 list.add(vo);
             }
 
@@ -108,34 +108,30 @@ public class RR_AnnouncementDAO {
         return list;
     }
 
-    // 3) 특정 공고 상세 조회 (수정/삭제용)
+    // ===== 공고 상세 조회 =====
     public RR_AnnouncementVO getAnnouncementDetail(int annId, int agyId) {
         RR_AnnouncementVO vo = null;
         Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        String sql = null;
 
         try {
             conn = DBUtil.getConnection();
 
-            sql = "SELECT a.ANNOUNCEMENT_ANN_ID, a.ANNOUNCEMENT_AGY_ID, a.ANNOUNCEMENT_TITLE, "
-                + "       a.ANNOUNCEMENT_DESC, a.ANNOUNCEMENT_REANN_YN, a.ANNOUNCEMENT_PM_CONTACT, "
-                + "       a.ANNOUNCEMENT_RECRUIT_CAP, a.ANNOUNCEMENT_START_DT, a.ANNOUNCEMENT_END_DT, "
-                + "       a.ANNOUNCEMENT_STATUS, a.ANNOUNCEMENT_FIELD, a.ANNOUNCEMENT_CREATED_BY, "
-                + "       a.ANNOUNCEMENT_TOTAL_BUDGET, a.ANNOUNCEMENT_HIDDEN_YN, "
-                + "       NVL((SELECT COUNT(*) "
-                + "              FROM APPLICATIONS ap "
-                + "             WHERE ap.APPLICATION_ANN_ID = a.ANNOUNCEMENT_ANN_ID), 0) AS APP_CNT "
-                + "FROM ANNOUNCEMENT a "
-                + "WHERE a.ANNOUNCEMENT_ANN_ID = ? "
-                + "  AND a.ANNOUNCEMENT_AGY_ID = ? "
-                + "  AND a.ANNOUNCEMENT_HIDDEN_YN = 0";
+            String sql =
+                "SELECT ANNOUNCEMENT_ANN_ID, ANNOUNCEMENT_AGY_ID, ANNOUNCEMENT_TITLE, ANNOUNCEMENT_DESC, "
+              + "       ANNOUNCEMENT_REANN_YN, ANNOUNCEMENT_PM_CONTACT, ANNOUNCEMENT_RECRUIT_CAP, "
+              + "       ANNOUNCEMENT_START_DT, ANNOUNCEMENT_END_DT, ANNOUNCEMENT_STATUS, "
+              + "       ANNOUNCEMENT_FIELD, ANNOUNCEMENT_CREATED_BY, ANNOUNCEMENT_TOTAL_BUDGET, "
+              + "       ANNOUNCEMENT_HIDDEN_YN "
+              + "FROM ANNOUNCEMENT "
+              + "WHERE ANNOUNCEMENT_ANN_ID = ? "
+              + "  AND ANNOUNCEMENT_AGY_ID = ? "
+              + "  AND ANNOUNCEMENT_HIDDEN_YN = 0";
 
             pstmt = conn.prepareStatement(sql);
             pstmt.setInt(1, annId);
             pstmt.setInt(2, agyId);
-
             rs = pstmt.executeQuery();
 
             if (rs.next()) {
@@ -154,7 +150,6 @@ public class RR_AnnouncementDAO {
                 vo.setCreatedBy(rs.getString("ANNOUNCEMENT_CREATED_BY"));
                 vo.setTotalBudget(rs.getLong("ANNOUNCEMENT_TOTAL_BUDGET"));
                 vo.setHiddenYn(rs.getInt("ANNOUNCEMENT_HIDDEN_YN"));
-                vo.setApplicantCount(rs.getInt("APP_CNT"));
             }
 
         } catch (Exception e) {
@@ -166,73 +161,54 @@ public class RR_AnnouncementDAO {
         return vo;
     }
 
-    // 4) 공고 수정
-    // fieldNo: 1=과제명, 2=과제설명, 3=예산, 4=선정팀수, 5=마감일
+    // ===== 공고 수정 =====
     public int updateAnnouncementField(int annId, int agyId, int fieldNo, String newValue) {
         Connection conn = null;
         PreparedStatement pstmt = null;
-        String sql = null;
-        int count = 0;
+        int cnt = 0;
 
         try {
             conn = DBUtil.getConnection();
 
+            String sql = null;
+
             switch (fieldNo) {
                 case 1:
-                    sql = "UPDATE ANNOUNCEMENT "
-                        + "SET ANNOUNCEMENT_TITLE = ? "
+                    sql = "UPDATE ANNOUNCEMENT SET ANNOUNCEMENT_TITLE = ? "
                         + "WHERE ANNOUNCEMENT_ANN_ID = ? AND ANNOUNCEMENT_AGY_ID = ? AND ANNOUNCEMENT_HIDDEN_YN = 0";
-                    pstmt = conn.prepareStatement(sql);
-                    pstmt.setString(1, newValue);
-                    pstmt.setInt(2, annId);
-                    pstmt.setInt(3, agyId);
                     break;
-
                 case 2:
-                    sql = "UPDATE ANNOUNCEMENT "
-                        + "SET ANNOUNCEMENT_DESC = ? "
+                    sql = "UPDATE ANNOUNCEMENT SET ANNOUNCEMENT_DESC = ? "
                         + "WHERE ANNOUNCEMENT_ANN_ID = ? AND ANNOUNCEMENT_AGY_ID = ? AND ANNOUNCEMENT_HIDDEN_YN = 0";
-                    pstmt = conn.prepareStatement(sql);
-                    pstmt.setString(1, newValue);
-                    pstmt.setInt(2, annId);
-                    pstmt.setInt(3, agyId);
                     break;
-
                 case 3:
-                    sql = "UPDATE ANNOUNCEMENT "
-                        + "SET ANNOUNCEMENT_TOTAL_BUDGET = ? "
+                    sql = "UPDATE ANNOUNCEMENT SET ANNOUNCEMENT_TOTAL_BUDGET = ? "
                         + "WHERE ANNOUNCEMENT_ANN_ID = ? AND ANNOUNCEMENT_AGY_ID = ? AND ANNOUNCEMENT_HIDDEN_YN = 0";
-                    pstmt = conn.prepareStatement(sql);
-                    pstmt.setLong(1, Long.parseLong(newValue));
-                    pstmt.setInt(2, annId);
-                    pstmt.setInt(3, agyId);
                     break;
-
                 case 4:
-                    sql = "UPDATE ANNOUNCEMENT "
-                        + "SET ANNOUNCEMENT_RECRUIT_CAP = ? "
+                    sql = "UPDATE ANNOUNCEMENT SET ANNOUNCEMENT_RECRUIT_CAP = ? "
                         + "WHERE ANNOUNCEMENT_ANN_ID = ? AND ANNOUNCEMENT_AGY_ID = ? AND ANNOUNCEMENT_HIDDEN_YN = 0";
-                    pstmt = conn.prepareStatement(sql);
-                    pstmt.setInt(1, Integer.parseInt(newValue));
-                    pstmt.setInt(2, annId);
-                    pstmt.setInt(3, agyId);
                     break;
-
                 case 5:
-                    sql = "UPDATE ANNOUNCEMENT "
-                        + "SET ANNOUNCEMENT_END_DT = ? "
+                    sql = "UPDATE ANNOUNCEMENT SET ANNOUNCEMENT_END_DT = ? "
                         + "WHERE ANNOUNCEMENT_ANN_ID = ? AND ANNOUNCEMENT_AGY_ID = ? AND ANNOUNCEMENT_HIDDEN_YN = 0";
-                    pstmt = conn.prepareStatement(sql);
-                    pstmt.setString(1, newValue); // VARCHAR2(10)
-                    pstmt.setInt(2, annId);
-                    pstmt.setInt(3, agyId);
                     break;
-
                 default:
                     return 0;
             }
 
-            count = pstmt.executeUpdate();
+            pstmt = conn.prepareStatement(sql);
+
+            if (fieldNo == 3 || fieldNo == 4) {
+                pstmt.setLong(1, Long.parseLong(newValue));
+            } else {
+                pstmt.setString(1, newValue);
+            }
+
+            pstmt.setInt(2, annId);
+            pstmt.setInt(3, agyId);
+
+            cnt = pstmt.executeUpdate();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -240,30 +216,30 @@ public class RR_AnnouncementDAO {
             DBUtil.executeClose(null, pstmt, conn);
         }
 
-        return count;
+        return cnt;
     }
 
-    // 5) 공고 논리 삭제
+    // ===== 공고 논리 삭제 =====
     public int softDeleteAnnouncement(int annId, int agyId) {
         Connection conn = null;
         PreparedStatement pstmt = null;
-        String sql = null;
-        int count = 0;
+        int cnt = 0;
 
         try {
             conn = DBUtil.getConnection();
 
-            sql = "UPDATE ANNOUNCEMENT "
-                + "SET ANNOUNCEMENT_HIDDEN_YN = 1 "
-                + "WHERE ANNOUNCEMENT_ANN_ID = ? "
-                + "  AND ANNOUNCEMENT_AGY_ID = ? "
-                + "  AND ANNOUNCEMENT_HIDDEN_YN = 0";
+            String sql =
+                "UPDATE ANNOUNCEMENT "
+              + "SET ANNOUNCEMENT_HIDDEN_YN = 1 "
+              + "WHERE ANNOUNCEMENT_ANN_ID = ? "
+              + "  AND ANNOUNCEMENT_AGY_ID = ? "
+              + "  AND ANNOUNCEMENT_HIDDEN_YN = 0";
 
             pstmt = conn.prepareStatement(sql);
             pstmt.setInt(1, annId);
             pstmt.setInt(2, agyId);
 
-            count = pstmt.executeUpdate();
+            cnt = pstmt.executeUpdate();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -271,13 +247,14 @@ public class RR_AnnouncementDAO {
             DBUtil.executeClose(null, pstmt, conn);
         }
 
-        return count;
+        return cnt;
     }
-    
-    
+
+    // ===== 마감 -> 선정대기 상태 변경 =====
     public int promoteClosedToSelectPending(int agyId) {
         Connection conn = null;
         PreparedStatement pstmt = null;
+        int cnt = 0;
 
         try {
             conn = DBUtil.getConnection();
@@ -287,21 +264,65 @@ public class RR_AnnouncementDAO {
               + "SET a.ANNOUNCEMENT_STATUS = ? "
               + "WHERE a.ANNOUNCEMENT_AGY_ID = ? "
               + "  AND a.ANNOUNCEMENT_HIDDEN_YN = 0 "
-              + "  AND a.ANNOUNCEMENT_STATUS = ? " // 마감인 것만
-              + "  AND EXISTS (SELECT 1 FROM APPLICATIONS ap WHERE ap.APPLICATION_ANN_ID = a.ANNOUNCEMENT_ANN_ID)";
+              + "  AND a.ANNOUNCEMENT_STATUS = ? "
+              + "  AND EXISTS ( "
+              + "      SELECT 1 FROM APPLICATIONS ap "
+              + "      WHERE ap.APPLICATION_ANN_ID = a.ANNOUNCEMENT_ANN_ID "
+              + "  ) "
+              + "  AND NOT EXISTS ( "
+              + "      SELECT 1 FROM SELECTION s "
+              + "      WHERE s.SELECTION_ANN_ID = a.ANNOUNCEMENT_ANN_ID "
+              + "  )";
 
             pstmt = conn.prepareStatement(sql);
-            pstmt.setString(1, RR_AnnouncementStatus.SELECT_PENDING); // 선정대기
+            pstmt.setString(1, RR_AnnouncementStatus.SELECT_PENDING);
             pstmt.setInt(2, agyId);
-            pstmt.setString(3, RR_AnnouncementStatus.CLOSED);        // 마감
-            return pstmt.executeUpdate();
+            pstmt.setString(3, RR_AnnouncementStatus.CLOSED);
+
+            cnt = pstmt.executeUpdate();
 
         } catch (Exception e) {
             e.printStackTrace();
-            return -1;
         } finally {
             DBUtil.executeClose(null, pstmt, conn);
         }
+
+        return cnt;
     }
-    
+
+    // ===== 선정 결과가 이미 있는 공고를 선정완료 상태로 보정 =====
+    public int syncSelectedDoneAnnouncements(int agyId) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int cnt = 0;
+
+        try {
+            conn = DBUtil.getConnection();
+
+            String sql =
+                "UPDATE ANNOUNCEMENT a "
+              + "SET a.ANNOUNCEMENT_STATUS = ? "
+              + "WHERE a.ANNOUNCEMENT_AGY_ID = ? "
+              + "  AND a.ANNOUNCEMENT_HIDDEN_YN = 0 "
+              + "  AND a.ANNOUNCEMENT_STATUS <> ? "
+              + "  AND EXISTS ( "
+              + "      SELECT 1 FROM SELECTION s "
+              + "      WHERE s.SELECTION_ANN_ID = a.ANNOUNCEMENT_ANN_ID "
+              + "  )";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, RR_AnnouncementStatus.SELECT_DONE);
+            pstmt.setInt(2, agyId);
+            pstmt.setString(3, RR_AnnouncementStatus.SELECT_DONE);
+
+            cnt = pstmt.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBUtil.executeClose(null, pstmt, conn);
+        }
+
+        return cnt;
+    }
 }

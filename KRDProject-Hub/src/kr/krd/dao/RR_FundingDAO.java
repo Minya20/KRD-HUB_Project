@@ -84,8 +84,7 @@ public class RR_FundingDAO {
         return false;
     }
 
-    // ✅ 중간/최종 보고 승인 여부(2/3차 조건)
-    // ⚠ REPORTS 컬럼명이 다르면 여기 SQL만 너희 테이블에 맞게 고치면 됨
+    // 중간/최종 보고 승인 여부(2/3차 조건)
     public boolean isReportApproved(int projectId, String typeCd /* MID / FINAL */) {
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -143,7 +142,7 @@ public class RR_FundingDAO {
             int updated = pstmt.executeUpdate();
             pstmt.close();
 
-            if (updated > 0) return updated; // ✅ 기존행 승인처리 완료
+            if (updated > 0) return updated; // 기존행 승인처리 완료
 
             // 2) 없으면 INSERT
             String insSql =

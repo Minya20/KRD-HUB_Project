@@ -11,10 +11,11 @@ import kr.krd.vo.RR_ProjectVO;
 import kr.krd.vo.RR_TaskVO;
 import kr.util.DBUtil;
 
+
 public class RR_ProjectDAO {
 
-    // ✅ 기관 기준 "관리할 과제(공고) 목록"
-    // ✅ 선정완료(SELECT_DONE) 공고만 보이도록 제한
+    // 기관 기준 "관리할 과제(공고) 목록"
+    // 선정완료(SELECT_DONE) 공고만 보이도록 제한
     public List<RR_TaskVO> getTaskListByAgency(int agyId) {
         List<RR_TaskVO> list = new ArrayList<>();
         Connection conn = null;
@@ -190,4 +191,82 @@ public class RR_ProjectDAO {
             DBUtil.executeClose(null, pstmt, conn);
         }
     }
+    
+    // 5) 팀 완료 처리 메서드
+    public int completeProject(int projectId) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int count = 0;
+
+        try {
+            conn = DBUtil.getConnection();
+            String sql = "UPDATE PROJECTS "
+                       + "SET PROJECT_STATUS_CD = 'COMPLETED', "
+                       + "    PROJECT_PROGRESS_PCT = 100 "
+                       + "WHERE PROJECT_ID = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, projectId);
+            count = pstmt.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBUtil.executeClose(null, pstmt, conn);
+        }
+
+        return count;
+    }
+    
+    // 완료 과제는 5번 메뉴 사용 불가
+    public RR_TaskVO getTaskByAnnId(int agyId, int annId) {
+        RR_TaskVO vo = null;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBUtil.getConnection();
+
+            String sql =
+                "SELECT an.ANNOUNCEMENT_ANN_ID AS ANN_ID, "
+              + "       an.ANNOUNCEMENT_TITLE AS TITLE, "
+              + "       COUNT(p.PROJECT_ID) AS TEAM_COUNT, "
+              + "       CASE "
+              + "         WHEN SUM(CASE WHEN p.PROJECT_STATUS_CD IN ('ONGOING','IN_PROGRESS') THEN 1 ELSE 0 END) > 0 THEN '진행중' "
+              + "         WHEN SUM(CASE WHEN p.PROJECT_STATUS_CD = 'COMPLETED' THEN 1 ELSE 0 END) = COUNT(p.PROJECT_ID) THEN '완료' "
+              + "         WHEN SUM(CASE WHEN p.PROJECT_STATUS_CD = 'STOPPED' THEN 1 ELSE 0 END) = COUNT(p.PROJECT_ID) THEN '중단' "
+              + "         ELSE '진행중' "
+              + "       END AS TASK_STATUS "
+              + "FROM ANNOUNCEMENT an "
+              + "JOIN APPLICATIONS ap "
+              + "  ON ap.APPLICATION_ANN_ID = an.ANNOUNCEMENT_ANN_ID "
+              + "JOIN PROJECTS p "
+              + "  ON p.PROJECT_APPLICATION_ID = ap.APPLICATION_ID "
+              + "WHERE an.ANNOUNCEMENT_AGY_ID = ? "
+              + "  AND an.ANNOUNCEMENT_ANN_ID = ? "
+              + "  AND an.ANNOUNCEMENT_HIDDEN_YN = 0 "
+              + "GROUP BY an.ANNOUNCEMENT_ANN_ID, an.ANNOUNCEMENT_TITLE";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, agyId);
+            pstmt.setInt(2, annId);
+
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                vo = new RR_TaskVO();
+                vo.setAnnId(rs.getInt("ANN_ID"));
+                vo.setTitle(rs.getString("TITLE"));
+                vo.setTeamCount(rs.getInt("TEAM_COUNT"));
+                vo.setTaskStatus(rs.getString("TASK_STATUS"));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBUtil.executeClose(rs, pstmt, conn);
+        }
+
+        return vo;
+    }
+    
 }

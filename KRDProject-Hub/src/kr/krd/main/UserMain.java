@@ -234,8 +234,28 @@ public class UserMain {
 				}
 				//	} else if(role.equals("AGY")) {
 			} else if("AGY".equals(role)) {
-				RR_KRDAdminMain agyMain = new RR_KRDAdminMain();
-				agyMain.callMenu();
+
+			    int agyId = dao.getAgencyId(cust_id);
+
+			    if(agyId == 0) {
+			        printError("기관 관리자 소속 기관 정보를 찾을 수 없습니다.");
+			        login = false;
+			        cust_id = null;
+			        role = null;
+			        field = null;
+			        break;
+			    }
+
+			    RR_KRDAdminMain agyMain = new RR_KRDAdminMain(agyId, cust_id);
+			    boolean isLogout = agyMain.callMenu();
+
+			    if(isLogout) {
+			        login = false;
+			        cust_id = null;
+			        role = null;
+			        field = null;
+			        break;
+			    }
 
 				//	}else if(role.equals("RESO")) {
 			} else if("RESO".equals(role)) {
