@@ -317,7 +317,7 @@ public class RR_KRDAdminMainOrigin {
     private boolean printSelectPendingAnnouncementListOnly() {
         syncAnnouncementStatusByDate();
         announcementDAO.promoteClosedToSelectPending(loginAgyId);
-        announcementDAO.syncSelectedDoneAnnouncements(loginAgyId);
+        //announcementDAO.syncSelectedDoneAnnouncements(loginAgyId);
 
         List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
 
@@ -348,7 +348,7 @@ public class RR_KRDAdminMainOrigin {
     private boolean printSelectDoneAnnouncementListOnly() {
         syncAnnouncementStatusByDate();
         announcementDAO.promoteClosedToSelectPending(loginAgyId);
-        announcementDAO.syncSelectedDoneAnnouncements(loginAgyId);
+        //announcementDAO.syncSelectedDoneAnnouncements(loginAgyId);
 
         List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
 
@@ -687,7 +687,7 @@ public class RR_KRDAdminMainOrigin {
     private void autoSelectFlow() {
         syncAnnouncementStatusByDate();
         announcementDAO.promoteClosedToSelectPending(loginAgyId);
-        announcementDAO.syncSelectedDoneAnnouncements(loginAgyId);
+        //announcementDAO.syncSelectedDoneAnnouncements(loginAgyId);
 
         System.out.println("\n===== 자동 선정 계산 =====");
         System.out.println("[공고 목록]");
@@ -819,7 +819,7 @@ public class RR_KRDAdminMainOrigin {
         while (true) {
             syncAnnouncementStatusByDate();
             announcementDAO.promoteClosedToSelectPending(loginAgyId);
-            announcementDAO.syncSelectedDoneAnnouncements(loginAgyId);
+            //announcementDAO.syncSelectedDoneAnnouncements(loginAgyId);
 
             System.out.println("\n===== 선정 결과 조회 =====");
             System.out.println("[공고 목록]");

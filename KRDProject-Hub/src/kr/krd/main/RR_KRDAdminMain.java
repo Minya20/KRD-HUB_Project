@@ -329,7 +329,7 @@ public class RR_KRDAdminMain {
 	private boolean printSelectPendingAnnouncementListOnly() {
 		syncAnnouncementStatusByDate();
 		announcementDAO.promoteClosedToSelectPending(loginAgyId);
-		announcementDAO.promoteClosedToSelectPending(loginAgyId);
+		//announcementDAO.promoteClosedToSelectPending(loginAgyId);
 
 		List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
 		System.out.println(INDENT + BOLD + CLR_WHT + String.format("%-8s | %-25s | %-12s | %-8s | %-12s", "과제번호", "과제명", "상태", "신청팀수", "마감일") + RESET);
@@ -352,7 +352,7 @@ public class RR_KRDAdminMain {
 	private boolean printSelectDoneAnnouncementListOnly() {
 		syncAnnouncementStatusByDate();
 		announcementDAO.promoteClosedToSelectPending(loginAgyId);
-		announcementDAO.promoteClosedToSelectPending(loginAgyId);
+		//announcementDAO.promoteClosedToSelectPending(loginAgyId);
 
 		List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
 		System.out.println(INDENT + BOLD + CLR_WHT + String.format("%-8s | %-25s | %-12s | %-8s | %-12s", "과제번호", "과제명", "상태", "신청팀수", "마감일") + RESET);
