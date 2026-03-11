@@ -114,7 +114,6 @@ public class HYJ_KRDRESOUserMain {
 
 					if("Y".equalsIgnoreCase(input)) {
 						printSuccess("단체 연구자 계정에서 안전하게 로그아웃 되었습니다.");
-						login = false; 
 						break;
 					} else if("N".equalsIgnoreCase(input)) {
 						continue;
