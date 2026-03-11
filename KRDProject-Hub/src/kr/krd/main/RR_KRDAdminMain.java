@@ -836,7 +836,7 @@ public class RR_KRDAdminMain {
 
 			printSubTitle("연구팀 지급 상세 [Proj: " + projectId + " | " + userName + "]");
 			System.out.println(INDENT + CLR_PRIMARY + "┌──────────────────────────────────────────────────────────────┐" + RESET);
-			System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-10s : " + CLR_WHT + "%,d 원\n" + RESET, "총 배정 예산", total);
+			System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-10s : " + CLR_WHT + "%,d 원\n" + RESET, "총 예산", total);
 			System.out.println(INDENT + CLR_PRIMARY + "├──────────────────────────────────────────────────────────────┤" + RESET);
 			System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-10s : " + CLR_WHT + "%,d 원 " + CLR_GRY + " [ " + getStatusColor(msg1) + "%-12s" + CLR_GRY + " ]\n" + RESET, "1차금(40%)", amt1, msg1);
 			System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-10s : " + CLR_WHT + "%,d 원 " + CLR_GRY + " [ " + getStatusColor(msg2) + "%-12s" + CLR_GRY + " ]\n" + RESET, "2차금(40%)", amt2, msg2);
