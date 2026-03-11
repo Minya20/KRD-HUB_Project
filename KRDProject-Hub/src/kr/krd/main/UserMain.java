@@ -245,8 +245,9 @@ public class UserMain {
 			        field = null;
 			        break;
 			    }
-
-			    RR_KRDAdminMain agyMain = new RR_KRDAdminMain(agyId, cust_id);
+				String agyName = dao.getUserAffiliation(cust_id);
+			    if(agyName == null || agyName.isBlank()) agyName = "소속 미지정";
+			    RR_KRDAdminMain agyMain = new RR_KRDAdminMain(agyId, cust_id, agyName);
 			    boolean isLogout = agyMain.callMenu();
 
 			    if(isLogout) {

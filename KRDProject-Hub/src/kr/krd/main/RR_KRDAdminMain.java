@@ -62,10 +62,12 @@ public class RR_KRDAdminMain {
 
 	private int loginAgyId;
 	private String loginUserId;
+	private String loginAgyName;
 
-	public RR_KRDAdminMain(int loginAgyId, String loginUserId) {
+	public RR_KRDAdminMain(int loginAgyId, String loginUserId, String loginAgyName) {
 		this.loginAgyId = loginAgyId;
 		this.loginUserId = loginUserId;
+		this.loginAgyName = loginAgyName;
 	}
 
 	// ------------------------------------------------
@@ -121,14 +123,13 @@ public class RR_KRDAdminMain {
 			System.out.println("\n\n" + INDENT + CLR_PRIMARY + BOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + RESET);
 			System.out.println(INDENT + BOLD + "   KRD Hubs | " + RESET + CLR_WHT + "기관 담당자 대시보드 (Agency Admin)" + RESET);
 			System.out.println(INDENT + CLR_PRIMARY + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + RESET);
-			System.out.println(INDENT + CLR_GRY + "  접속 계정: " + RESET + loginUserId + CLR_GRY + " | 소속 기관ID: " + RESET + loginAgyId);
+			System.out.println(INDENT + CLR_GRY + "  접속 계정: " + RESET + loginUserId + CLR_GRY + " | 소속 기관명: " + RESET + loginAgyName);
 			System.out.println();
 			
 			printMenuOption("1", "공고 등록 (Register Announcement)");
 			printMenuOption("2", "공고 조회 및 관리 (Manage Announcements)");
 			printMenuOption("3", "신청자 목록 조회 (View Applicants)");
 			printMenuOption("4", "선정 관리 (Selection Management)");
-			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
 			printMenuOption("5", "연구 진행 관리 (Research Progress)");
 			printMenuOption("6", "과제 진행 현황 조회 (Task Status)");
 			System.out.println(INDENT + CLR_GRY + "┃" + RESET);
@@ -1042,7 +1043,7 @@ public class RR_KRDAdminMain {
 
 	private void stopTeamMenuByTask(int annId) {
 		while (true) {
-			printSubTitle("연구 중단 (페널티) 처리");
+			printSubTitle("연구 중단 처리");
 			List<RR_ProjectVO> teams = projectDAO.getTeamsByTask(loginAgyId, annId);
 			if (teams.isEmpty()) { printError("선정된 팀 데이터가 없습니다."); return; }
 

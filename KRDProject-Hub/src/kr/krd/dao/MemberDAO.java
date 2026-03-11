@@ -291,33 +291,33 @@ public class MemberDAO {
 			String myBirth;
 			printInputTag("생년월일을 입력하세요.");
 			while (true) {
-			    try {
-			        
-			        System.out.println();
+				try {
 
-			        printInputTag("연도(year)");
-			        user_birthyear = Integer.parseInt(br.readLine());
+					System.out.println();
 
-			        printInputTag("월(month)");
-			        user_birthmonth = Integer.parseInt(br.readLine());
+					printInputTag("연도(year)");
+					user_birthyear = Integer.parseInt(br.readLine());
 
-			        printInputTag("일(day)");
-			        user_birthday = Integer.parseInt(br.readLine());
+					printInputTag("월(month)");
+					user_birthmonth = Integer.parseInt(br.readLine());
 
-			        // 날짜 검증
-			        LocalDate.of(user_birthyear, user_birthmonth, user_birthday);
-			        
-			        myBirth = String.format("%04d-%02d-%02d",
-			                user_birthyear, user_birthmonth, user_birthday);
-			        
-			        break;  // 정상 입력이면 탈출
+					printInputTag("일(day)");
+					user_birthday = Integer.parseInt(br.readLine());
 
-			    } catch(NumberFormatException e) {
-			        printError("숫자를 입력하세요.");
+					// 날짜 검증
+					LocalDate.of(user_birthyear, user_birthmonth, user_birthday);
 
-			    } catch(DateTimeException e) {
-			    	printError("잘못된 입력입니다.");
-			    }
+					myBirth = String.format("%04d-%02d-%02d",
+							user_birthyear, user_birthmonth, user_birthday);
+
+					break;  // 정상 입력이면 탈출
+
+				} catch(NumberFormatException e) {
+					printError("숫자를 입력하세요.");
+
+				} catch(DateTimeException e) {
+					printError("잘못된 입력입니다.");
+				}
 			}
 
 			String user_phoneNo;
@@ -969,8 +969,8 @@ public class MemberDAO {
 		finally {DBUtil.executeClose(rs, pstmt, conn);}
 		return real_field;
 	}
-	
-	
+
+
 	public int getAgencyId(String user_id) {
 		Connection conn = null;
 		PreparedStatement pstmt = null;
@@ -982,9 +982,9 @@ public class MemberDAO {
 			conn = DBUtil.getConnection();
 
 			sql = "SELECT a.AGENCY_AGY_ID "
-			    + "FROM USERINFO u JOIN AGENCY a "
-			    + "ON u.USER_AFFILIATION = a.AGENCY_AGY_NAME "
-			    + "WHERE u.USER_ID = ? AND u.USER_ROLE_CD = 'AGY'";
+					+ "FROM USERINFO u JOIN AGENCY a "
+					+ "ON u.USER_AFFILIATION = a.AGENCY_AGY_NAME "
+					+ "WHERE u.USER_ID = ? AND u.USER_ROLE_CD = 'AGY'";
 
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, user_id);
@@ -1446,5 +1446,17 @@ public class MemberDAO {
 		//	return false; //-> GST메뉴에서 로그아웃 시도할 때 항상 오류 문구가 먼저 찍힘.
 		return true;
 	}
+
+	// 사용자의 소속 기관명을 반환하는 메서드 추가
+	public String getUserAffiliation(String user_id) {
+		Connection conn = null; PreparedStatement pstmt = null; ResultSet rs = null; String affiliation = null;
+		try {
+			conn = DBUtil.getConnection();
+			pstmt = conn.prepareStatement("SELECT user_affiliation FROM USERINFO WHERE USER_ID = ?");
+			pstmt.setString(1, user_id); rs = pstmt.executeQuery();
+			if(rs.next()) affiliation = rs.getString("user_affiliation");
+		} catch(Exception e){ e.printStackTrace(); } finally { DBUtil.executeClose(rs, pstmt, conn); }
+		return affiliation;
+	}	
 
 }
