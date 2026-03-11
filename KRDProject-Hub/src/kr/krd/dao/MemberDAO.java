@@ -70,7 +70,7 @@ public class MemberDAO {
 			rs = pstmt.executeQuery();
 
 			if(!rs.next()) {
-				System.out.println("존재하지 않는 아이디입니다.");
+				//System.out.println("존재하지 않는 아이디입니다.");
 				return "0";
 			}
 
