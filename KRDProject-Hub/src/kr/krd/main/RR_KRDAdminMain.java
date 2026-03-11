@@ -208,7 +208,7 @@ public class RR_KRDAdminMain {
 		printInputTag("모집 분야 입력");
 		String field = sc.nextLine().trim();
 
-		printInputTag("총 배정 예산(숫자)");
+		printInputTag("총 예산(숫자)");
 		long totalBudget = readLong();
 
 		printInputTag("선정 팀 수(숫자)");
