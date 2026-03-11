@@ -329,7 +329,7 @@ public class RR_KRDAdminMain {
 	private boolean printSelectPendingAnnouncementListOnly() {
 		syncAnnouncementStatusByDate();
 		announcementDAO.promoteClosedToSelectPending(loginAgyId);
-		announcementDAO.syncSelectedDoneAnnouncements(loginAgyId);
+		announcementDAO.promoteClosedToSelectPending(loginAgyId);
 
 		List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
 		System.out.println(INDENT + BOLD + CLR_WHT + String.format("%-8s | %-25s | %-12s | %-8s | %-12s", "과제번호", "과제명", "상태", "신청팀수", "마감일") + RESET);
@@ -352,7 +352,7 @@ public class RR_KRDAdminMain {
 	private boolean printSelectDoneAnnouncementListOnly() {
 		syncAnnouncementStatusByDate();
 		announcementDAO.promoteClosedToSelectPending(loginAgyId);
-		announcementDAO.syncSelectedDoneAnnouncements(loginAgyId);
+		announcementDAO.promoteClosedToSelectPending(loginAgyId);
 
 		List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
 		System.out.println(INDENT + BOLD + CLR_WHT + String.format("%-8s | %-25s | %-12s | %-8s | %-12s", "과제번호", "과제명", "상태", "신청팀수", "마감일") + RESET);
@@ -597,7 +597,7 @@ public class RR_KRDAdminMain {
 		long sum = 0; int selectedCount = 0;
 
 		System.out.println("\n" + INDENT + CLR_PRIMARY + "┌─ [ " + cut(ann.getTitle(), 20) + " - 선정 시뮬레이션 ] ──────────────┐" + RESET);
-		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%,d 원\n" + RESET, "총 배정 예산", totalBudget);
+		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%,d 원\n" + RESET, "총 예산", totalBudget);
 		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%d 팀\n" + RESET, "최대 선정 팀수", cap);
 		System.out.println(INDENT + CLR_PRIMARY + "└──────────────────────────────────────────────────────────────┘" + RESET);
 

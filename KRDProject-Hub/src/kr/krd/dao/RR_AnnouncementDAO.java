@@ -291,7 +291,7 @@ public class RR_AnnouncementDAO {
     }
 
     // ===== 선정 결과가 이미 있는 공고를 선정완료 상태로 보정 =====
-    public int syncSelectedDoneAnnouncements(int agyId) {
+    /*public int syncSelectedDoneAnnouncements(int agyId) {
         Connection conn = null;
         PreparedStatement pstmt = null;
         int cnt = 0;
@@ -324,5 +324,5 @@ public class RR_AnnouncementDAO {
         }
 
         return cnt;
-    }
+    }*/
 }
