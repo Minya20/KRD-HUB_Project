@@ -208,7 +208,6 @@ public class RR_AnnouncementDAO {
             pstmt.setInt(2, annId);
             pstmt.setInt(3, agyId);
 
-            
             cnt = pstmt.executeUpdate();
 
         } catch (Exception e) {
@@ -327,5 +326,125 @@ public class RR_AnnouncementDAO {
         return cnt;
     }*/
     
+    public int promoteClosedToReviewing(int agyId) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int cnt = 0;
+
+        try {
+            conn = DBUtil.getConnection();
+
+            String sql =
+                "UPDATE ANNOUNCEMENT a " +
+                "SET a.ANNOUNCEMENT_STATUS = ? " +
+                "WHERE a.ANNOUNCEMENT_AGY_ID = ? " +
+                "  AND a.ANNOUNCEMENT_HIDDEN_YN = 0 " +
+                "  AND a.ANNOUNCEMENT_STATUS = ? " +
+                "  AND EXISTS ( " +
+                "      SELECT 1 FROM APPLICATIONS ap " +
+                "      WHERE ap.APPLICATION_ANN_ID = a.ANNOUNCEMENT_ANN_ID " +
+                "  )";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, RR_AnnouncementStatus.REVIEWING);
+            pstmt.setInt(2, agyId);
+            pstmt.setString(3, RR_AnnouncementStatus.CLOSED);
+
+            cnt = pstmt.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBUtil.executeClose(null, pstmt, conn);
+        }
+
+        return cnt;
+    }
+    
+    public int promoteReviewingToReviewDone(int agyId, int requiredReviewers) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int cnt = 0;
+
+        try {
+            conn = DBUtil.getConnection();
+
+            String sql =
+                "UPDATE ANNOUNCEMENT a "
+              + "SET a.ANNOUNCEMENT_STATUS = ? "
+              + "WHERE a.ANNOUNCEMENT_AGY_ID = ? "
+              + "  AND a.ANNOUNCEMENT_HIDDEN_YN = 0 "
+              + "  AND a.ANNOUNCEMENT_STATUS IN (?, ?) "
+              + "  AND EXISTS ( "
+              + "      SELECT 1 "
+              + "      FROM APPLICATIONS ap "
+              + "      WHERE ap.APPLICATION_ANN_ID = a.ANNOUNCEMENT_ANN_ID "
+              + "  ) "
+              + "  AND NOT EXISTS ( "
+              + "      SELECT 1 "
+              + "      FROM APPLICATIONS ap "
+              + "      WHERE ap.APPLICATION_ANN_ID = a.ANNOUNCEMENT_ANN_ID "
+              + "        AND ( "
+              + "            SELECT COUNT(*) "
+              + "            FROM EVALUATIONS e "
+              + "            WHERE e.EVALUATION_APPLICATION_ID = ap.APPLICATION_ID "
+              + "              AND e.EVALUATION_STATUS_CD = 'SUBMITTED' "
+              + "        ) < ? "
+              + "  )";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, RR_AnnouncementStatus.REVIEW_DONE);
+            pstmt.setInt(2, agyId);
+            pstmt.setString(3, RR_AnnouncementStatus.CLOSED);
+            pstmt.setString(4, RR_AnnouncementStatus.REVIEWING);
+            pstmt.setInt(5, requiredReviewers);
+
+            cnt = pstmt.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBUtil.executeClose(null, pstmt, conn);
+        }
+
+        return cnt;
+    }
+    
+    
+    public int promoteReviewDoneToSelectPending(int agyId) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int cnt = 0;
+
+        try {
+            conn = DBUtil.getConnection();
+
+            String sql =
+                "UPDATE ANNOUNCEMENT a "
+              + "SET a.ANNOUNCEMENT_STATUS = ? "
+              + "WHERE a.ANNOUNCEMENT_AGY_ID = ? "
+              + "  AND a.ANNOUNCEMENT_HIDDEN_YN = 0 "
+              + "  AND a.ANNOUNCEMENT_STATUS = ? "
+              + "  AND NOT EXISTS ( "
+              + "      SELECT 1 FROM SELECTION s "
+              + "      WHERE s.SELECTION_ANN_ID = a.ANNOUNCEMENT_ANN_ID "
+              + "        AND s.SELECTION_RESULT_CD IN ('SELECTED', 'REJECTED') "
+              + "  )";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, RR_AnnouncementStatus.SELECT_PENDING);
+            pstmt.setInt(2, agyId);
+            pstmt.setString(3, RR_AnnouncementStatus.REVIEW_DONE);
+
+            cnt = pstmt.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBUtil.executeClose(null, pstmt, conn);
+        }
+
+        return cnt;
+    }
     
 }

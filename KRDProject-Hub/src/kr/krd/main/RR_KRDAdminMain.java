@@ -119,6 +119,8 @@ public class RR_KRDAdminMain {
 	public boolean callMenu() {
 		while (true) {
 			syncAnnouncementStatusByDate();
+			syncReviewWorkflow();
+			
 
 			System.out.println("\n\n" + INDENT + CLR_PRIMARY + BOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + RESET);
 			System.out.println(INDENT + BOLD + "   KRD Hubs | " + RESET + CLR_WHT + "기관 담당자 대시보드 (Agency Admin)" + RESET);
@@ -289,6 +291,7 @@ public class RR_KRDAdminMain {
 
 	private void printAnnouncementList() {
 		syncAnnouncementStatusByDate();
+		syncReviewWorkflow();
 		List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
 
 		if (list == null || list.isEmpty()) {
@@ -309,6 +312,7 @@ public class RR_KRDAdminMain {
 
 	private void printClosedAnnouncementListOnly() {
 		syncAnnouncementStatusByDate();
+		syncReviewWorkflow();
 		List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
 		System.out.println(INDENT + BOLD + CLR_WHT + String.format("%-8s | %-25s | %-12s | %-8s | %-12s", "과제번호", "과제명", "상태", "신청팀수", "마감일") + RESET);
 		System.out.println(INDENT + CLR_GRY + "-----------------------------------------------------------------------------" + RESET);
@@ -327,6 +331,39 @@ public class RR_KRDAdminMain {
 	}
 
 	private boolean printSelectPendingAnnouncementListOnly() {
+	    syncAnnouncementStatusByDate();
+	    syncReviewWorkflow();
+	    //announcementDAO.promoteReviewDoneToSelectPending(loginAgyId);
+
+	    List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
+
+	    System.out.println(INDENT + "[공고 목록 - 선정대기만]");
+	    System.out.println(INDENT + CLR_GRY + "--------------------------------------------------------------------------" + RESET);
+	    System.out.printf(INDENT + "%-8s %-20s %-10s %-10s %-12s%n", "과제번호", "과제명", "상태", "신청자수", "마감일" + RESET);
+	    System.out.println(INDENT + CLR_GRY + "--------------------------------------------------------------------------" + RESET);
+
+	    boolean hasAny = false;
+	    if (list != null) {
+	        for (RR_AnnouncementVO vo : list) {
+	            if (!RR_AnnouncementStatus.SELECT_PENDING.equals(vo.getStatus())) continue;
+	            hasAny = true;
+	            System.out.printf(INDENT + "%-8d %-20s %-10s %-10d %-12s%n",
+	                    vo.getAnnId(),
+	                    cut(vo.getTitle(), 18),
+	                    vo.getStatus(),
+	                    vo.getApplicantCount(),
+	                    vo.getEndDt());
+	        }
+	    }
+
+	    if (!hasAny) System.out.println(INDENT + CLR_GRY + "선정대기 공고가 없습니다." + RESET);
+	    System.out.println(INDENT + CLR_GRY + "--------------------------------------------------------------------------" + RESET);
+	    return hasAny;
+	}
+	
+	
+	
+	/*private boolean printSelectPendingAnnouncementListOnly() {
 		syncAnnouncementStatusByDate();
 		announcementDAO.promoteClosedToSelectPending(loginAgyId);
 		//announcementDAO.promoteClosedToSelectPending(loginAgyId);
@@ -347,33 +384,51 @@ public class RR_KRDAdminMain {
 		if (!hasAny) System.out.println(INDENT + CLR_GRY + "  선정 대기 중인 공고가 없습니다." + RESET);
 		System.out.println(INDENT + CLR_GRY + "-----------------------------------------------------------------------------" + RESET);
 		return hasAny;
-	}
+	}*/
+
+	
+	
+	
+	
+	
 
 	private boolean printSelectDoneAnnouncementListOnly() {
-		syncAnnouncementStatusByDate();
-		announcementDAO.promoteClosedToSelectPending(loginAgyId);
-		//announcementDAO.promoteClosedToSelectPending(loginAgyId);
+	    syncAnnouncementStatusByDate();
+	    syncReviewWorkflow();
+	    //announcementDAO.promoteReviewDoneToSelectPending(loginAgyId);
 
-		List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
-		System.out.println(INDENT + BOLD + CLR_WHT + String.format("%-8s | %-25s | %-12s | %-8s | %-12s", "과제번호", "과제명", "상태", "신청팀수", "마감일") + RESET);
-		System.out.println(INDENT + CLR_GRY + "-----------------------------------------------------------------------------" + RESET);
+	    List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
 
-		boolean hasAny = false;
-		if (list != null) {
-			for (RR_AnnouncementVO vo : list) {
-				if (!RR_AnnouncementStatus.SELECT_DONE.equals(vo.getStatus())) continue;
-				hasAny = true;
-				System.out.println(INDENT + String.format("%-10d | %-25s | " + getStatusColor(vo.getStatus()) + "%-12s" + RESET + " | %-8d | %-12s",
-					vo.getAnnId(), cut(vo.getTitle(), 23), vo.getStatus(), vo.getApplicantCount(), vo.getEndDt()));
-			}
-		}
-		if (!hasAny) System.out.println(INDENT + CLR_GRY + "  선정 완료된 공고가 없습니다." + RESET);
-		System.out.println(INDENT + CLR_GRY + "-----------------------------------------------------------------------------" + RESET);
-		return hasAny;
+	    System.out.println(INDENT + "[공고 목록 - 선정완료만]" + RESET);
+	    System.out.println(INDENT + CLR_GRY +"--------------------------------------------------------------------------" + RESET);
+	    System.out.printf(INDENT + "%-8s %-20s %-10s %-10s %-12s%n", "과제번호", "과제명", "상태", "신청자수", "마감일" + RESET);
+	    System.out.println(INDENT + CLR_GRY + "--------------------------------------------------------------------------" + RESET);
+
+	    boolean hasAny = false;
+	    if (list != null) {
+	        for (RR_AnnouncementVO vo : list) {
+	            if (!RR_AnnouncementStatus.SELECT_DONE.equals(vo.getStatus())) continue;
+	            hasAny = true;
+	            System.out.printf(INDENT + "%-8d %-20s %-10s %-10d %-12s%n" + RESET,
+	                    vo.getAnnId(),
+	                    cut(vo.getTitle(), 18),
+	                    vo.getStatus(),
+	                    vo.getApplicantCount(),
+	                    vo.getEndDt());
+	        }
+	    }
+
+	    if (!hasAny) {
+	        System.out.println("선정완료 공고가 없습니다.");
+	    }
+	    System.out.println(INDENT + CLR_GRY + "--------------------------------------------------------------------------" + RESET);
+
+	    return hasAny;
 	}
 
 	private void printOpenAnnouncementListOnly() {
 		syncAnnouncementStatusByDate();
+		syncReviewWorkflow();
 		List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
 		System.out.println(INDENT + BOLD + CLR_WHT + String.format("%-8s | %-25s | %-12s | %-8s | %-12s", "과제번호", "과제명", "상태", "신청팀수", "마감일") + RESET);
 		System.out.println(INDENT + CLR_GRY + "-----------------------------------------------------------------------------" + RESET);
@@ -393,6 +448,7 @@ public class RR_KRDAdminMain {
 
 	private void printOpenOrClosedAnnouncementListOnly() {
 		syncAnnouncementStatusByDate();
+		syncReviewWorkflow();
 		List<RR_AnnouncementVO> list = announcementDAO.getAnnouncementListByAgency(loginAgyId);
 		System.out.println(INDENT + BOLD + CLR_WHT + String.format("%-8s | %-25s | %-12s | %-8s | %-12s", "과제번호", "과제명", "상태", "신청팀수", "마감일") + RESET);
 		System.out.println(INDENT + CLR_GRY + "-----------------------------------------------------------------------------" + RESET);
@@ -572,6 +628,12 @@ public class RR_KRDAdminMain {
 	}
 
 	private void autoSelectFlow() {
+		
+		syncAnnouncementStatusByDate();
+	    syncReviewWorkflow();
+	    announcementDAO.promoteReviewDoneToSelectPending(loginAgyId);
+	    
+		
 		printSubTitle("자동 선정 계산 (Auto Selection)");
 		boolean hasPending = printSelectPendingAnnouncementListOnly();
 
@@ -599,7 +661,7 @@ public class RR_KRDAdminMain {
 		System.out.println("\n" + INDENT + CLR_PRIMARY + "┌─ [ " + cut(ann.getTitle(), 20) + " - 선정 시뮬레이션 ] ──────────────┐" + RESET);
 		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%,d 원\n" + RESET, "총 예산", totalBudget);
 		System.out.printf(INDENT + CLR_PRIMARY + "│  " + CLR_GRY + "%-12s : " + CLR_WHT + "%d 팀\n" + RESET, "최대 선정 팀수", cap);
-		System.out.println(INDENT + CLR_PRIMARY + "└──────────────────────────────────────────────────────────────┘" + RESET);
+		System.out.println(INDENT + CLR_PRIMARY + "└────────────────────────────────────────────┘" + RESET);
 
 		System.out.println(INDENT + BOLD + CLR_WHT + String.format("%-4s | %-8s | %-12s | %-8s | %-15s | %-8s | %s", "순위", "신청ID", "신청자", "평균점수", "희망예산(원)", "평가완료", "비고") + RESET);
 		System.out.println(INDENT + CLR_GRY + "--------------------------------------------------------------------------------------------" + RESET);
@@ -640,8 +702,15 @@ public class RR_KRDAdminMain {
 		else printError("선정 승인 중 오류가 발생했습니다.");
 	}
 
+	
+	
 	private void viewSelectionResultFlow() {
 		while (true) {
+			
+			syncAnnouncementStatusByDate();
+	        syncReviewWorkflow();
+	        announcementDAO.promoteReviewDoneToSelectPending(loginAgyId);
+			
 			printSubTitle("선정 결과 조회 (View Selection Results)");
 			boolean hasDone = printSelectDoneAnnouncementListOnly();
 
@@ -1166,6 +1235,11 @@ public class RR_KRDAdminMain {
 		sc.nextLine();
 	}
 
+	
+	
+	
+	
+	
 	// ===== 표시 변환 유틸 =====
 	private String toAgreementKor(String cd) {
 		if (cd == null) return "대기";
@@ -1214,16 +1288,30 @@ public class RR_KRDAdminMain {
 	}
 	
 	private String toApplicationStatusKor(String cd) {
-		if (cd == null) return "-";
-		switch (cd.toUpperCase()) {
-			case "APPLIED": return "심사대기";
-			case "UNDER_REVIEW": return "심사중";
-			case "SELECTED": return "선정";
-			case "REJECTED": return "탈락";
-			case "CANCELLED": return "취소";
-			default: return cd;
-		}
+	    if (cd == null) return "-";
+
+	    String norm = cd.trim().toUpperCase().replace(' ', '_');
+
+	    switch (norm) {
+	        case "APPLIED": return "심사대기";
+	        case "UNDER_REVIEW": return "심사중";
+	        case "REVIEW_DONE": return "심사완료";
+	        case "SELECTED": return "선정";
+	        case "REJECTED": return "탈락";
+	        case "PRECHECK_FAILED": return "사전검토탈락";
+	        case "CANCELLED": return "취소";
+	        default: return cd;
+	    }
 	}
+	
+	
+	private void syncReviewWorkflow() {
+	    announcementDAO.promoteClosedToReviewing(loginAgyId);
+	    applicationDAO.promoteAppliedToUnderReview(loginAgyId);
+	    applicationDAO.promoteReviewDoneApplications(loginAgyId, REQUIRED_REVIEWERS);
+	    announcementDAO.promoteReviewingToReviewDone(loginAgyId, REQUIRED_REVIEWERS);
+	}
+	
 
 	// ===== 공통 입력 유틸 =====
 	private int readInt() {
