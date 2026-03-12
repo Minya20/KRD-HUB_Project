@@ -211,11 +211,12 @@ public class RR_AnnouncementDAO {
             pstmt.setInt(2, annId);
             pstmt.setInt(3, agyId);
 
-            cnt = pstmt.executeUpdate();
-
-            if (cnt > 0 && fieldNo == 3) {
-                budgetHistDAO.insertBudgetHist(annId, Long.parseLong(newValue));
+         
+            if (fieldNo == 3) {
+                budgetHistDAO.insertBudgetHist(annId,Long.parseLong(newValue),agyId);
             }
+            
+            cnt = pstmt.executeUpdate();
 
         } catch (Exception e) {
             e.printStackTrace();
