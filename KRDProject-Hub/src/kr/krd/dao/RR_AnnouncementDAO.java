@@ -11,9 +11,6 @@ import kr.krd.vo.RR_AnnouncementVO;
 import kr.util.DBUtil;
 
 public class RR_AnnouncementDAO {
-	
-	private HYJ_InsertBUDGET_HISTDAO budgetHistDAO =
-	        new HYJ_InsertBUDGET_HISTDAO();
 
     // ===== 공고 등록 =====
     public int insertAnnouncement(RR_AnnouncementVO vo) {
@@ -211,10 +208,6 @@ public class RR_AnnouncementDAO {
             pstmt.setInt(2, annId);
             pstmt.setInt(3, agyId);
 
-         
-            if (fieldNo == 3) {
-                budgetHistDAO.insertBudgetHist(annId,Long.parseLong(newValue),agyId);
-            }
             
             cnt = pstmt.executeUpdate();
 
