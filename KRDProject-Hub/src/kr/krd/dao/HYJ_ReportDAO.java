@@ -99,7 +99,7 @@ public class HYJ_ReportDAO {
 			System.out.println(INDENT + CLR_GRY + "  (MID / FINAL 중 하나를 입력하세요)" + RESET);
 			printInputTag("보고서 타입 (Type)");
 			type = br.readLine().trim();
-			if(!type.equals("MID") || !type.equals("FINAL")) {
+			if(!type.equals("MID") && !type.equals("FINAL")) {
 				printError("MID / FINAL 중 하나를 입력하세요");
 				continue;
 				}
