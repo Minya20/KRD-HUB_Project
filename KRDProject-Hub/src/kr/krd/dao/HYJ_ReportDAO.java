@@ -93,7 +93,7 @@ public class HYJ_ReportDAO {
 
 			// 5. 보고서 입력 폼 
 			System.out.println("\n" + INDENT + CLR_WHT + "[ 보고서 상세 정보 입력 ]" + RESET);
-			
+			   
 			String type = "";
 			while(true){
 			System.out.println(INDENT + CLR_GRY + "  (MID / FINAL 중 하나를 입력하세요)" + RESET);
