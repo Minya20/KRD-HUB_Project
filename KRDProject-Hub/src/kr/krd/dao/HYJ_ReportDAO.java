@@ -101,7 +101,7 @@ public class HYJ_ReportDAO {
 			type = br.readLine().trim();
 			if(!type.equals("MID") && !type.equals("FINAL")) {
 				printError("MID / FINAL 중 하나를 입력하세요");
-				continue;
+				continue;//다시 돌아가는 부분
 				}
 			break;
 			}
