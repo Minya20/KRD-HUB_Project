@@ -94,9 +94,14 @@ public class HYJ_ReportDAO {
 			// 5. 보고서 입력 폼 
 			System.out.println("\n" + INDENT + CLR_WHT + "[ 보고서 상세 정보 입력 ]" + RESET);
 			
-			System.out.println(INDENT + CLR_GRY + "  (중간 / 최종 중 하나를 입력하세요)" + RESET);
+			System.out.println(INDENT + CLR_GRY + "  (MID / FINAL 중 하나를 입력하세요)" + RESET);
 			printInputTag("보고서 타입 (Type)");
 			String type = br.readLine().trim();
+			if(!type.equals("MID") || !type.equals("FINAL")) {
+				printError("진행률은 숫자만 입력 가능합니다.");
+			}else {
+				return;
+			}
 
 			printInputTag("보고서 내용 요약 (Content)");
 			String content = br.readLine().trim();
@@ -123,7 +128,7 @@ public class HYJ_ReportDAO {
 			sql = "INSERT INTO REPORTS("
 					+ "report_rpt_id, report_project_id, report_rpt_type_cd, report_submitted_at, "
 					+ "report_status_cd, report_content, report_keywords, report_progress_rate, report_approved_by) "
-					+ "VALUES(REPORTS_SEQ.NEXTVAL, ?, ?, SYSDATE, 'APPLIED', ?, ?, ?, ?)";
+					+ "VALUES(REPORTS_SEQ.NEXTVAL, ?, ?, SYSDATE, 'SUBMITED', ?, ?, ?, ?)";
 
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(++cnt, project_id);
@@ -132,7 +137,8 @@ public class HYJ_ReportDAO {
 			pstmt.setString(++cnt, keywords);
 			pstmt.setInt(++cnt, progress);
 			pstmt.setString(++cnt, "agy01"); // 하드코딩된 담당자ID 유지
-
+			
+			
 			int result = pstmt.executeUpdate();
 			if (result > 0) {
 				printSuccess("해당 프로젝트의 보고서가 성공적으로 등록되었습니다.");
