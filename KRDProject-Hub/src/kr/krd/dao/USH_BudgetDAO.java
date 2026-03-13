@@ -112,7 +112,7 @@ public class USH_BudgetDAO {
 				String title = rs.getString("announcement_title");
 				long total = rs.getLong("total_budget");
 				long used = rs.getLong("used_budget");
-				long remain = total = used;
+				long remain = total - used;
 				double pct = (total == 0) ? 0.0 : Math.round((used * 10000.0 / total)) / 100.0;
 				
 				list.add(new USH_BudgetUsageSummary(projectId, title, total, used, remain, pct));
