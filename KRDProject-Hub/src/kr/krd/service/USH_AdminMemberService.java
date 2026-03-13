@@ -89,7 +89,7 @@ public class USH_AdminMemberService {
 		String name = io.readOptional(getInputPrompt("이름(부분일치)"));
 		String email = io.readOptional(getInputPrompt("이메일(부분일치)"));
 		String role = io.readOptional(getInputPrompt("권한 코드 (ADM/AGY/RESI/RESO/REV)"));
-		String status = io.readOptional(getInputPrompt("상태 코드 (ACTIVE/SUSPENDED)"));
+		String status = io.readOptional(getInputPrompt("상태 코드 (ACTIVE/SUSPENDED/DELETED)"));
 		
 		if(role != null) role = role.toUpperCase();
 		if(status != null) status = status.toUpperCase();
