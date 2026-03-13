@@ -162,7 +162,84 @@ public class RR_AnnouncementDAO {
     }
 
     // ===== 공고 수정 =====
-    public int updateAnnouncementField(int annId, int agyId, int fieldNo, String newValue) {
+    public int updateAnnouncementField(int annId, int agyId, int fieldNo, String newValue, String loginUserId) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        java.sql.CallableStatement cstmtSet = null;
+        java.sql.CallableStatement cstmtClear = null;
+        int cnt = 0;
+
+        try {
+            conn = DBUtil.getConnection();
+            conn.setAutoCommit(false);
+
+            String sql = null;
+
+            switch (fieldNo) {
+                case 1:
+                    sql = "UPDATE ANNOUNCEMENT SET ANNOUNCEMENT_TITLE = ? "
+                        + "WHERE ANNOUNCEMENT_ANN_ID = ? AND ANNOUNCEMENT_AGY_ID = ? AND ANNOUNCEMENT_HIDDEN_YN = 0";
+                    break;
+                case 2:
+                    sql = "UPDATE ANNOUNCEMENT SET ANNOUNCEMENT_DESC = ? "
+                        + "WHERE ANNOUNCEMENT_ANN_ID = ? AND ANNOUNCEMENT_AGY_ID = ? AND ANNOUNCEMENT_HIDDEN_YN = 0";
+                    break;
+                case 3:
+                    sql = "UPDATE ANNOUNCEMENT SET ANNOUNCEMENT_TOTAL_BUDGET = ? "
+                        + "WHERE ANNOUNCEMENT_ANN_ID = ? AND ANNOUNCEMENT_AGY_ID = ? AND ANNOUNCEMENT_HIDDEN_YN = 0";
+                    break;
+                case 4:
+                    sql = "UPDATE ANNOUNCEMENT SET ANNOUNCEMENT_RECRUIT_CAP = ? "
+                        + "WHERE ANNOUNCEMENT_ANN_ID = ? AND ANNOUNCEMENT_AGY_ID = ? AND ANNOUNCEMENT_HIDDEN_YN = 0";
+                    break;
+                case 5:
+                    sql = "UPDATE ANNOUNCEMENT SET ANNOUNCEMENT_END_DT = ? "
+                        + "WHERE ANNOUNCEMENT_ANN_ID = ? AND ANNOUNCEMENT_AGY_ID = ? AND ANNOUNCEMENT_HIDDEN_YN = 0";
+                    break;
+                default:
+                    return 0;
+            }
+
+            if (fieldNo == 3) {
+                cstmtSet = conn.prepareCall("{call PKG_BUDGET_AUDIT.SET_INFO(?)}");
+                cstmtSet.setString(1, loginUserId);
+                cstmtSet.execute();
+            }
+
+            pstmt = conn.prepareStatement(sql);
+
+            if (fieldNo == 3 || fieldNo == 4) {
+                pstmt.setLong(1, Long.parseLong(newValue));
+            } else {
+                pstmt.setString(1, newValue);
+            }
+
+            pstmt.setInt(2, annId);
+            pstmt.setInt(3, agyId);
+
+            cnt = pstmt.executeUpdate();
+
+            if (fieldNo == 3) {
+                cstmtClear = conn.prepareCall("{call PKG_BUDGET_AUDIT.CLEAR_INFO}");
+                cstmtClear.execute();
+            }
+
+            conn.commit();
+
+        } catch (Exception e) {
+            try {
+                if (conn != null) conn.rollback();
+            } catch (Exception ignore) {}
+            e.printStackTrace();
+        } finally {
+            try { if (cstmtClear != null) cstmtClear.close(); } catch (Exception ignore) {}
+            try { if (cstmtSet != null) cstmtSet.close(); } catch (Exception ignore) {}
+            DBUtil.executeClose(null, pstmt, conn);
+        }
+
+        return cnt;
+    }
+/*    public int updateAnnouncementField(int annId, int agyId, int fieldNo, String newValue) {
         Connection conn = null;
         PreparedStatement pstmt = null;
         int cnt = 0;
@@ -217,7 +294,7 @@ public class RR_AnnouncementDAO {
         }
 
         return cnt;
-    }
+    } */
 
     // ===== 공고 논리 삭제 =====
     public int softDeleteAnnouncement(int annId, int agyId) {

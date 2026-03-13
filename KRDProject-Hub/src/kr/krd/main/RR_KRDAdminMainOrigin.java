@@ -525,7 +525,7 @@ public class RR_KRDAdminMainOrigin {
                 return;
         }
 
-        int result = announcementDAO.updateAnnouncementField(annId, loginAgyId, fieldNo, newValue);
+        int result = announcementDAO.updateAnnouncementField(annId, loginAgyId, fieldNo, newValue, loginUserId);
 
         if (result > 0) {
             System.out.println("공고 정보가 수정되었습니다.");

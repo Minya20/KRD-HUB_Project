@@ -514,7 +514,7 @@ public class RR_KRDAdminMain {
 			default: printError("잘못된 번호입니다."); return;
 		}
 
-		int result = announcementDAO.updateAnnouncementField(annId, loginAgyId, fieldNo, newValue);
+		int result = announcementDAO.updateAnnouncementField(annId, loginAgyId, fieldNo, newValue, loginUserId);
 		if (result > 0) printSuccess("공고 정보가 정상적으로 수정되었습니다.");
 		else printError("공고 수정에 실패했습니다.");
 	}
